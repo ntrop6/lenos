@@ -1,0 +1,45 @@
+lenOS 1.0 — attribution and upstream provenance
+===============================================
+
+lenOS is a LineageOS 23.2 distribution for the Nothing Phone (3a) / (3a) Pro
+(codename "asteroids", SM7635) with hardening and anti-correlation features
+integrated at build time.
+
+Component provenance:
+
+- Device, kernel, vendor, glyph and hardware trees:
+  NullDebris (https://github.com/NullDebris), BSD/Apache-2.0 per upstream
+  SPDX headers. lenOS does not modify their licensing.
+
+- LineageOS 23.2 platform sources: The LineageOS Project
+  (https://lineageos.org), Apache-2.0. lenOS is a derivative work; it keeps
+  LineageOS licensing intact.
+
+- The hardening patch set in patches/ (OTHER_SENSORS permission, duress
+  PIN/password with eSIM wipe isolation, automatic BFU reboot in init,
+  per-connection Wi-Fi MAC randomization with DHCP-state unlinkability, PIN
+  scramble default, and their Settings UI) is adapted from GrapheneOS
+  Android 16 QPR2 platform sources (https://grapheneos.org, MIT/Apache-2.0).
+  Exact upstream commit hashes are recorded inside each patch. These patches
+  were previously distributed as lenOS 2.8.1 hardening (MIT) and are carried
+  forward here under the same license.
+
+- LineageOS provides the per-app network firewall (POLICY_REJECT_ALL) and
+  PIN scrambling; lenOS only changes defaults and consumes them unchanged.
+
+- Cromite (https://github.com/uazo/cromite) ships as a presigned prebuilt
+  APK, GPL-3.0-or-later. Source: the pinned release tag recorded in
+  config/VERSIONS.sh. You may replace or remove it before building.
+
+- ReSukiSU manager APK (https://github.com/ReSukiSU/ReSukiSU, GPL-3.0)
+  ships presigned when root mode is enabled; source for the exact build is
+  recorded in config/VERSIONS.sh. The kernelsu LKM is injected into
+  init_boot at package time via ReSukiSU's ksud boot-patch tooling.
+
+- avbroot (https://github.com/chenxiaolong/avbroot, GPL-3.0) is a host-side
+  build tool used for OTA signing and relocking with user-owned AVB keys;
+  it is not distributed inside lenOS images.
+
+- OEMUnlockOnBoot (https://github.com/chenxiaolong/OEMUnlockOnBoot,
+  Apache-2.0) is an optional Magisk-style module; it is fetched pinned and
+  installed by the user, never preinstalled.

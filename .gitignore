@@ -1,0 +1,9 @@
+out/
+*.tmp
+.keys/
+keys/
+workspace/
+*.zip
+*.apk
+*.img
+__pycache__/

@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  lenOS pinned local manifest for Nothing Phone (3a)/(3a Pro) "asteroids",
+  LineageOS 23.2, GKI kernel 6.6.
+
+  Every project that lenOS patches is pinned to an exact revision so the
+  patch set in patches/ and device-patches/ applies deterministically.
+  The pinned revisions were captured on 2026-09-21:
+
+    device/nothing/asteroids              53d7b7e554823155e1d2ceb31cd1e64dc31dfe17  (6.6/lineage-23.2)
+    kernel/nothing/sm7635                 1b6d6d95170e5f36a532430c8e74b3b1fb139cdb  (6.6/lineage-23.2)
+    kernel/nothing/sm7635-modules         4366a514a7ddf1079ec8c60b1d20238fa5573e13  (6.6/lineage-23.2)
+    kernel/nothing/sm7635-devicetrees     e0eb1dc2235850f9f966bfb3294967d06c00a0f1  (6.6/lineage-23.2)
+    vendor/nothing/asteroids              dec51e71456a55af3f5a4d4744c3e2aab726afc4  (lineage-23.2, GitLab)
+    packages/apps/ParanoidGlyph           1bdc1cf90e475e7030bad5aa3fe313bba3abae4f  (lineage-23.1)
+    packages/apps/GlyphAdapter            d15021d86dfd5e054dade0683bd51c8f9a501f7f  (15)
+    hardware/dolby                        f66b08f3ee8c67a44f292d7edb68d5fbfb2172ed  (lunaris)
+    hardware/nothing                      09a3ca569fb0ea9b12f2f29107ff06da0009192c  (lineage-23.2)
+    frameworks/base                       c8e9a4a21efb16c923371a740b9c1c755d17ebb2  (lineage-23.2)
+    frameworks/native                     9568531f9be7ae65f260699811f32ec4e461de6e  (lineage-23.2)
+    frameworks/opt/telephony              566e62daf4e93be6f934001bc76d60aba087b4d6  (lineage-23.2)
+    system/core                           0e96ff13d90df568ddd788bb02b3ddb6e3641528  (lineage-23.2)
+    system/sepolicy                       885cc500f6078a766d1f6def5ce4c06c55841773  (lineage-23.2)
+    packages/modules/Permission           ee30155a8872cd022b5b7fb1983fdcf09e752723  (lineage-23.2)
+    packages/modules/Wifi                 8e08d5bf50bb82fa66aab3d1e9e224dd2489955f  (lineage-23.2)
+    packages/apps/Settings                ecbe1adc3e207d8dc38c35571171ba9d886092f6  (lineage-23.2)
+    packages/modules/NetworkStack         853cb402bf02cd935d06d42c1155b0023eabd3e6  (AOSP tag android-16.0.0_r4)
+    frameworks/opt/net/wifi               e7e8646a896f2ee736ccca935c862d52f0492b07  (AOSP tag android-16.0.0_r4)
+
+  LineageOS's default manifest syncs packages/modules/NetworkStack and
+  frameworks/opt/net/wifi from the AOSP remote at tag android-16.0.0_r4;
+  the remove/re-add pairs below pin them to the same tag commits explicitly.
+-->
+<manifest>
+    <remote name="lenos-nd" fetch="https://github.com/NullDebris/" />
+    <remote name="lenos-nd-gl" fetch="https://gitlab.com/NullDebris/" />
+    <remote name="lenos-gh" fetch="https://github.com/" />
+    <remote name="lenos-aosp" fetch="https://android.googlesource.com" />
+
+    <project path="device/nothing/asteroids" name="android_device_nothing_asteroids"
+             remote="lenos-nd" revision="53d7b7e554823155e1d2ceb31cd1e64dc31dfe17" />
+
+    <project path="kernel/nothing/sm7635" name="android_kernel_nothing_sm7635"
+             remote="lenos-nd" revision="1b6d6d95170e5f36a532430c8e74b3b1fb139cdb" />
+
+    <project path="kernel/nothing/sm7635-modules" name="android_kernel_nothing_sm7635-modules"
+             remote="lenos-nd" revision="4366a514a7ddf1079ec8c60b1d20238fa5573e13" />
+
+    <project path="kernel/nothing/sm7635-devicetrees" name="android_kernel_nothing_sm7635-devicetrees"
+             remote="lenos-nd" revision="e0eb1dc2235850f9f966bfb3294967d06c00a0f1" />
+
+    <project path="vendor/nothing/asteroids" name="proprietary_vendor_nothing_asteroids"
+             remote="lenos-nd-gl" revision="dec51e71456a55af3f5a4d4744c3e2aab726afc4" />
+
+    <project path="packages/apps/ParanoidGlyph" name="packages_apps_ParanoidGlyph"
+             remote="lenos-nd" revision="1bdc1cf90e475e7030bad5aa3fe313bba3abae4f" />
+
+    <project path="packages/apps/GlyphAdapter" name="packages_apps_GlyphAdapter"
+             remote="lenos-nd" revision="d15021d86dfd5e054dade0683bd51c8f9a501f7f" />
+
+    <project path="hardware/dolby" name="hardware_dolby"
+             remote="lenos-nd" revision="f66b08f3ee8c67a44f292d7edb68d5fbfb2172ed" />
+
+    <project path="hardware/nothing" name="android_hardware_nothing"
+             remote="lenos-nd" revision="09a3ca569fb0ea9b12f2f29107ff06da0009192c" />
+
+    <remove-project name="LineageOS/android_frameworks_base" />
+    <project path="frameworks/base" name="LineageOS/android_frameworks_base"
+             remote="lenos-gh" revision="c8e9a4a21efb16c923371a740b9c1c755d17ebb2" />
+
+    <remove-project name="LineageOS/android_frameworks_native" />
+    <project path="frameworks/native" name="LineageOS/android_frameworks_native"
+             remote="lenos-gh" revision="9568531f9be7ae65f260699811f32ec4e461de6e" />
+
+    <remove-project name="LineageOS/android_frameworks_opt_telephony" />
+    <project path="frameworks/opt/telephony" name="LineageOS/android_frameworks_opt_telephony"
+             remote="lenos-gh" revision="566e62daf4e93be6f934001bc76d60aba087b4d6" />
+
+    <remove-project name="LineageOS/android_system_core" />
+    <project path="system/core" name="LineageOS/android_system_core"
+             remote="lenos-gh" revision="0e96ff13d90df568ddd788bb02b3ddb6e3641528" />
+
+    <remove-project name="LineageOS/android_system_sepolicy" />
+    <project path="system/sepolicy" name="LineageOS/android_system_sepolicy"
+             remote="lenos-gh" revision="885cc500f6078a766d1f6def5ce4c06c55841773" />
+
+    <remove-project name="LineageOS/android_packages_modules_Permission" />
+    <project path="packages/modules/Permission" name="LineageOS/android_packages_modules_Permission"
+             remote="lenos-gh" revision="ee30155a8872cd022b5b7fb1983fdcf09e752723" />
+
+    <remove-project name="LineageOS/android_packages_modules_Wifi" />
+    <project path="packages/modules/Wifi" name="LineageOS/android_packages_modules_Wifi"
+             remote="lenos-gh" revision="8e08d5bf50bb82fa66aab3d1e9e224dd2489955f" />
+
+    <remove-project name="LineageOS/android_packages_apps_Settings" />
+    <project path="packages/apps/Settings" name="LineageOS/android_packages_apps_Settings"
+             remote="lenos-gh" revision="ecbe1adc3e207d8dc38c35571171ba9d886092f6" />
+
+    <remove-project name="platform/packages/modules/NetworkStack" />
+    <project path="packages/modules/NetworkStack" name="platform/packages/modules/NetworkStack"
+             remote="lenos-aosp" revision="853cb402bf02cd935d06d42c1155b0023eabd3e6" />
+
+    <remove-project name="platform/frameworks/opt/net/wifi" />
+    <project path="frameworks/opt/net/wifi" name="platform/frameworks/opt/net/wifi"
+             remote="lenos-aosp" revision="e7e8646a896f2ee736ccca935c862d52f0492b07" />
+</manifest>
