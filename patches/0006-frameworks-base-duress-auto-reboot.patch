@@ -1,0 +1,787 @@
+diff --git a/core/java/com/android/internal/widget/ILockSettings.aidl b/core/java/com/android/internal/widget/ILockSettings.aidl
+index 640a62571..bce984786 100644
+--- a/core/java/com/android/internal/widget/ILockSettings.aidl
++++ b/core/java/com/android/internal/widget/ILockSettings.aidl
+@@ -114,4 +114,6 @@ interface ILockSettings {
+     void unlockUserKeyIfUnsecured(int userId);
+     boolean writeRepairModeCredential(int userId);
+     byte getLockPatternSize(int userId);
++    void setDuressCredentials(in LockscreenCredential ownerCredential, in LockscreenCredential duressPin, in LockscreenCredential duressPassword);
++    boolean hasDuressCredentials(in LockscreenCredential ownerCredential);
+ }
+diff --git a/core/java/com/android/internal/widget/LockPatternUtils.java b/core/java/com/android/internal/widget/LockPatternUtils.java
+index 842404753..3fe5c5a22 100644
+--- a/core/java/com/android/internal/widget/LockPatternUtils.java
++++ b/core/java/com/android/internal/widget/LockPatternUtils.java
+@@ -2069,4 +2069,38 @@ public class LockPatternUtils {
+             throw e.rethrowFromSystemServer();
+         }
+     }
++
++    public static List<PasswordValidationError> validateDuressCredential(
++            @NonNull LockscreenCredential credential) {
++        var metrics = new PasswordMetrics(credential.getType());
++        metrics.length = 4;
++        return PasswordMetrics.validateCredential(metrics, DevicePolicyManager.PASSWORD_COMPLEXITY_LOW, credential);
++    }
++
++    public void setDuressCredentials(@NonNull LockscreenCredential ownerCredential,
++                                     @NonNull LockscreenCredential duressPin,
++                                     @NonNull LockscreenCredential duressPassword) {
++        try {
++            getLockSettings().setDuressCredentials(ownerCredential, duressPin, duressPassword);
++        } catch (RemoteException e) {
++            throw e.rethrowFromSystemServer();
++        }
++    }
++
++    public void deleteDuressCredentials(@NonNull LockscreenCredential ownerCredential) {
++        var noCredential = LockscreenCredential.createNone();
++        try {
++            getLockSettings().setDuressCredentials(ownerCredential, noCredential, noCredential);
++        } catch (RemoteException e) {
++            throw e.rethrowFromSystemServer();
++        }
++    }
++
++    public boolean hasDuressCredentials(@NonNull LockscreenCredential ownerCredential) {
++        try {
++            return getLockSettings().hasDuressCredentials(ownerCredential);
++        } catch (RemoteException e) {
++            throw e.rethrowFromSystemServer();
++        }
++    }
+ }
+diff --git a/services/core/java/com/android/server/locksettings/DuressCredential.java b/services/core/java/com/android/server/locksettings/DuressCredential.java
+new file mode 100644
+index 000000000..96781687a
+--- /dev/null
++++ b/services/core/java/com/android/server/locksettings/DuressCredential.java
+@@ -0,0 +1,66 @@
++package com.android.server.locksettings;
++
++import com.android.internal.widget.LockPatternUtils;
++import com.android.internal.widget.LockscreenCredential;
++import com.android.internal.widget.PasswordValidationError;
++import com.android.server.locksettings.SyntheticPasswordManager.PasswordData;
++
++import java.io.DataInputStream;
++import java.io.DataOutputStream;
++import java.io.IOException;
++import java.util.Arrays;
++import java.util.List;
++
++class DuressCredential {
++    private final PasswordData salt;
++    private final byte[] hashedCredential;
++
++    DuressCredential(PasswordData salt, byte[] hashedCredential) {
++        this.salt = salt;
++        this.hashedCredential = hashedCredential;
++    }
++
++    static DuressCredential create(LockscreenCredential credential, SyntheticPasswordManager spm) {
++        PasswordData salt = PasswordData.create(credential.getType(),
++                // no need to leak PIN length here, it's used only for PIN auto-confirm
++                LockPatternUtils.PIN_LENGTH_UNAVAILABLE);
++        byte[] hashedCredential = spm.stretchLskf(credential, salt);
++        return new DuressCredential(salt, hashedCredential);
++    }
++
++    boolean verify(SyntheticPasswordManager spm, LockscreenCredential credential) {
++        return Arrays.equals(hashedCredential, spm.stretchLskf(credential, salt));
++    }
++
++    int getType() {
++        return salt.credentialType;
++    }
++
++    void serialize(DataOutputStream s) throws IOException {
++        byte[] saltBytes = salt.toBytes();
++        s.writeInt(saltBytes.length);
++        s.write(saltBytes);
++        s.writeInt(hashedCredential.length);
++        s.write(hashedCredential);
++    }
++
++    static DuressCredential deserialize(DataInputStream s) throws IOException {
++        PasswordData salt = PasswordData.fromBytes(s.readNBytes(s.readInt()));
++        byte[] hashedCredential = s.readNBytes(s.readInt());
++        return new DuressCredential(salt, hashedCredential);
++    }
++
++    static void validate(LockscreenCredential credential, int expectedType) {
++        int type = credential.getType();
++        if (type != expectedType) {
++            throw new IllegalArgumentException("type mismatch: expected " + expectedType + ", got " + type);
++        }
++
++        List<PasswordValidationError> validationErrors =
++                LockPatternUtils.validateDuressCredential(credential);
++        if (!validationErrors.isEmpty()) {
++            throw new IllegalArgumentException("validation failed: " +
++                    Arrays.toString(validationErrors.toArray()));
++        }
++    }
++}
+diff --git a/services/core/java/com/android/server/locksettings/DuressCredentials.java b/services/core/java/com/android/server/locksettings/DuressCredentials.java
+new file mode 100644
+index 000000000..7a2312ef5
+--- /dev/null
++++ b/services/core/java/com/android/server/locksettings/DuressCredentials.java
+@@ -0,0 +1,104 @@
++package com.android.server.locksettings;
++
++import android.annotation.Nullable;
++import android.database.sqlite.SQLiteDiskIOException;
++import android.os.UserHandle;
++
++import com.android.internal.widget.LockscreenCredential;
++
++import java.io.ByteArrayInputStream;
++import java.io.ByteArrayOutputStream;
++import java.io.DataInputStream;
++import java.io.DataOutputStream;
++import java.io.IOException;
++
++import libcore.util.HexEncoding;
++
++import static com.android.internal.widget.LockPatternUtils.CREDENTIAL_TYPE_PASSWORD;
++import static com.android.internal.widget.LockPatternUtils.CREDENTIAL_TYPE_PIN;
++
++class DuressCredentials {
++    final DuressCredential pin;
++    final DuressCredential password;
++
++    DuressCredentials(DuressCredential pin, DuressCredential password) {
++        if (pin.getType() != CREDENTIAL_TYPE_PIN) {
++            throw new IllegalArgumentException();
++        }
++        this.pin = pin;
++        if (password.getType() != CREDENTIAL_TYPE_PASSWORD) {
++            throw new IllegalArgumentException();
++        }
++        this.password = password;
++    }
++
++    static DuressCredentials create(SyntheticPasswordManager spm,
++                                    LockscreenCredential pin, LockscreenCredential password) {
++        return new DuressCredentials(DuressCredential.create(pin, spm),
++                DuressCredential.create(password, spm));
++    }
++
++    private static final String LOCK_SETTINGS_STORAGE_KEY = "duress_credentials";
++    private static final int LOCK_SETTINGS_STORAGE_USER_ID = UserHandle.USER_SYSTEM;
++
++    void save(LockSettingsStorage lss) {
++        lss.setString(LOCK_SETTINGS_STORAGE_KEY, serialize(), LOCK_SETTINGS_STORAGE_USER_ID);
++    }
++
++    @Nullable
++    static DuressCredentials maybeGet(LockSettingsStorage lss) {
++        String s = lss.getString(LOCK_SETTINGS_STORAGE_KEY, null, LOCK_SETTINGS_STORAGE_USER_ID);
++        if (s == null) {
++            return null;
++        }
++        return deserialize(s);
++    }
++
++    static void delete(LockSettingsStorage lss) {
++        lss.removeKey(LOCK_SETTINGS_STORAGE_KEY, LOCK_SETTINGS_STORAGE_USER_ID);
++    }
++
++    DuressCredential get(int type) {
++        return switch (type) {
++            case CREDENTIAL_TYPE_PIN -> pin;
++            case CREDENTIAL_TYPE_PASSWORD -> password;
++            default -> throw new IllegalArgumentException(Integer.toString(type));
++        };
++    }
++
++    private static final int VERSION = 0;
++
++    private String serialize() {
++        var bos = new ByteArrayOutputStream(1000);
++        var s = new DataOutputStream(bos);
++        try {
++            s.writeByte(VERSION);
++            pin.serialize(s);
++            password.serialize(s);
++        } catch (IOException e) {
++            // ByteArrayOutputStream never throws IOException
++            throw new IllegalStateException(e);
++        }
++
++        return HexEncoding.encodeToString(bos.toByteArray());
++    }
++
++    private static DuressCredentials deserialize(String str) {
++        var s = new DataInputStream(new ByteArrayInputStream(HexEncoding.decode(str)));
++        try {
++            int version = s.readByte();
++            if (version > VERSION) {
++                throw new IllegalArgumentException(str);
++            }
++            var pin = DuressCredential.deserialize(s);
++            var password = DuressCredential.deserialize(s);
++            if (s.available() != 0) {
++                throw new IllegalArgumentException(str);
++            }
++            return new DuressCredentials(pin, password);
++        } catch (IOException e) {
++            // ByteArrayInputStream never throws IOException
++            throw new IllegalStateException(e);
++        }
++    }
++}
+diff --git a/services/core/java/com/android/server/locksettings/DuressPasswordHelper.java b/services/core/java/com/android/server/locksettings/DuressPasswordHelper.java
+new file mode 100644
+index 000000000..8da0059a8
+--- /dev/null
++++ b/services/core/java/com/android/server/locksettings/DuressPasswordHelper.java
+@@ -0,0 +1,117 @@
++package com.android.server.locksettings;
++
++import android.annotation.Nullable;
++import android.os.HandlerThread;
++import android.os.UserHandle;
++import android.util.Slog;
++
++import com.android.internal.widget.LockscreenCredential;
++import com.android.internal.widget.VerifyCredentialResponse;
++
++import java.util.Objects;
++import java.util.UUID;
++
++import static com.android.internal.widget.LockPatternUtils.CREDENTIAL_TYPE_NONE;
++import static com.android.internal.widget.LockPatternUtils.CREDENTIAL_TYPE_PASSWORD;
++import static com.android.internal.widget.LockPatternUtils.CREDENTIAL_TYPE_PIN;
++
++public class DuressPasswordHelper {
++    static final String TAG = DuressPasswordHelper.class.getSimpleName();
++
++    private final LockSettingsService lockSettingsService;
++    private final LockSettingsStorage lockSettingsStorage;
++    private final SyntheticPasswordManager spManager;
++    private final HandlerThread backgroundThread;
++
++    DuressPasswordHelper(LockSettingsService lockSettingsService,
++            LockSettingsStorage lockSettingsStorage, SyntheticPasswordManager spManager) {
++        var bgThread = new HandlerThread(UUID.randomUUID().toString());
++        bgThread.start();
++        this.backgroundThread = bgThread;
++        this.lockSettingsService = lockSettingsService;
++        this.lockSettingsStorage = lockSettingsStorage;
++        this.spManager = spManager;
++    }
++
++    protected void onVerifyCredentialResult(@Nullable VerifyCredentialResponse res, @Nullable LockscreenCredential credential) {
++        if (res != null && res.isMatched()) {
++            return;
++        }
++
++        if (credential == null) {
++            return;
++        }
++
++        // original credential is zeroized after this method returns
++        LockscreenCredential credentialCopy = credential.duplicate();
++
++        // credential verification is slow, don't block the current (usually binder) thread
++        backgroundThread.getThreadHandler().post(() -> {
++            final boolean isDuressCredential;
++            try {
++                isDuressCredential = isDuressCredential(credentialCopy);
++            } finally {
++                // invalid credential might be similar to the actual credential
++                credentialCopy.zeroize();
++            }
++            if (isDuressCredential) {
++                DuressWipe.run(lockSettingsService.getContext());
++            }
++        });
++    }
++
++    private void checkOwnerCredential(LockscreenCredential ownerCredential) {
++        int userId = UserHandle.USER_SYSTEM;
++
++        if (lockSettingsService.getCredentialType(userId) == CREDENTIAL_TYPE_NONE) {
++            if (!ownerCredential.isNone()) {
++                throw new IllegalArgumentException("!ownerCredential.isNone()");
++            }
++        } else {
++            VerifyCredentialResponse response = lockSettingsService.checkCredential(ownerCredential, userId, null);
++
++            if (!response.isMatched()) {
++                throw new SecurityException("owner credential verification failed; " + response);
++            }
++        }
++    }
++
++    protected void setDuressCredentials(LockscreenCredential ownerCredential,
++                                 LockscreenCredential pin, LockscreenCredential password) {
++        Objects.requireNonNull(ownerCredential, "ownerCredential");
++        Objects.requireNonNull(pin, "pin");
++        Objects.requireNonNull(password, "password");
++
++        checkOwnerCredential(ownerCredential);
++
++        if (pin.isNone() && password.isNone()) {
++            // exception handling is delegated to the caller
++            DuressCredentials.delete(lockSettingsStorage);
++            Slog.d(TAG, "deleted duress credentials");
++            return;
++        }
++
++        DuressCredential.validate(pin, CREDENTIAL_TYPE_PIN);
++        DuressCredential.validate(password, CREDENTIAL_TYPE_PASSWORD);
++
++        // exception handling is delegated to the caller
++        DuressCredentials.create(spManager, pin, password).save(lockSettingsStorage);
++    }
++
++    protected boolean hasDuressCredentials(LockscreenCredential ownerCredential) {
++        checkOwnerCredential(ownerCredential);
++        return DuressCredentials.maybeGet(lockSettingsStorage) != null;
++    }
++
++    private boolean isDuressCredential(LockscreenCredential credential) {
++        int credentialType = credential.getType();
++        switch (credentialType) {
++            case CREDENTIAL_TYPE_PIN:
++            case CREDENTIAL_TYPE_PASSWORD:
++                DuressCredentials dc = DuressCredentials.maybeGet(lockSettingsStorage);
++                return dc != null && dc.get(credentialType).verify(spManager, credential);
++            default:
++                return false;
++        }
++    }
++}
+diff --git a/services/core/java/com/android/server/locksettings/DuressWipe.java b/services/core/java/com/android/server/locksettings/DuressWipe.java
+new file mode 100644
+index 000000000..cdc63df57
+--- /dev/null
++++ b/services/core/java/com/android/server/locksettings/DuressWipe.java
+@@ -0,0 +1,77 @@
++package com.android.server.locksettings;
++
++import android.annotation.UptimeMillisLong;
++import android.content.Context;
++import android.os.SystemClock;
++import android.telephony.euicc.EuiccCardManager;
++import android.util.Slog;
++
++import com.android.internal.telephony.euicc.EuiccWipe;
++import com.android.server.power.PowerManagerService;
++import com.android.server.recoverysystem.RecoverySystemService;
++
++public class DuressWipe {
++    static final String TAG = DuressWipe.class.getSimpleName();
++
++    // used only for testing, guarded by owner credential
++    public static boolean sleep5sBeforePoweroff;
++
++    static void run(Context context) {
++        Slog.d(TAG, "start");
++
++        EuiccWipeThread euiccWipeThread = EuiccWipeThread.start(context);
++
++        Slog.d(TAG, "calling deleteSecrets");
++        // deleteSecrets() calls AndroidKeyStoreMaintenance.deleteAllKeys(), which deletes all
++        // KeyMint keys, including the storage encryption keys
++        RecoverySystemService.deleteSecrets();
++        Slog.d(TAG, "deleteSecrets returned");
++
++        euiccWipeThread.await(3000);
++        Slog.d(TAG, "finished waiting for euiccWipeThread");
++
++        if (sleep5sBeforePoweroff) {
++            SystemClock.sleep(5000);
++        }
++
++        PowerManagerService.lowLevelShutdown(null);
++    }
++
++    static class EuiccWipeThread extends Thread {
++        private final Context context;
++        @UptimeMillisLong private long startTime;
++
++        private EuiccWipeThread(Context context) {
++            this.context = context;
++        }
++
++        static EuiccWipeThread start(Context ctx) {
++            var t = new EuiccWipeThread(ctx);
++            t.start();
++            t.startTime = SystemClock.uptimeMillis();
++            return t;
++        }
++
++        @Override
++        public void run() {
++            try {
++                EuiccWipe.run(context, EuiccCardManager.RESET_FLAG_IS_FOR_DURESS_WIPE);
++            } catch (Throwable e) {
++                Slog.e(TAG, "", e);
++            }
++        }
++
++        void await(long timeoutMs) {
++            long remaining = timeoutMs - (SystemClock.uptimeMillis() - startTime);
++            if (remaining <= 0) {
++                return;
++            }
++            try {
++                join(remaining);
++            } catch (InterruptedException e) {
++                // should never happen, but don't rethrow it just in case
++                Slog.e(TAG, "", e);
++            }
++        }
++    }
++}
+diff --git a/services/core/java/com/android/server/locksettings/LockSettingsService.java b/services/core/java/com/android/server/locksettings/LockSettingsService.java
+index 59e43c22a..75e95e167 100644
+--- a/services/core/java/com/android/server/locksettings/LockSettingsService.java
++++ b/services/core/java/com/android/server/locksettings/LockSettingsService.java
+@@ -95,6 +95,7 @@ import android.os.Bundle;
+ import android.os.Handler;
+ import android.os.IBinder;
+ import android.os.IProgressListener;
++import android.os.ParcelableException;
+ import android.os.ParcelDuration;
+ import android.os.Process;
+ import android.os.RemoteException;
+@@ -611,6 +612,13 @@ public class LockSettingsService extends ILockSettings.Stub {
+                     getHandler(getServiceThread()), getUserManagerInternal());
+         }
+ 
++        public DuressPasswordHelper getDuressPasswordHelper(LockSettingsService lockSettingsService,
++                LockSettingsStorage lockSettingsStorage,
++                SyntheticPasswordManager syntheticPasswordManager) {
++            return new DuressPasswordHelper(lockSettingsService, lockSettingsStorage,
++                    syntheticPasswordManager);
++        }
++
+         public int binderGetCallingUid() {
+             return Binder.getCallingUid();
+         }
+@@ -752,6 +760,8 @@ public class LockSettingsService extends ILockSettings.Stub {
+                 mStorage);
+ 
+         LocalServices.addService(LockSettingsInternal.class, new LocalService());
++
++        duressPasswordHelper = injector.getDuressPasswordHelper(this, mStorage, mSpManager);
+     }
+ 
+     private void updateActivatedEncryptionNotifications(String reason) {
+@@ -2426,6 +2436,18 @@ public class LockSettingsService extends ILockSettings.Stub {
+     private VerifyCredentialResponse doVerifyCredential(LockscreenCredential credential,
+             int userId, ICheckCredentialProgressCallback progressCallback,
+             @LockPatternUtils.VerifyFlag int flags) {
++        VerifyCredentialResponse res = null;
++        try {
++            res = doVerifyCredentialInner(credential, userId, progressCallback, flags);
++            return res;
++        } finally {
++            duressPasswordHelper.onVerifyCredentialResult(res, credential);
++        }
++    }
++
++    private VerifyCredentialResponse doVerifyCredentialInner(LockscreenCredential credential,
++            int userId, ICheckCredentialProgressCallback progressCallback,
++            @LockPatternUtils.VerifyFlag int flags) {
+         if (credential == null || credential.isNone()) {
+             throw new IllegalArgumentException("Credential can't be null or empty");
+         }
+@@ -4021,4 +4043,32 @@ public class LockSettingsService extends ILockSettings.Stub {
+             onCredentialVerified(sp, loadPasswordMetrics(sp, userId), userId);
+         }
+     }
++
++    private final DuressPasswordHelper duressPasswordHelper;
++
++    @Override
++    public void setDuressCredentials(LockscreenCredential ownerCredential,
++            LockscreenCredential pin, LockscreenCredential password) {
++        checkWritePermission();
++
++        try {
++            duressPasswordHelper.setDuressCredentials(ownerCredential, pin, password);
++        } catch (Throwable e) {
++            throw new ParcelableException(e);
++        } finally {
++            ownerCredential.zeroize();
++            pin.zeroize();
++            password.zeroize();
++        }
++    }
++
++    @Override
++    public boolean hasDuressCredentials(LockscreenCredential ownerCredential) {
++        checkPasswordHavePermission();
++        return duressPasswordHelper.hasDuressCredentials(ownerCredential);
++    }
++
++    Context getContext() {
++        return mContext;
++    }
+ }
+diff --git a/services/core/java/com/android/server/policy/keyguard/AutoReboot.java b/services/core/java/com/android/server/policy/keyguard/AutoReboot.java
+new file mode 100644
+index 000000000..8dd3e7e14
+--- /dev/null
++++ b/services/core/java/com/android/server/policy/keyguard/AutoReboot.java
+@@ -0,0 +1,53 @@
++/*
++ * Copyright (C) 2024 GrapheneOS
++ * Copyright (C) 2026 lenOS adaptation
++ * SPDX-License-Identifier: Apache-2.0
++ */
++package com.android.server.policy.keyguard;
++
++import android.content.Context;
++import android.os.SystemProperties;
++import android.provider.Settings;
++import android.util.Slog;
++
++import java.util.concurrent.TimeUnit;
++
++/** Low-level inactivity reboot bridge. The actual alarm is owned by init. @hide */
++final class AutoReboot {
++    private static final String TAG = AutoReboot.class.getSimpleName();
++    static final String SETTING = "lenos_auto_reboot_timeout_ms";
++    static final int DEFAULT_TIMEOUT_MILLIS = (int) TimeUnit.HOURS.toMillis(18);
++
++    // Writes to this system property are intercepted by init and never persisted.
++    private static final String SYS_PROP = "sys.auto_reboot_ctl";
++
++    private AutoReboot() {}
++
++    private static void sendControl(String value) {
++        try {
++            SystemProperties.set(SYS_PROP, value);
++        } catch (RuntimeException e) {
++            // A missing init timer or policy mismatch must not crash system_server and cause a
++            // framework restart loop. Physical validation still treats this as a failed feature.
++            Slog.e(TAG, "Unable to update init-owned automatic BFU timer", e);
++        }
++    }
++
++    // Invoked when keyguard becomes active and after a successful dismissal.
++    static void onKeyguardShowingStateChanged(Context context, boolean showing, int userId) {
++        Slog.d(TAG, "keyguard state changed: showing=" + showing + ", userId=" + userId);
++
++        if (!showing) {
++            sendControl("on_device_unlocked");
++            return;
++        }
++
++        final int timeoutMillis = Settings.Global.getInt(context.getContentResolver(),
++                SETTING, DEFAULT_TIMEOUT_MILLIS);
++        final int timeoutSeconds = timeoutMillis / 1000;
++        if (timeoutSeconds > 0) {
++            sendControl(Integer.toString(timeoutSeconds));
++        }
++        Slog.d(TAG, "timeoutSeconds=" + timeoutSeconds);
++    }
++}
+diff --git a/services/core/java/com/android/server/policy/keyguard/KeyguardStateMonitor.java b/services/core/java/com/android/server/policy/keyguard/KeyguardStateMonitor.java
+index c0aa8aeff..f622a5c89 100644
+--- a/services/core/java/com/android/server/policy/keyguard/KeyguardStateMonitor.java
++++ b/services/core/java/com/android/server/policy/keyguard/KeyguardStateMonitor.java
+@@ -49,11 +49,13 @@ public class KeyguardStateMonitor extends IKeyguardStateCallback.Stub {
+ 
+     private final LockPatternUtils mLockPatternUtils;
+     private final StateCallback mCallback;
++    private final Context mContext;
+ 
+     public KeyguardStateMonitor(Context context, IKeyguardService service, StateCallback callback) {
+         mLockPatternUtils = new LockPatternUtils(context);
+         mCurrentUserId = ActivityManager.getCurrentUser();
+         mCallback = callback;
++        mContext = context;
+ 
+         try {
+             service.addStateMonitorCallback(this);
+@@ -89,6 +91,8 @@ public class KeyguardStateMonitor extends IKeyguardStateCallback.Stub {
+         mIsShowing = showing;
+ 
+         mCallback.onShowingChanged();
++
++        AutoReboot.onKeyguardShowingStateChanged(mContext, showing, userId);
+     }
+ 
+     @Override // Binder interface
+diff --git a/services/core/java/com/android/server/recoverysystem/RecoverySystemService.java b/services/core/java/com/android/server/recoverysystem/RecoverySystemService.java
+index 1ab423d90..a674583a6 100644
+--- a/services/core/java/com/android/server/recoverysystem/RecoverySystemService.java
++++ b/services/core/java/com/android/server/recoverysystem/RecoverySystemService.java
+@@ -551,7 +551,7 @@ public class RecoverySystemService extends IRecoverySystem.Stub implements Reboo
+         }
+     }
+ 
+-    private static void deleteSecrets() {
++    public static void deleteSecrets() {
+         Slogf.w(TAG, "deleteSecrets");
+         try {
+             AndroidKeyStoreMaintenance.deleteAllKeys();
+diff --git a/services/tests/servicestests/src/com/android/server/locksettings/LockSettingsServiceTestable.java b/services/tests/servicestests/src/com/android/server/locksettings/LockSettingsServiceTestable.java
+index 53211a78a..9b0c44cba 100644
+--- a/services/tests/servicestests/src/com/android/server/locksettings/LockSettingsServiceTestable.java
++++ b/services/tests/servicestests/src/com/android/server/locksettings/LockSettingsServiceTestable.java
+@@ -178,6 +178,13 @@ public class LockSettingsServiceTestable extends LockSettingsService {
+             return mIsHeadlessSystemUserMode;
+         }
+ 
++        @Override
++        public DuressPasswordHelper getDuressPasswordHelper(LockSettingsService lockSettingsService,
++                LockSettingsStorage lockSettingsStorage,
++                SyntheticPasswordManager syntheticPasswordManager) {
++            return mock(DuressPasswordHelper.class);
++        }
++
+         @Override
+         public KeyStore getKeyStore() {
+             return mKeyStore;
+diff --git a/telephony/java/android/telephony/euicc/EuiccCardManager.java b/telephony/java/android/telephony/euicc/EuiccCardManager.java
+index 69594f27e..651123f30 100644
+--- a/telephony/java/android/telephony/euicc/EuiccCardManager.java
++++ b/telephony/java/android/telephony/euicc/EuiccCardManager.java
+@@ -464,6 +464,18 @@ public class EuiccCardManager {
+      */
+     public void resetMemory(String cardId, @ResetOption int options,
+             @CallbackExecutor Executor executor, ResultCallback<Void> callback) {
++        resetMemory(cardId, options, executor, callback, 0);
++    }
++
++    /**
++     * @see com.android.internal.telephony.euicc.EuiccCardController#resetMemory
++     * @hide
++     */
++    public static final int RESET_FLAG_IS_FOR_DURESS_WIPE = 1;
++
++    /** @hide */
++    public void resetMemory(String cardId, @ResetOption int options,
++            @CallbackExecutor Executor executor, ResultCallback<Void> callback, int flags) {
+         try {
+             getIEuiccCardController().resetMemory(mContext.getOpPackageName(), cardId, options,
+                     new IResetMemoryCallback.Stub() {
+@@ -476,7 +488,7 @@ public class EuiccCardManager {
+                                 Binder.restoreCallingIdentity(token);
+                             }
+                         }
+-                    });
++                    }, flags);
+         } catch (RemoteException e) {
+             Log.e(TAG, "Error calling resetMemory", e);
+             throw e.rethrowFromSystemServer();
+diff --git a/telephony/java/com/android/internal/telephony/euicc/EuiccWipe.java b/telephony/java/com/android/internal/telephony/euicc/EuiccWipe.java
+new file mode 100644
+index 000000000..3d3288cdd
+--- /dev/null
++++ b/telephony/java/com/android/internal/telephony/euicc/EuiccWipe.java
+@@ -0,0 +1,90 @@
++package com.android.internal.telephony.euicc;
++
++import android.content.Context;
++import android.telephony.TelephonyManager;
++import android.telephony.UiccSlotInfo;
++import android.telephony.euicc.EuiccCardManager;
++import android.util.Log;
++
++import java.util.ArrayList;
++import java.util.Objects;
++import java.util.concurrent.CompletableFuture;
++import java.util.concurrent.ExecutionException;
++import java.util.concurrent.Executor;
++import java.util.concurrent.Executors;
++
++public class EuiccWipe {
++    static final String TAG = EuiccWipe.class.getSimpleName();
++
++    public static boolean run(Context ctx, int flags) {
++        Log.d(TAG, "start");
++
++        var telephonyManager = ctx.getSystemService(TelephonyManager.class);
++        if (telephonyManager == null) {
++            Log.d(TAG, "TelephonyManager is null");
++            return false;
++        }
++
++        var euiccCardManager = ctx.getSystemService(EuiccCardManager.class);
++        if (euiccCardManager == null) {
++            Log.d(TAG, "EuiccCardManager is null");
++            return false;
++        }
++
++        UiccSlotInfo[] usiArr = telephonyManager.getUiccSlotsInfo();
++        if (usiArr == null) {
++            Log.d(TAG, "getUiccSlotsInfo is null");
++            return false;
++        }
++
++        Executor callbackExecutor = Executors.newSingleThreadExecutor();
++        ArrayList<CompletableFuture<Integer>> futures = new ArrayList<>();
++
++        for (UiccSlotInfo usi : usiArr) {
++            Log.d(TAG, "processing " + usi);
++            if (usi == null || !usi.getIsEuicc()) {
++                continue;
++            }
++
++            String cardId = usi.getCardId();
++
++            var future = new CompletableFuture<Integer>();
++
++            var cb = new EuiccCardManager.ResultCallback<Void>() {
++                @Override
++                public void onComplete(int resultCode, Void result) {
++                    Log.d(TAG, "onComplete: cardId " + cardId + " resultCode " + resultCode);
++                    future.complete(resultCode);
++                }
++            };
++
++            int opts = EuiccCardManager.RESET_OPTION_DELETE_OPERATIONAL_PROFILES
++                | EuiccCardManager.RESET_OPTION_DELETE_FIELD_LOADED_TEST_PROFILES;
++
++            euiccCardManager.resetMemory(cardId, opts, callbackExecutor, cb, flags);
++            futures.add(future);
++        }
++
++        CompletableFuture<Void> allFutures = CompletableFuture.allOf(
++                futures.toArray(new CompletableFuture[0]));
++
++        // await completion
++        try {
++            allFutures.get();
++        } catch (InterruptedException | ExecutionException e) {
++            Log.e(TAG, "", e);
++            return false;
++        }
++
++        for (CompletableFuture<Integer> future : futures) {
++            Integer res = future.getNow(null);
++            Objects.requireNonNull(res);
++            if (res.intValue() != EuiccCardManager.RESULT_OK) {
++                return false;
++            }
++        }
++
++        Log.d(TAG, "end");
++        return true;
++    }
++}
+diff --git a/telephony/java/com/android/internal/telephony/euicc/IEuiccCardController.aidl b/telephony/java/com/android/internal/telephony/euicc/IEuiccCardController.aidl
+index 928223a30..3152205f5 100644
+--- a/telephony/java/com/android/internal/telephony/euicc/IEuiccCardController.aidl
++++ b/telephony/java/com/android/internal/telephony/euicc/IEuiccCardController.aidl
+@@ -55,7 +55,7 @@ interface IEuiccCardController {
+         in ISetNicknameCallback callback);
+     oneway void deleteProfile(String callingPackage, String cardId, String iccid,
+         in IDeleteProfileCallback callback);
+-    oneway void resetMemory(String callingPackage, String cardId, int options, in IResetMemoryCallback callback);
++    oneway void resetMemory(String callingPackage, String cardId, int options, in IResetMemoryCallback callback, int flags);
+     oneway void getDefaultSmdpAddress(String callingPackage, String cardId,
+         in IGetDefaultSmdpAddressCallback callback);
+     oneway void getSmdsAddress(String callingPackage, String cardId,

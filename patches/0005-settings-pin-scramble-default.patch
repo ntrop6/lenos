@@ -1,0 +1,25 @@
+From b7f228b2335bb8f88aab58783254bc3a216e70c6 Mon Sep 17 00:00:00 2001
+From: lenOS <security@lenos.invalid>
+Date: Sat, 8 Aug 2026 17:07:19 +0000
+Subject: [PATCH] lenOS: show PIN scrambling enabled by default
+
+---
+ .../security/screenlock/PinScramblePreferenceController.java    | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/com/android/settings/security/screenlock/PinScramblePreferenceController.java b/src/com/android/settings/security/screenlock/PinScramblePreferenceController.java
+index 6d7ae8a..ea20a8b 100644
+--- a/src/com/android/settings/security/screenlock/PinScramblePreferenceController.java
++++ b/src/com/android/settings/security/screenlock/PinScramblePreferenceController.java
+@@ -57,7 +57,7 @@ public class PinScramblePreferenceController extends AbstractPreferenceControlle
+         ((TwoStatePreference) preference).setChecked(LineageSettings.System.getInt(
+                 mContext.getContentResolver(),
+                 LineageSettings.System.LOCKSCREEN_PIN_SCRAMBLE_LAYOUT,
+-                0) == 1);
++                1) == 1);
+     }
+ 
+     private boolean isPinLock() {
+-- 
+2.47.3
+

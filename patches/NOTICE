@@ -1,0 +1,8 @@
+The OTHER_SENSORS permission, duress PIN/password, automatic BFU reboot, and
+per-connection Wi-Fi privacy implementations are adapted from GrapheneOS
+Android 16 QPR2 platform sources under Apache-2.0-compatible licensing. Exact
+upstream commits and lenOS adaptation notes are recorded in each patch.
+
+The PIN scrambling implementation itself is already part of LineageOS; lenOS
+only changes its unset default. LineageOS's existing POLICY_REJECT_ALL firewall
+is used unchanged.

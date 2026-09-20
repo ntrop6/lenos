@@ -1,0 +1,31 @@
+From 0b367bbfb6eb08c5234a7e94274eec548cfa58ab Mon Sep 17 00:00:00 2001
+From: lenOS <lenos@lenos.invalid>
+Date: Mon, 21 Sep 2026 02:26:10 +0300
+Subject: [PATCH] lenOS: merge the kernel hardening config fragment
+
+Appends vendor/lenos_hardening.config to TARGET_KERNEL_CONFIG. The
+integrator materializes the fragment file inside the kernel tree; the
+strict profile additionally enables INIT_ON_FREE_DEFAULT_ON and
+ZERO_CALL_USED_REGS.
+---
+ BoardConfig.mk | 7 +++++++
+ 1 file changed, 7 insertions(+)
+
+diff --git a/BoardConfig.mk b/BoardConfig.mk
+index eeabc7f..1a8deba 100644
+--- a/BoardConfig.mk
++++ b/BoardConfig.mk
+@@ -263,3 +263,10 @@ WIFI_HIDL_FEATURE_AWARE := true
+ WIFI_HIDL_FEATURE_DUAL_INTERFACE := true
+ WIFI_HIDL_UNIFIED_SUPPLICANT_SERVICE_RC_ENTRY := true
+ WPA_SUPPLICANT_VERSION := VER_0_8_X
++
++# lenOS: kernel hardening fragment. The integrator writes the selected
++# profile (standard/full/strict) into the kernel tree as
++# arch/arm64/configs/vendor/lenos_hardening.config; an empty file is valid
++# for the "none" profile, so this line is always buildable.
++TARGET_KERNEL_CONFIG += \
++    vendor/lenos_hardening.config
+-- 
+2.55.0
+

@@ -1,0 +1,204 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: lenOS <security@lenos.invalid>
+Date: Sat, 8 Aug 2026 20:30:00 +0000
+Subject: [PATCH] lenOS: default to full per-connection Wi-Fi identity randomization
+
+GrapheneOS 16 QPR2 provenance:
+- ed58a7e357c5900e08bccc8372ff1a617429f511
+- 111d94207a85b2353499ba8a44d8413a4acf9fcf
+
+Adds RANDOMIZATION_ALWAYS, makes it the new-network default, generates a new
+MAC for every connection, and disables DHCP hostname transmission by default.
+
+---
+diff --git a/framework/api/current.txt b/framework/api/current.txt
+index 9be389d..feab59b 100644
+--- a/framework/api/current.txt
++++ b/framework/api/current.txt
+@@ -207,6 +207,7 @@ package android.net.wifi {
+     method public void writeToParcel(android.os.Parcel, int);
+     field public String BSSID;
+     field public String FQDN;
++    field public static final int RANDOMIZATION_ALWAYS = 100; // 0x64
+     field public static final int RANDOMIZATION_AUTO = 3; // 0x3
+     field public static final int RANDOMIZATION_NONE = 0; // 0x0
+     field public static final int RANDOMIZATION_NON_PERSISTENT = 2; // 0x2
+diff --git a/framework/java/android/net/wifi/WifiConfiguration.java b/framework/java/android/net/wifi/WifiConfiguration.java
+index c34ed13..0eb9ff4 100644
+--- a/framework/java/android/net/wifi/WifiConfiguration.java
++++ b/framework/java/android/net/wifi/WifiConfiguration.java
+@@ -1884,7 +1884,8 @@ public class WifiConfiguration implements Parcelable {
+             RANDOMIZATION_NONE,
+             RANDOMIZATION_PERSISTENT,
+             RANDOMIZATION_NON_PERSISTENT,
+-            RANDOMIZATION_AUTO})
++            RANDOMIZATION_AUTO,
++            RANDOMIZATION_ALWAYS})
+     public @interface MacRandomizationSetting {}
+ 
+     /**
+@@ -1908,16 +1909,22 @@ public class WifiConfiguration implements Parcelable {
+      */
+     public static final int RANDOMIZATION_AUTO = 3;
+ 
++    /**
++     * Generate a randomize MAC always
++     */
++    public static final int RANDOMIZATION_ALWAYS = 100;
++
+     /**
+      * Level of MAC randomization for this network.
+      * One of {@link #RANDOMIZATION_NONE}, {@link #RANDOMIZATION_AUTO},
+      * {@link #RANDOMIZATION_PERSISTENT} or {@link #RANDOMIZATION_NON_PERSISTENT}.
+-     * By default this field is set to {@link #RANDOMIZATION_AUTO}.
++     * {@link #RANDOMIZATION_PERSISTENT} or {@link #RANDOMIZATION_NON_PERSISTENT} or RANDOMIZATION_ALWAYS.
++     * By default this field is set to RANDOMIZATION_ALWAYS in GrapheneOS.
+      * @hide
+      */
+     @SystemApi
+     @MacRandomizationSetting
+-    public int macRandomizationSetting = RANDOMIZATION_AUTO;
++    public int macRandomizationSetting = RANDOMIZATION_ALWAYS;
+ 
+     /**
+      * Set the MAC randomization setting for this network.
+@@ -2006,7 +2013,7 @@ public class WifiConfiguration implements Parcelable {
+         mRandomizedMacAddress = mac;
+     }
+ 
+-    private boolean mIsSendDhcpHostnameEnabled = true;
++    private boolean mIsSendDhcpHostnameEnabled;
+ 
+     /**
+      * Set whether to send the hostname of the device to this network's DHCP server.
+diff --git a/service/java/com/android/server/wifi/WifiBackupDataV1Parser.java b/service/java/com/android/server/wifi/WifiBackupDataV1Parser.java
+index 093c66c..35dd4b3 100644
+--- a/service/java/com/android/server/wifi/WifiBackupDataV1Parser.java
++++ b/service/java/com/android/server/wifi/WifiBackupDataV1Parser.java
+@@ -345,7 +345,6 @@ class WifiBackupDataV1Parser implements WifiBackupDataParser {
+         WifiConfiguration configuration = new WifiConfiguration();
+         String configKeyInData = null;
+         Set<String> supportedTags = getSupportedWifiConfigurationTags(minorVersion);
+-        boolean sendDhcpHostnameExists = false;
+         // Loop through and parse out all the elements from the stream within this section.
+         while (!XmlUtil.isNextSectionEnd(in, outerTagDepth)) {
+             String tagName = null;
+@@ -442,7 +441,6 @@ class WifiBackupDataV1Parser implements WifiBackupDataParser {
+                     break;
+                 case WifiConfigurationXmlUtil.XML_TAG_SEND_DHCP_HOSTNAME:
+                     configuration.setSendDhcpHostnameEnabled((boolean) value);
+-                    sendDhcpHostnameExists = true;
+                     break;
+                 // V5
+                 case WifiConfigurationXmlUtil.XML_TAG_ALLOW_UPDATE_BY_OTHER_USERS:
+@@ -457,12 +455,6 @@ class WifiBackupDataV1Parser implements WifiBackupDataParser {
+                             "Unknown value name found: " + tagName);
+             }
+         }
+-        if (!sendDhcpHostnameExists) {
+-            // Update legacy configs to send the DHCP hostname for secure networks only.
+-            configuration.setSendDhcpHostnameEnabled(
+-                    !configuration.isSecurityType(WifiConfiguration.SECURITY_TYPE_OPEN)
+-                    && !configuration.isSecurityType(WifiConfiguration.SECURITY_TYPE_OWE));
+-        }
+         clearAnyKnownIssuesInParsedConfiguration(configuration);
+         return Pair.create(configKeyInData, configuration);
+     }
+diff --git a/service/java/com/android/server/wifi/WifiConfigManager.java b/service/java/com/android/server/wifi/WifiConfigManager.java
+index 9938a81..b859562 100644
+--- a/service/java/com/android/server/wifi/WifiConfigManager.java
++++ b/service/java/com/android/server/wifi/WifiConfigManager.java
+@@ -551,6 +551,10 @@ public class WifiConfigManager {
+      * @return
+      */
+     public boolean shouldUseNonPersistentRandomization(WifiConfiguration config) {
++        if (config.macRandomizationSetting == WifiConfiguration.RANDOMIZATION_ALWAYS) {
++            return true;
++        }
++
+         if (!isMacRandomizationSupported()
+                 || config.macRandomizationSetting == WifiConfiguration.RANDOMIZATION_NONE) {
+             return false;
+@@ -704,7 +708,8 @@ public class WifiConfigManager {
+     private MacAddress updateRandomizedMacIfNeeded(WifiConfiguration config) {
+         boolean shouldUpdateMac = config.randomizedMacExpirationTimeMs
+                 < mClock.getWallClockMillis() || mClock.getWallClockMillis()
+-                - config.randomizedMacLastModifiedTimeMs >= NON_PERSISTENT_MAC_REFRESH_MS_MAX;
++                - config.randomizedMacLastModifiedTimeMs >= NON_PERSISTENT_MAC_REFRESH_MS_MAX ||
++                config.macRandomizationSetting == WifiConfiguration.RANDOMIZATION_ALWAYS;
+         if (!shouldUpdateMac) {
+             return config.getRandomizedMacAddress();
+         }
+diff --git a/service/java/com/android/server/wifi/WifiConfigurationUtil.java b/service/java/com/android/server/wifi/WifiConfigurationUtil.java
+index 612b7b4..57dda93 100644
+--- a/service/java/com/android/server/wifi/WifiConfigurationUtil.java
++++ b/service/java/com/android/server/wifi/WifiConfigurationUtil.java
+@@ -281,7 +281,7 @@ public class WifiConfigurationUtil {
+     public static boolean hasMacRandomizationSettingsChanged(WifiConfiguration existingConfig,
+             WifiConfiguration newConfig) {
+         if (existingConfig == null) {
+-            return newConfig.macRandomizationSetting != WifiConfiguration.RANDOMIZATION_AUTO;
++            return newConfig.macRandomizationSetting != WifiConfiguration.RANDOMIZATION_ALWAYS;
+         }
+         return newConfig.macRandomizationSetting != existingConfig.macRandomizationSetting;
+     }
+@@ -297,7 +297,7 @@ public class WifiConfigurationUtil {
+     public static boolean hasSendDhcpHostnameEnabledChanged(WifiConfiguration existingConfig,
+             WifiConfiguration newConfig) {
+         if (existingConfig == null) {
+-            return !newConfig.isSendDhcpHostnameEnabled();
++            return newConfig.isSendDhcpHostnameEnabled();
+         }
+         return newConfig.isSendDhcpHostnameEnabled() != existingConfig.isSendDhcpHostnameEnabled();
+     }
+diff --git a/service/java/com/android/server/wifi/util/XmlUtil.java b/service/java/com/android/server/wifi/util/XmlUtil.java
+index fffa5e7..69aefbe 100644
+--- a/service/java/com/android/server/wifi/util/XmlUtil.java
++++ b/service/java/com/android/server/wifi/util/XmlUtil.java
+@@ -379,9 +379,16 @@ public class XmlUtil {
+         public static final String XML_TAG_ROAMING_CONSORTIUM_OIS = "RoamingConsortiumOIs";
+         public static final String XML_TAG_RANDOMIZED_MAC_ADDRESS = "RandomizedMacAddress";
+         public static final String XML_TAG_MAC_RANDOMIZATION_SETTING = "MacRandomizationSetting";
++        // SendDhcpHostname setting was added and enabled by default in Android 14 QPR3 for all
++        // saved Wi-Fi networks except for the ones with OPEN or OWE security type.
++        // On 14 QPR3, usage of this setting was disabled with a flag. That flag is enabled starting
++        // with Android 15.
++        // SendDhcpHostname setting is disabled by default for all Wi-Fi networks on GrapheneOS.
++        // It was renamed to SendDhcpHostname2 to ignore the original value for users who upgrade
++        // from 14 QPR3.
++        public static final String XML_TAG_SEND_DHCP_HOSTNAME = "SendDhcpHostname2";
+         public static final String XML_TAG_PERSISTENT_MAC_RANDOMIZATION_SEED =
+                 "PersistentMacRandomizationSeed";
+-        public static final String XML_TAG_SEND_DHCP_HOSTNAME = "SendDhcpHostname";
+         public static final String XML_TAG_CARRIER_ID = "CarrierId";
+         public static final String XML_TAG_SUBSCRIPTION_ID = "SubscriptionId";
+         public static final String XML_TAG_IS_AUTO_JOIN = "AutoJoinEnabled";
+@@ -899,7 +906,6 @@ public class XmlUtil {
+             WifiConfiguration configuration = new WifiConfiguration();
+             String configKeyInData = null;
+             boolean macRandomizationSettingExists = false;
+-            boolean sendDhcpHostnameExists = false;
+             boolean isCreatorUserIdExists = false;
+             byte[] dppConnector = null;
+             byte[] dppCSign = null;
+@@ -1044,7 +1050,6 @@ public class XmlUtil {
+                             break;
+                         case XML_TAG_SEND_DHCP_HOSTNAME:
+                             configuration.setSendDhcpHostnameEnabled((boolean) value);
+-                            sendDhcpHostnameExists = true;
+                             break;
+                         case XML_TAG_CARRIER_ID:
+                             configuration.carrierId = (int) value;
+@@ -1194,12 +1199,6 @@ public class XmlUtil {
+                     == WifiConfiguration.RANDOMIZATION_PERSISTENT && !fromSuggestion) {
+                 configuration.macRandomizationSetting = WifiConfiguration.RANDOMIZATION_AUTO;
+             }
+-            if (!sendDhcpHostnameExists) {
+-                // Update legacy configs to send the DHCP hostname for secure networks only.
+-                configuration.setSendDhcpHostnameEnabled(
+-                        !configuration.isSecurityType(WifiConfiguration.SECURITY_TYPE_OPEN)
+-                        && !configuration.isSecurityType(WifiConfiguration.SECURITY_TYPE_OWE));
+-            }
+             if (Flags.multiUserWifiEnhancement() && Environment.isSdkNewerThanB()
+                     && !isCreatorUserIdExists) {
+                 int userId = UserHandle.getUserHandleForUid(configuration.creatorUid)

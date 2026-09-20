@@ -1,0 +1,174 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: lenOS <security@lenos.invalid>
+Date: Sat, 8 Aug 2026 20:30:00 +0000
+Subject: [PATCH] lenOS: put automatic BFU timer in init
+
+GrapheneOS 16 QPR2 provenance:
+- 75e08db93e4212c47c9083606296e3f9da45bf8e
+- ab3ec4c2bccc467964f5950f9c25fbca39d60f45
+
+CLOCK_BOOTTIME_ALARM is owned by init, starts only after at least one successful
+unlock, and is cancelled by a successful unlock. BFU chain reboots are avoided.
+The lenOS adaptation adds explicit standard-library includes, strict numeric
+parsing, and non-fatal timer setup. Alarm failures disable automatic BFU rather
+than crashing PID 1 and creating a boot loop.
+
+---
+diff --git a/init/property_service.cpp b/init/property_service.cpp
+index 3c78e76..aecf887 100644
+--- a/init/property_service.cpp
++++ b/init/property_service.cpp
+@@ -23,6 +23,7 @@
+ #include <inttypes.h>
+ #include <limits.h>
+ #include <netinet/in.h>
++#include <signal.h>
+ #include <stdarg.h>
+ #include <stddef.h>
+ #include <stdio.h>
+@@ -34,9 +35,11 @@
+ #include <sys/system_properties.h>
+ #include <sys/types.h>
+ #include <sys/un.h>
++#include <time.h>
+ #include <unistd.h>
+ #include <wchar.h>
+ 
++#include <limits>
+ #include <map>
+ #include <memory>
+ #include <mutex>
+@@ -531,6 +534,110 @@ uint32_t CheckPermissions(const std::string& name, const std::string& value,
+     return PROP_SUCCESS;
+ }
+ 
++static timer_t auto_reboot_timer;
++static bool auto_reboot_timer_available;
++static bool device_unlocked_at_least_once;
++static bool is_auto_reboot_timer_started;
++
++static void auto_reboot_timer_callback(union sigval) {
++    LOG(INFO) << "auto_reboot: received timer callback, rebooting";
++    trigger_shutdown("reboot");
++}
++
++// all of the auto_reboot_* functions, except for auto_reboot_timer_callback, are called on the
++// same thread
++
++static bool auto_reboot_timer_init() {
++    struct sigevent sev = {};
++    sev.sigev_notify = SIGEV_THREAD;
++    sev.sigev_notify_function = auto_reboot_timer_callback;
++
++    if (int r = timer_create(CLOCK_BOOTTIME_ALARM, &sev, &auto_reboot_timer); r != 0) {
++        // Automatic BFU is important, but an unsupported alarm clock must not crash PID 1 and
++        // turn a recoverable feature failure into a device boot loop.
++        LOG(ERROR) << "auto_reboot: timer_create failed; feature disabled: " << strerror(errno);
++        return false;
++    }
++    auto_reboot_timer_available = true;
++    LOG(INFO) << "auto_reboot: CLOCK_BOOTTIME_ALARM timer initialized";
++    return true;
++}
++
++static bool auto_reboot_timer_set(time_t duration_sec) {
++    if (!auto_reboot_timer_available) {
++        LOG(ERROR) << "auto_reboot: timer request rejected because initialization failed";
++        return false;
++    }
++    const time_t min_duration = 20;
++    if (duration_sec != 0 && duration_sec < min_duration) {
++        LOG(WARNING) << "auto_reboot: raised timer duration from " << duration_sec << " to " << min_duration << " seconds";
++        duration_sec = min_duration;
++    }
++    struct itimerspec ts_dur = {};
++    ts_dur.it_value.tv_sec = duration_sec;
++    struct itimerspec ts_prev = {};
++    int flags = 0;
++    if (int r = timer_settime(auto_reboot_timer, flags, &ts_dur, &ts_prev); r != 0) {
++        LOG(ERROR) << "auto_reboot: timer_settime failed: " << strerror(errno);
++        return false;
++    }
++    if (duration_sec > 0) {
++        LOG(INFO) << "auto_reboot: started timer for " << duration_sec << " seconds";
++    }
++    LOG(DEBUG) << "auto_reboot: prev timer value: " << ts_prev.it_value.tv_sec << " seconds";
++    return true;
++}
++
++static int auto_reboot_handle_property_set(const std::string& value) {
++    LOG(DEBUG) << "auto_reboot: handle_property_set: " << value;
++    if (!auto_reboot_timer_available) {
++        LOG(ERROR) << "auto_reboot: control request rejected; timer is unavailable";
++        return PROP_ERROR_SET_FAILED;
++    }
++    if (value == "on_device_unlocked") {
++        device_unlocked_at_least_once = true;
++        if (is_auto_reboot_timer_started) {
++            if (!auto_reboot_timer_set(0)) {
++                return PROP_ERROR_SET_FAILED;
++            }
++            is_auto_reboot_timer_started = false;
++            LOG(INFO) << "auto_reboot: on_device_unlocked: stopped timer";
++        } else {
++            LOG(INFO) << "auto_reboot: on_device_unlocked: no started timer";
++        }
++        return PROP_SUCCESS;
++    }
++
++    if (value.empty() || value.find_first_not_of("0123456789") != std::string::npos) {
++        LOG(WARNING) << "auto_reboot: invalid prop value: " << value;
++        return PROP_ERROR_INVALID_VALUE;
++    }
++    errno = 0;
++    const unsigned long long parsed_duration = strtoull(value.c_str(), nullptr, 10);
++    if (errno == ERANGE || parsed_duration == 0 ||
++            parsed_duration > static_cast<uint64_t>(std::numeric_limits<time_t>::max())) {
++        LOG(WARNING) << "auto_reboot: out-of-range prop value: " << value;
++        return PROP_ERROR_INVALID_VALUE;
++    }
++    const time_t duration_sec = static_cast<time_t>(parsed_duration);
++
++    if (device_unlocked_at_least_once) {
++        if (is_auto_reboot_timer_started) {
++            LOG(INFO) << "auto_reboot: timer is already started, ignored request to restart it;"
++                << " requested timer duration: " << value << " seconds";
++        } else {
++            if (!auto_reboot_timer_set(duration_sec)) {
++                return PROP_ERROR_SET_FAILED;
++            }
++            is_auto_reboot_timer_started = true;
++        }
++    } else {
++        LOG(INFO) << "auto_reboot: device was never unlocked, skipped setting timer";
++    }
++
++    return PROP_SUCCESS;
++}
++
+ // This returns one of the enum of PROP_SUCCESS or PROP_ERROR*, or std::nullopt
+ // if asynchronous.
+ std::optional<uint32_t> HandlePropertySet(const std::string& name, const std::string& value,
+@@ -573,6 +680,11 @@ std::optional<uint32_t> HandlePropertySet(const std::string& name, const std::st
+         return {PROP_SUCCESS};
+     }
+ 
++    if (name == "sys.auto_reboot_ctl") {
++        int res = auto_reboot_handle_property_set(value);
++        return {res};
++    }
++
+     return PropertySet(name, value, socket, error);
+ }
+ 
+@@ -1459,6 +1571,10 @@ static void PropertyServiceThread(int fd, bool listen_init) {
+         }
+     }
+ 
++    if (!IsMicrodroid()) {
++        auto_reboot_timer_init();
++    }
++
+     while (true) {
+         auto epoll_result = epoll.Wait(std::nullopt);
+         if (!epoll_result.ok()) {

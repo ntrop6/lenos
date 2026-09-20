@@ -1,0 +1,34 @@
+From 74d78d2ef62352c9e85aa2fa0332dc5678588fe2 Mon Sep 17 00:00:00 2001
+From: lenOS <security@lenos.invalid>
+Date: Sat, 8 Aug 2026 17:07:18 +0000
+Subject: [PATCH] lenOS: enable existing LineageOS PIN scrambling by default
+
+---
+ .../src/com/android/keyguard/KeyguardPinViewController.java   | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/packages/SystemUI/src/com/android/keyguard/KeyguardPinViewController.java b/packages/SystemUI/src/com/android/keyguard/KeyguardPinViewController.java
+index e6c1e535a..e0a94f92f 100644
+--- a/packages/SystemUI/src/com/android/keyguard/KeyguardPinViewController.java
++++ b/packages/SystemUI/src/com/android/keyguard/KeyguardPinViewController.java
+@@ -105,7 +105,7 @@ public class KeyguardPinViewController
+         updateAutoConfirmationState();
+         mView.updatePinScrambling(
+                 LineageSettings.System.getIntForUser(getContext().getContentResolver(),
+-                        LineageSettings.System.LOCKSCREEN_PIN_SCRAMBLE_LAYOUT, 0,
++                        LineageSettings.System.LOCKSCREEN_PIN_SCRAMBLE_LAYOUT, 1,
+                         mSelectedUserInteractor.getSelectedUserId()) == 1);
+     }
+ 
+@@ -132,7 +132,7 @@ public class KeyguardPinViewController
+         super.startAppearAnimation();
+         mView.updatePinScrambling(
+                 LineageSettings.System.getIntForUser(getContext().getContentResolver(),
+-                        LineageSettings.System.LOCKSCREEN_PIN_SCRAMBLE_LAYOUT, 0,
++                        LineageSettings.System.LOCKSCREEN_PIN_SCRAMBLE_LAYOUT, 1,
+                         mSelectedUserInteractor.getSelectedUserId()) == 1);
+     }
+ 
+-- 
+2.47.3
+

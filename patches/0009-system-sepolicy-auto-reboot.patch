@@ -1,0 +1,47 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: lenOS <security@lenos.invalid>
+Date: Sat, 8 Aug 2026 20:30:00 +0000
+Subject: [PATCH] lenOS: label automatic BFU control property
+
+GrapheneOS 16 QPR2 provenance:
+- 9cef4b78832edb8bd0a2e6ed566c66fc5a9359d9
+
+Only system_server is permitted to send the control request intercepted by init.
+
+---
+diff --git a/private/property.te b/private/property.te
+index a9e13a3..a9ef99e 100644
+--- a/private/property.te
++++ b/private/property.te
+@@ -4,6 +4,7 @@ system_internal_prop(adbd_tradeinmode_prop)
+ system_internal_prop(apexd_payload_metadata_prop)
+ system_internal_prop(apexd_private_prop)
+ system_internal_prop(appsearch_vm_prop)
++system_internal_prop(auto_reboot_ctl_prop)
+ system_internal_prop(bluetooth_lea_prop)
+ system_internal_prop(ctl_snapuserd_prop)
+ system_internal_prop(ctl_prefetch_prop)
+diff --git a/private/property_contexts b/private/property_contexts
+index b325c2f..3866dc0 100644
+--- a/private/property_contexts
++++ b/private/property_contexts
+@@ -26,6 +26,7 @@ sys.init.perf_lsm_hooks u:object_r:init_perf_lsm_hooks_prop:s0
+ sys.cppreopt            u:object_r:cppreopt_prop:s0
+ sys.lpdumpd             u:object_r:lpdumpd_prop:s0
+ sys.powerctl            u:object_r:powerctl_prop:s0
++sys.auto_reboot_ctl     u:object_r:auto_reboot_ctl_prop:s0
+ service.                u:object_r:system_prop:s0
+ dhcp.                   u:object_r:dhcp_prop:s0
+ dhcp.bt-pan.result      u:object_r:pan_result_prop:s0
+diff --git a/private/system_server.te b/private/system_server.te
+index d85caed..c514b30 100644
+--- a/private/system_server.te
++++ b/private/system_server.te
+@@ -800,6 +800,7 @@ set_prop(system_server, usb_control_prop)
+ set_prop(system_server, usb_prop)
+ set_prop(system_server, debug_prop)
+ set_prop(system_server, powerctl_prop)
++set_prop(system_server, auto_reboot_ctl_prop)
+ set_prop(system_server, fingerprint_prop)
+ set_prop(system_server, device_logging_prop)
+ set_prop(system_server, dumpstate_options_prop)

@@ -1,0 +1,72 @@
+From bf533bb581d19b9502cdcb16f5d387fe66bd472b Mon Sep 17 00:00:00 2001
+From: lenOS <security@lenos.invalid>
+Date: Sat, 8 Aug 2026 17:06:57 +0000
+Subject: [PATCH] lenOS: enforce OTHER_SENSORS in SensorService
+
+Ported from GrapheneOS Android 16 QPR2 commits:
+- 9928d5db1724394c3f3c72fc47f643bd7ef2d49f
+- 94abf35804ead7ec333e0d82f478c6b0dbc9daf3
+---
+ libs/sensor/Sensor.cpp                   |  1 +
+ services/sensorservice/SensorService.cpp | 24 +++++++++++++++---------
+ 2 files changed, 16 insertions(+), 9 deletions(-)
+
+diff --git a/libs/sensor/Sensor.cpp b/libs/sensor/Sensor.cpp
+index 16a932e..7c2e4ce 100644
+--- a/libs/sensor/Sensor.cpp
++++ b/libs/sensor/Sensor.cpp
+@@ -65,6 +65,7 @@ Sensor::Sensor(struct sensor_t const& hwSensor, const uuid_t& uuid, int halVersi
+     mMinDelay = hwSensor.minDelay;
+     mFlags = 0;
+     mUuid = uuid;
++    mRequiredPermission = "android.permission.OTHER_SENSORS";
+ 
+     // Set fifo event count zero for older devices which do not support batching. Fused
+     // sensors also have their fifo counts set to zero.
+diff --git a/services/sensorservice/SensorService.cpp b/services/sensorservice/SensorService.cpp
+index c28ef15..4df5ba1 100644
+--- a/services/sensorservice/SensorService.cpp
++++ b/services/sensorservice/SensorService.cpp
+@@ -2312,17 +2312,9 @@ bool SensorService::canAccessSensor(const Sensor& sensor, const char* operation,
+     }
+ 
+     const int32_t opCode = sensor.getRequiredAppOp();
+-    int targetSdkVersion = getTargetSdkVersion(opPackageName);
+ 
+     bool canAccess = false;
+-    if (targetSdkVersion > 0 && targetSdkVersion <= __ANDROID_API_P__ &&
+-            (sensor.getType() == SENSOR_TYPE_STEP_COUNTER ||
+-             sensor.getType() == SENSOR_TYPE_STEP_DETECTOR)) {
+-        // Allow access to step sensors if the application targets pre-Q, which is before the
+-        // requirement to hold the AR permission to access Step Counter and Step Detector events
+-        // was introduced.
+-        canAccess = true;
+-    } else if (IPCThreadState::self()->getCallingUid() == AID_SYSTEM) {
++    if (IPCThreadState::self()->getCallingUid() == AID_SYSTEM) {
+         // Allow access if it is requested from system.
+         canAccess = true;
+     } else if (hasPermissionForSensor(sensor)) {
+@@ -2336,6 +2328,20 @@ bool SensorService::canAccessSensor(const Sensor& sensor, const char* operation,
+         } else {
+             canAccess = true;
+         }
++    } else {
++        int targetSdkVersion = getTargetSdkVersion(opPackageName);
++        if (targetSdkVersion > 0 && targetSdkVersion <= __ANDROID_API_P__ &&
++            (sensor.getType() == SENSOR_TYPE_STEP_COUNTER ||
++             sensor.getType() == SENSOR_TYPE_STEP_DETECTOR)) {
++
++            // upstream allows access to these sensors without the ACTIVITY_RECOGNITION permission
++            // for targetSdk < 29 apps, enforce the OTHER_SENSORS permission instead
++            const String16 requiredPermission("android.permission.OTHER_SENSORS");
++
++            // copied from hasPermissionForSensor() below
++            canAccess = checkPermission(requiredPermission,
++                IPCThreadState::self()->getCallingPid(), IPCThreadState::self()->getCallingUid());
++         }
+     }
+ 
+     if (!canAccess) {
+-- 
+2.47.3
+

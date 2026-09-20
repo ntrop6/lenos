@@ -1,0 +1,1240 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: lenOS <security@lenos.invalid>
+Date: Sat, 8 Aug 2026 20:30:00 +0000
+Subject: [PATCH] lenOS: add security UI and per-connection MAC selector
+
+GrapheneOS 16 QPR2 provenance:
+- 28e9cd1c413c96f592acaf94d907ebfe0d84ca8f (credential error converter)
+- 0a49b2cb8931c200d0234ccc17cecbedca02ce3c (duress management UI)
+- f367867e351f091e503de88722da5e5a62cbfa59 (per-connection MAC UI)
+- 02dd52e3d73f43517cd0ac2a7e688749627bc87f (auto-reboot UI design)
+
+Adapted to LineageOS Security > More security settings without importing the
+GrapheneOS extension framework. Duress activities are internal-only, available
+only to the secured Owner, and the automatic BFU picker uses an authenticated
+preference. Default timeout is 18 hours. Development-only Wi-Fi stack-trace
+logging from the upstream change is deliberately omitted.
+
+---
+diff --git a/AndroidManifest.xml b/AndroidManifest.xml
+index f4691b4..0a655d7 100644
+--- a/AndroidManifest.xml
++++ b/AndroidManifest.xml
+@@ -3311,6 +3311,16 @@
+             <meta-data android:name="com.android.settings.icon_tintable" android:value="true" />
+         </activity>
+ 
++        <activity android:name=".security.DuressPasswordMainActivity"
++            android:excludeFromRecents="true"
++            android:theme="@style/GlifTheme.Light"
++            android:exported="false" />
++
++        <activity android:name=".security.DuressPasswordSetupActivity"
++            android:excludeFromRecents="true"
++            android:theme="@style/GlifTheme.Light"
++            android:exported="false" />
++
+         <activity android:name=".biometrics.fingerprint.FingerprintEnrollSuggestionActivity"
+             android:exported="true"
+             android:icon="@drawable/ic_suggestion_fingerprint">
+diff --git a/res/layout/duress_password_setup.xml b/res/layout/duress_password_setup.xml
+new file mode 100644
+index 0000000..a708b3f
+--- /dev/null
++++ b/res/layout/duress_password_setup.xml
+@@ -0,0 +1,67 @@
++<?xml version="1.0" encoding="utf-8"?>
++
++<com.google.android.setupdesign.GlifLayout
++    xmlns:android="http://schemas.android.com/apk/res/android"
++    xmlns:app="http://schemas.android.com/apk/res-auto"
++    android:id="@+id/glif_layout"
++    android:layout_width="match_parent"
++    android:layout_height="match_parent"
++    android:icon="@drawable/ic_lock"
++>
++    <LinearLayout
++        android:layout_width="match_parent"
++        android:layout_height="match_parent"
++        android:orientation="vertical"
++        style="@style/SudContentFrame">
++
++        <TextView
++            android:layout_width="match_parent"
++            android:layout_height="wrap_content"
++            android:textAppearance="@style/TextAppearance.Material3.TitleMedium"
++            android:text="@string/unlock_set_unlock_pin_title" />
++
++        <EditText
++            android:id="@+id/pin_input"
++            android:layout_width="match_parent"
++            android:layout_height="wrap_content"
++            android:layout_marginTop="16dp"
++            android:hint="@string/duress_pwd_enter_pin"
++            android:imeOptions="actionNext"
++            android:inputType="numberPassword" />
++
++        <EditText
++            android:id="@+id/pin_input_confirmation"
++            android:layout_width="match_parent"
++            android:layout_height="wrap_content"
++            android:layout_marginTop="16dp"
++            android:hint="@string/duress_pwd_confirm_pin"
++            android:imeOptions="actionNext"
++            android:inputType="numberPassword" />
++
++        <TextView
++            android:layout_width="match_parent"
++            android:layout_height="wrap_content"
++            android:layout_marginTop="32dp"
++            android:textAppearance="@style/TextAppearance.Material3.TitleMedium"
++            android:text="@string/unlock_set_unlock_password_title" />
++
++        <EditText
++            android:id="@+id/password_input"
++            android:layout_width="match_parent"
++            android:layout_height="wrap_content"
++            android:layout_marginTop="16dp"
++            android:hint="@string/duress_pwd_enter_password"
++            android:imeOptions="actionNext"
++            android:inputType="textPassword" />
++
++        <EditText
++            android:id="@+id/password_input_confirmation"
++            android:layout_width="match_parent"
++            android:layout_height="wrap_content"
++            android:layout_marginTop="16dp"
++            android:hint="@string/duress_pwd_confirm_password"
++            android:imeOptions="actionDone"
++            android:inputType="textPassword" />
++
++    </LinearLayout>
++</com.google.android.setupdesign.GlifLayout>
+diff --git a/res/layout/wifi_network_config.xml b/res/layout/wifi_network_config.xml
+index 990f759..a76e203 100644
+--- a/res/layout/wifi_network_config.xml
++++ b/res/layout/wifi_network_config.xml
+@@ -789,7 +789,7 @@
+                 android:id="@+id/privacy_settings"
+                 style="@style/wifi_item_spinner"
+                 android:prompt="@string/wifi_privacy_settings"
+-                android:entries="@array/wifi_privacy_entries"/>
++                android:entries="@array/wifi_privacy_entries_ext"/>
+ 
+             <Spinner
+                 android:id="@+id/dhcp_settings"
+diff --git a/res/values/arrays.xml b/res/values/arrays.xml
+index f0fe2b5..0408128 100644
+--- a/res/values/arrays.xml
++++ b/res/values/arrays.xml
+@@ -1112,8 +1112,9 @@
+         <item>Treat as unmetered</item>
+     </string-array>
+ 
+-    <string-array name="wifi_privacy_entries">
+-        <item>Use randomized MAC</item>
++    <string-array name="wifi_privacy_entries_ext">
++        <item>Use per-connection randomized MAC (default)</item>
++        <item>Use per-network randomized MAC</item>
+         <item>Use device MAC</item>
+     </string-array>
+ 
+@@ -1133,7 +1134,8 @@
+         <item>2</item>
+     </string-array>
+ 
+-    <string-array name="wifi_privacy_values" translatable="false">
++    <string-array name="wifi_privacy_values_ext" translatable="false">
++        <item>100</item>
+         <item>1</item>
+         <item>0</item>
+     </string-array>
+diff --git a/res/values/lenos_security_features.xml b/res/values/lenos_security_features.xml
+new file mode 100644
+index 0000000..bd2fb85
+--- /dev/null
++++ b/res/values/lenos_security_features.xml
+@@ -0,0 +1,67 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="lenos_security_features_title">lenOS security</string>
++
++    <string name="duress_pwd_pref_title">Duress PIN and password</string>
++    <string name="duress_pwd_pref_summary">Configure credentials that irreversibly destroy device data when entered</string>
++    <string name="duress_pwd_description">"A duress PIN or password can be entered instead of a user credential anywhere Android asks for it, including the lock screen and profile credential prompts.
++
++Submitting either duress credential immediately deletes hardware-backed keystore secrets used to protect storage, attempts to erase installed eSIM profiles, and powers off the device. The data destruction cannot be undone. lenOS remains installed."</string>
++    <string name="duress_pwd_enter_pin">Enter duress PIN</string>
++    <string name="duress_pwd_confirm_pin">Confirm duress PIN</string>
++    <string name="duress_pwd_enter_password">Enter duress password</string>
++    <string name="duress_pwd_confirm_password">Confirm duress password</string>
++    <string name="duress_pwd_action_add">Add duress PIN and password</string>
++    <string name="duress_pwd_add_button">Add</string>
++    <string name="duress_pwd_toast_added">Added duress PIN and password</string>
++    <string name="duress_pwd_toast_updated">Updated duress PIN and password</string>
++    <string name="duress_pwd_update_button">Update</string>
++    <string name="duress_pwd_cancel_button">Cancel</string>
++    <string name="duress_pwd_proceed_button">Proceed</string>
++    <string name="duress_pwd_delete_button">Delete</string>
++    <string name="duress_pwd_action_update">Update duress PIN and password</string>
++    <string name="duress_pwd_action_delete">Delete duress PIN and password</string>
++    <string name="duress_pwd_action_delete_confirmation">Delete the duress PIN and password?</string>
++    <string name="duress_pwd_save_warning_title">Destructive credential warning</string>
++    <string name="duress_pwd_save_warning_text">"Entering either duress credential instead of a normal user credential <b>will immediately and irreversibly make storage contents inaccessible</b>, attempt to erase eSIM profiles, and power off the device. Test only on expendable hardware with no important data."</string>
++    <string name="duress_pwd_save_error">Duress credentials were not saved.\n\nDetails:\n%1$s</string>
++    <string name="duress_pwd_delete_error">Duress credentials were not deleted.\n\nDetails:\n%1$s</string>
++    <string name="duress_pwd_error_dialog_dismiss">Dismiss</string>
++
++    <string name="auto_reboot_title">Automatic BFU reboot</string>
++    <string name="auto_reboot_summary">Reboot after the device remains locked for %1$s</string>
++    <string name="auto_reboot_summary_off">Automatic BFU reboot is off</string>
++    <string name="auto_reboot_footer">Automatically reboot after the device remains locked without a successful unlock. Rebooting returns encrypted user data to Before First Unlock state. The default is 18 hours.</string>
++
++    <string-array name="lenos_auto_reboot_entries">
++        <item>Off</item>
++        <item>10 minutes</item>
++        <item>30 minutes</item>
++        <item>1 hour</item>
++        <item>2 hours</item>
++        <item>4 hours</item>
++        <item>8 hours</item>
++        <item>12 hours</item>
++        <item>18 hours (default)</item>
++        <item>1 day</item>
++        <item>36 hours</item>
++        <item>2 days</item>
++        <item>3 days</item>
++    </string-array>
++
++    <string-array name="lenos_auto_reboot_values" translatable="false">
++        <item>0</item>
++        <item>600000</item>
++        <item>1800000</item>
++        <item>3600000</item>
++        <item>7200000</item>
++        <item>14400000</item>
++        <item>28800000</item>
++        <item>43200000</item>
++        <item>64800000</item>
++        <item>86400000</item>
++        <item>129600000</item>
++        <item>172800000</item>
++        <item>259200000</item>
++    </string-array>
++</resources>
+diff --git a/res/xml/security_advanced_settings.xml b/res/xml/security_advanced_settings.xml
+index 2c0c0bb..441cd4b 100644
+--- a/res/xml/security_advanced_settings.xml
++++ b/res/xml/security_advanced_settings.xml
+@@ -29,6 +29,31 @@
+         android:order="210"
+         android:key="security_category" />
+ 
++    <PreferenceCategory
++        android:order="220"
++        android:key="lenos_security_features"
++        android:title="@string/lenos_security_features_title">
++
++        <Preference
++            android:key="duress_password"
++            android:title="@string/duress_pwd_pref_title"
++            android:summary="@string/duress_pwd_pref_summary"
++            settings:controller="com.android.settings.security.DuressPasswordPreferenceController">
++            <intent
++                android:action="android.intent.action.MAIN"
++                android:targetPackage="com.android.settings"
++                android:targetClass="com.android.settings.security.DuressPasswordMainActivity" />
++        </Preference>
++
++        <com.android.settings.security.screenlock.ProtectedTimeoutListPreference
++            android:key="auto_reboot"
++            android:title="@string/auto_reboot_title"
++            android:dialogTitle="@string/auto_reboot_title"
++            android:entries="@array/lenos_auto_reboot_entries"
++            android:entryValues="@array/lenos_auto_reboot_values"
++            settings:controller="com.android.settings.security.AutoRebootPreferenceController" />
++    </PreferenceCategory>
++
+     <Preference
+         android:order="230"
+         android:key="content_protection_preference"
+diff --git a/res/xml/wifi_network_details_fragment2.xml b/res/xml/wifi_network_details_fragment2.xml
+index e41a765..02bd47c 100644
+--- a/res/xml/wifi_network_details_fragment2.xml
++++ b/res/xml/wifi_network_details_fragment2.xml
+@@ -94,8 +94,8 @@
+             android:key="privacy"
+             android:icon="@drawable/ic_wifi_privacy_24dp"
+             android:title="@string/wifi_privacy_settings"
+-            android:entries="@array/wifi_privacy_entries"
+-            android:entryValues="@array/wifi_privacy_values"/>
++            android:entries="@array/wifi_privacy_entries_ext"
++            android:entryValues="@array/wifi_privacy_values_ext"/>
+ 
+       <SwitchPreferenceCompat
+           android:key="shared"
+diff --git a/src/com/android/settings/password/ChooseLockPassword.java b/src/com/android/settings/password/ChooseLockPassword.java
+index a51d906..78fae23 100644
+--- a/src/com/android/settings/password/ChooseLockPassword.java
++++ b/src/com/android/settings/password/ChooseLockPassword.java
+@@ -292,7 +292,7 @@ public class ChooseLockPassword extends SettingsActivity {
+         private boolean mIsExpressiveStyle = false;
+ 
+         /** Used to store the profile type for which pin/password is being set */
+-        protected enum ProfileType {
++        public enum ProfileType {
+             None,
+             Managed,
+             Private,
+@@ -931,11 +931,42 @@ public class ChooseLockPassword extends SettingsActivity {
+             return false;
+         }
+ 
++    String[] convertErrorCodeToMessages() {
++        var pvec = new PasswordValidationErrorConverter(getContext(), mIsAlphaMode, mProfileType, mValidationErrors);
++        String[] res = pvec.convertErrorCodeToMessages();
++        mIsErrorTooShort = pvec.mIsErrorTooShort;
++        return res;
++    }
++
++    public static class PasswordValidationErrorConverter {
++        private final Context mContext;
++        private final boolean mIsAlphaMode;
++        private final ProfileType mProfileType;
++        private final List<PasswordValidationError> mValidationErrors;
++        public boolean mIsErrorTooShort = true;
++
++        public PasswordValidationErrorConverter(Context context, boolean isAlphaMode,
++                              ProfileType profileType,
++                              List<PasswordValidationError> validationErrors) {
++            mContext = context;
++            mIsAlphaMode = isAlphaMode;
++            mValidationErrors = validationErrors;
++            mProfileType = profileType;
++        }
++
++        private Context getContext() {
++            return mContext;
++        }
++
++        private String getString(int id) {
++            return mContext.getString(id);
++        }
++
+         /**
+          * @param errorCode error code returned from password validation.
+          * @return an array of messages describing the error, important messages come first.
+          */
+-        String[] convertErrorCodeToMessages() {
++        public String[] convertErrorCodeToMessages() {
+             List<String> messages = new ArrayList<>();
+             mIsErrorTooShort = false;
+             for (PasswordValidationError error : mValidationErrors) {
+@@ -973,7 +1004,7 @@ public class ChooseLockPassword extends SettingsActivity {
+                         break;
+                     case TOO_SHORT:
+                         mIsErrorTooShort = true;
+-                        boolean isSupervisingProfile = isSupervisingProfile();
++                        boolean isSupervisingProfile = isSupervisingProfile(mProfileType);
+                         String message = StringUtil.getIcuPluralsString(getContext(),
+                                 error.requirement,
+                                 mIsAlphaMode
+@@ -1029,6 +1060,7 @@ public class ChooseLockPassword extends SettingsActivity {
+ 
+             return messages.toArray(new String[0]);
+         }
++    }
+ 
+         /**
+          * Update the hint based on current Stage and length of password entry
+@@ -1275,8 +1307,12 @@ public class ChooseLockPassword extends SettingsActivity {
+         }
+ 
+         private boolean isSupervisingProfile() {
++            return isSupervisingProfile(mProfileType);
++        }
++
++        static boolean isSupervisingProfile(ProfileType profileType) {
+             return android.multiuser.Flags.allowSupervisingProfile()
+-                    && mProfileType.equals(ProfileType.Supervising);
++                    && profileType.equals(ProfileType.Supervising);
+         }
+     }
+ }
+diff --git a/src/com/android/settings/security/AutoRebootPreferenceController.java b/src/com/android/settings/security/AutoRebootPreferenceController.java
+new file mode 100644
+index 0000000..65fb7c8
+--- /dev/null
++++ b/src/com/android/settings/security/AutoRebootPreferenceController.java
+@@ -0,0 +1,93 @@
++/*
++ * Copyright (C) 2024 GrapheneOS
++ * Copyright (C) 2026 lenOS adaptation
++ * SPDX-License-Identifier: Apache-2.0
++ */
++package com.android.settings.security;
++
++import android.content.Context;
++import android.os.UserHandle;
++import android.provider.Settings;
++import android.util.Log;
++
++import androidx.preference.ListPreference;
++import androidx.preference.Preference;
++
++import com.android.settings.R;
++import com.android.settings.core.BasePreferenceController;
++
++import java.util.Set;
++
++/** Controls the init-owned inactivity reboot timer. */
++public class AutoRebootPreferenceController extends BasePreferenceController
++        implements Preference.OnPreferenceChangeListener {
++    private static final String TAG = "AutoRebootPref";
++    private static final String SETTING = "lenos_auto_reboot_timeout_ms";
++    private static final int DEFAULT_TIMEOUT_MILLIS = 64_800_000; // 18 hours
++    private static final Set<Integer> ALLOWED_VALUES = Set.of(
++            0, 600_000, 1_800_000, 3_600_000, 7_200_000, 14_400_000,
++            28_800_000, 43_200_000, 64_800_000, 86_400_000, 129_600_000,
++            172_800_000, 259_200_000);
++
++    public AutoRebootPreferenceController(Context context, String preferenceKey) {
++        super(context, preferenceKey);
++    }
++
++    @Override
++    public int getAvailabilityStatus() {
++        return UserHandle.myUserId() == UserHandle.USER_SYSTEM
++                ? AVAILABLE : DISABLED_FOR_USER;
++    }
++
++    @Override
++    public void displayPreference(androidx.preference.PreferenceScreen screen) {
++        super.displayPreference(screen);
++        Preference preference = screen.findPreference(getPreferenceKey());
++        if (preference != null) {
++            preference.setOnPreferenceChangeListener(this);
++        }
++    }
++
++    @Override
++    public void updateState(Preference preference) {
++        if (!(preference instanceof ListPreference listPreference)) {
++            return;
++        }
++        int value = Settings.Global.getInt(mContext.getContentResolver(),
++                SETTING, DEFAULT_TIMEOUT_MILLIS);
++        if (!ALLOWED_VALUES.contains(value)) {
++            value = DEFAULT_TIMEOUT_MILLIS;
++        }
++        String stringValue = Integer.toString(value);
++        listPreference.setValue(stringValue);
++        int index = listPreference.findIndexOfValue(stringValue);
++        if (value == 0) {
++            listPreference.setSummary(R.string.auto_reboot_summary_off);
++        } else if (index >= 0) {
++            listPreference.setSummary(mContext.getString(R.string.auto_reboot_summary,
++                    listPreference.getEntries()[index]));
++        } else {
++            listPreference.setSummary(R.string.auto_reboot_footer);
++        }
++    }
++
++    @Override
++    public boolean onPreferenceChange(Preference preference, Object newValue) {
++        final int value;
++        try {
++            value = Integer.parseInt(String.valueOf(newValue));
++        } catch (NumberFormatException e) {
++            Log.e(TAG, "invalid timeout", e);
++            return false;
++        }
++        if (!ALLOWED_VALUES.contains(value)) {
++            Log.e(TAG, "rejected unsupported timeout: " + value);
++            return false;
++        }
++        if (!Settings.Global.putInt(mContext.getContentResolver(), SETTING, value)) {
++            return false;
++        }
++        updateState(preference);
++        return true;
++    }
++}
+diff --git a/src/com/android/settings/security/DuressPasswordActivity.java b/src/com/android/settings/security/DuressPasswordActivity.java
+new file mode 100644
+index 0000000..54a6cb8
+--- /dev/null
++++ b/src/com/android/settings/security/DuressPasswordActivity.java
+@@ -0,0 +1,71 @@
++package com.android.settings.security;
++
++import android.app.Activity;
++import android.os.Bundle;
++import android.view.WindowManager;
++
++import androidx.annotation.Nullable;
++
++import com.android.internal.widget.LockPatternUtils;
++import com.android.settings.SetupWizardUtils;
++import com.android.settings.overlay.FeatureFactory;
++import com.google.android.setupdesign.GlifLayout;
++import com.google.android.setupdesign.template.DescriptionMixin;
++import com.google.android.setupdesign.util.ThemeHelper;
++
++public class DuressPasswordActivity extends Activity {
++
++    @Override
++    protected void onCreate(@Nullable Bundle savedInstanceState) {
++        super.onCreate(savedInstanceState);
++        getWindow().addFlags(WindowManager.LayoutParams.FLAG_SECURE);
++
++        setTheme(SetupWizardUtils.getTheme(this, getIntent()));
++        ThemeHelper.trySetDynamicColor(this);
++
++        setResult(RESULT_OK);
++    }
++
++    protected boolean allowNextOnStop;
++
++    @Override
++    protected void onStop() {
++        super.onStop();
++        if (!isChangingConfigurations() && hasUserCredential()) {
++            if (allowNextOnStop) {
++                allowNextOnStop = false;
++            } else {
++                // require user credential to be re-entered after activity is backgrounded
++                setResult(RESULT_CANCELED);
++                finish();
++            }
++        }
++    }
++
++    protected boolean hasUserCredential() {
++        return true;
++    }
++
++    @Override
++    protected void onDestroy() {
++        super.onDestroy();
++        if (!isChangingConfigurations()) {
++            /** @see com.android.settings.password.ConfirmDeviceCredentialBaseActivity#onDestroy */
++            getMainThreadHandler().postDelayed(() -> {
++                System.gc();
++                System.runFinalization();
++                System.gc();
++            }, 5000);
++        }
++    }
++
++    static void adjustDescriptionStyle(GlifLayout l) {
++        l.getMixin(DescriptionMixin.class).getTextView().setTextSize(16f);
++    }
++
++    LockPatternUtils getLockPatternUtils() {
++        return FeatureFactory.getFeatureFactory()
++                .getSecurityFeatureProvider()
++                .getLockPatternUtils(this);
++    }
++}
+diff --git a/src/com/android/settings/security/DuressPasswordMainActivity.java b/src/com/android/settings/security/DuressPasswordMainActivity.java
+new file mode 100644
+index 0000000..cc1de62
+--- /dev/null
++++ b/src/com/android/settings/security/DuressPasswordMainActivity.java
+@@ -0,0 +1,181 @@
++package com.android.settings.security;
++
++import android.app.AlertDialog;
++import android.content.Intent;
++import android.os.Bundle;
++import android.util.Log;
++
++import androidx.annotation.DrawableRes;
++import androidx.annotation.Nullable;
++import androidx.annotation.StringRes;
++
++import com.android.internal.widget.LockPatternUtils;
++import com.android.internal.widget.LockscreenCredential;
++import com.android.settings.R;
++import com.android.settings.password.ChooseLockSettingsHelper;
++import com.google.android.setupdesign.GlifRecyclerLayout;
++import com.google.android.setupdesign.items.IItem;
++import com.google.android.setupdesign.items.Item;
++import com.google.android.setupdesign.items.ItemGroup;
++import com.google.android.setupdesign.items.RecyclerItemAdapter;
++
++import java.util.Objects;
++
++
++public class DuressPasswordMainActivity extends DuressPasswordActivity implements RecyclerItemAdapter.OnItemSelectedListener {
++    private static final String TAG = DuressPasswordMainActivity.class.getSimpleName();
++    private static final String KEY_USER_CREDENTIAL = "user_credential";
++    private static final String KEY_HAS_ASKED_FOR_USER_CREDENTIALS = "asked_for_user_credentials";
++
++    private GlifRecyclerLayout layout;
++    private LockscreenCredential userCredential;
++    private boolean askedForUserCredentials;
++
++    @Override
++    protected void onCreate(@Nullable Bundle savedInstanceState) {
++        super.onCreate(savedInstanceState);
++
++        var layout = new GlifRecyclerLayout(this);
++        this.layout = layout;
++        layout.setIcon(getDrawable(R.drawable.ic_lock));
++        layout.setHeaderText(R.string.duress_pwd_pref_title);
++        adjustDescriptionStyle(layout);
++        layout.setDescriptionText(R.string.duress_pwd_description);
++
++        setContentView(layout);
++
++        if (savedInstanceState != null) {
++            userCredential = savedInstanceState.getParcelable(KEY_USER_CREDENTIAL, LockscreenCredential.class);
++            askedForUserCredentials = savedInstanceState.getBoolean(KEY_HAS_ASKED_FOR_USER_CREDENTIALS);
++        }
++    }
++
++    @Override
++    protected boolean hasUserCredential() {
++        return userCredential != null && !userCredential.isNone();
++    }
++
++    @Override
++    protected void onSaveInstanceState(Bundle outState) {
++        super.onSaveInstanceState(outState);
++        outState.putParcelable(KEY_USER_CREDENTIAL, userCredential);
++        outState.putBoolean(KEY_HAS_ASKED_FOR_USER_CREDENTIALS, askedForUserCredentials);
++    }
++
++    @Override
++    protected void onResume() {
++        super.onResume();
++
++        if (userCredential == null) {
++            if (!getLockPatternUtils().isSecure(getUserId())) {
++                userCredential = LockscreenCredential.createNone();
++            } else if (!askedForUserCredentials) {
++                var b = new ChooseLockSettingsHelper.Builder(this);
++                b.setRequestCode(REQ_CODE_OBTAIN_USER_CREDENTIALS);
++                b.setReturnCredentials(true);
++                b.setForegroundOnly(true);
++                b.show();
++                askedForUserCredentials = true;
++            }
++        }
++
++        updateActionList();
++    }
++
++    private void updateActionList() {
++        if (userCredential == null) {
++            Log.d(TAG, "no userCredential, skipping updateActionList");
++            return;
++        }
++
++        var g = new ItemGroup();
++
++        if (getLockPatternUtils().hasDuressCredentials(userCredential)) {
++            g.addChild(createItem(R.string.duress_pwd_action_update, R.drawable.ic_edit));
++            g.addChild(createItem(R.string.duress_pwd_action_delete, R.drawable.ic_delete));
++        } else {
++            g.addChild(createItem(R.string.duress_pwd_action_add, R.drawable.ic_add_24dp));
++        }
++
++        var adapter = new RecyclerItemAdapter(g);
++        adapter.setOnItemSelectedListener(this);
++        layout.setAdapter(adapter);
++    }
++
++    private Item createItem(@StringRes int title, @DrawableRes int icon) {
++        var i = new Item();
++        i.setId(title);
++        i.setTitle(getText(title));
++        i.setIcon(getDrawable(icon));
++        return i;
++    }
++
++    // RecyclerItemAdapter.OnItemSelectedListener
++    @Override
++    public void onItemSelected(IItem iitem) {
++        Item item = (Item) iitem;
++        int id = item.getId();
++
++        if (id == R.string.duress_pwd_action_add || id == R.string.duress_pwd_action_update) {
++            var i = new Intent(this, DuressPasswordSetupActivity.class);
++            i.putExtra(DuressPasswordSetupActivity.EXTRA_TITLE_TEXT, id);
++            i.putExtra(DuressPasswordSetupActivity.EXTRA_USER_CREDENTIAL, userCredential);
++            allowNextOnStop = true;
++            startActivityForResult(i, REQ_CODE_SETUP);
++        } else if (id == R.string.duress_pwd_action_delete) {
++            var b = new AlertDialog.Builder(this);
++            b.setMessage(R.string.duress_pwd_action_delete_confirmation);
++            b.setPositiveButton(R.string.duress_pwd_delete_button, (dialog, which) -> {
++                LockPatternUtils lpu = getLockPatternUtils();
++                try {
++                    lpu.deleteDuressCredentials(userCredential);
++                } catch (Exception e) {
++                    Log.e(TAG, "deleteDuressCredentials failed", e);
++
++                    var d = new AlertDialog.Builder(this);
++                    d.setMessage(getString(R.string.duress_pwd_delete_error, e.toString()));
++                    d.setNeutralButton(R.string.duress_pwd_error_dialog_dismiss, null);
++                    d.show();
++                    return;
++                }
++                updateActionList();
++            });
++            b.setNegativeButton(R.string.duress_pwd_cancel_button, null);
++            b.show();
++        }
++    }
++
++    static final int REQ_CODE_OBTAIN_USER_CREDENTIALS = 1;
++    static final int REQ_CODE_SETUP = 2;
++
++    @Override
++    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
++        if (requestCode == REQ_CODE_SETUP) {
++            if (resultCode == RESULT_CANCELED) {
++                finish();
++            }
++            return;
++        }
++
++        if (requestCode != REQ_CODE_OBTAIN_USER_CREDENTIALS) {
++            throw new IllegalStateException(Integer.toString(resultCode));
++        }
++
++        Log.d(TAG, "onActivityResult, requestCode: " + requestCode + ", resultCode: " + resultCode);
++
++        if (resultCode != RESULT_OK) {
++            finish();
++            return;
++        }
++
++        if (data == null) {
++            throw new IllegalStateException("data == null");
++        }
++
++        var credential = data.getParcelableExtra(ChooseLockSettingsHelper.EXTRA_KEY_PASSWORD, LockscreenCredential.class);
++        if (credential == null) {
++            throw new IllegalStateException("no returned credential");
++        }
++        userCredential = credential;
++    }
++}
+diff --git a/src/com/android/settings/security/DuressPasswordPreferenceController.java b/src/com/android/settings/security/DuressPasswordPreferenceController.java
+new file mode 100644
+index 0000000..c1d21ce
+--- /dev/null
++++ b/src/com/android/settings/security/DuressPasswordPreferenceController.java
+@@ -0,0 +1,32 @@
++/*
++ * Copyright (C) 2026 lenOS
++ * SPDX-License-Identifier: Apache-2.0
++ */
++package com.android.settings.security;
++
++import android.content.Context;
++import android.os.UserHandle;
++
++import com.android.internal.widget.LockPatternUtils;
++import com.android.settings.core.BasePreferenceController;
++import com.android.settings.overlay.FeatureFactory;
++
++/** Exposes duress setup only to the secured Owner user. */
++public class DuressPasswordPreferenceController extends BasePreferenceController {
++    private final LockPatternUtils mLockPatternUtils;
++
++    public DuressPasswordPreferenceController(Context context, String preferenceKey) {
++        super(context, preferenceKey);
++        mLockPatternUtils = FeatureFactory.getFeatureFactory()
++                .getSecurityFeatureProvider().getLockPatternUtils(context);
++    }
++
++    @Override
++    public int getAvailabilityStatus() {
++        if (UserHandle.myUserId() != UserHandle.USER_SYSTEM) {
++            return DISABLED_FOR_USER;
++        }
++        return mLockPatternUtils.isSecure(UserHandle.USER_SYSTEM)
++                ? AVAILABLE : CONDITIONALLY_UNAVAILABLE;
++    }
++}
+diff --git a/src/com/android/settings/security/DuressPasswordSetupActivity.java b/src/com/android/settings/security/DuressPasswordSetupActivity.java
+new file mode 100644
+index 0000000..4c78534
+--- /dev/null
++++ b/src/com/android/settings/security/DuressPasswordSetupActivity.java
+@@ -0,0 +1,200 @@
++package com.android.settings.security;
++
++import android.app.AlertDialog;
++import android.os.Bundle;
++import android.util.Log;
++import android.view.KeyEvent;
++import android.view.inputmethod.EditorInfo;
++import android.widget.EditText;
++import android.widget.TextView;
++import android.widget.Toast;
++
++import androidx.annotation.IdRes;
++import androidx.annotation.Nullable;
++import androidx.annotation.StringRes;
++
++import com.android.internal.widget.LockPatternUtils;
++import com.android.internal.widget.LockscreenCredential;
++import com.android.internal.widget.PasswordValidationError;
++import com.android.settings.R;
++import com.android.settings.password.ChooseLockPassword;
++import com.android.settings.password.ChooseLockPassword.ChooseLockPasswordFragment.PasswordValidationErrorConverter;
++import com.google.android.setupcompat.template.FooterBarMixin;
++import com.google.android.setupcompat.template.FooterButton;
++import com.google.android.setupdesign.GlifLayout;
++
++import java.util.List;
++import java.util.Objects;
++import java.util.function.Function;
++
++public class DuressPasswordSetupActivity extends DuressPasswordActivity
++        implements TextView.OnEditorActionListener {
++    static final String TAG = DuressPasswordSetupActivity.class.getSimpleName();
++    static final String EXTRA_USER_CREDENTIAL = "user_credential";
++    static final String EXTRA_TITLE_TEXT = "title";
++    private boolean isUpdate;
++
++    enum DuressCredentialType {
++        PIN(LockscreenCredential::createPin,
++                R.id.pin_input, R.id.pin_input_confirmation,
++                R.string.lockpassword_confirm_pins_dont_match),
++        PASSWORD(LockscreenCredential::createPassword,
++                R.id.password_input, R.id.password_input_confirmation,
++                R.string.lockpassword_confirm_passwords_dont_match),
++        ;
++
++        final Function<String, LockscreenCredential> credenialCreator;
++        final @IdRes int mainInputId;
++        final @IdRes int confirmationInputId;
++        final @StringRes int confirmationMismatchText;
++
++        DuressCredentialType(Function<String, LockscreenCredential> credenialCreator,
++                             int mainInputId, int confirmationInputId,
++                             int confirmationMismatchText) {
++            this.credenialCreator = credenialCreator;
++            this.mainInputId = mainInputId;
++            this.confirmationInputId = confirmationInputId;
++            this.confirmationMismatchText = confirmationMismatchText;
++        }
++
++        LockscreenCredential createCredential(DuressPasswordSetupActivity activity) {
++            EditText ed = activity.requireViewById(mainInputId);
++            return credenialCreator.apply(ed.getText().toString());
++        }
++    }
++
++    @Override
++    protected void onCreate(@Nullable Bundle savedInstanceState) {
++        super.onCreate(savedInstanceState);
++
++        setContentView(R.layout.duress_password_setup);
++
++        GlifLayout layout = requireViewById(R.id.glif_layout);
++        int headerText = getIntent().getIntExtra(EXTRA_TITLE_TEXT, 0);
++        if (headerText == 0) {
++            throw new IllegalArgumentException("missing title");
++        }
++        isUpdate = headerText == R.string.duress_pwd_action_update;
++        layout.setHeaderText(headerText);
++        adjustDescriptionStyle(layout);
++
++        FooterBarMixin footerBar = layout.getMixin(FooterBarMixin.class);
++        {
++            var b = new FooterButton.Builder(this);
++            b.setText(isUpdate ? R.string.duress_pwd_update_button : R.string.duress_pwd_add_button);
++            b.setButtonType(FooterButton.ButtonType.DONE);
++            b.setListener(v -> save());
++            b.setTheme(com.google.android.setupdesign.R.style.SudGlifButton_Primary);
++            footerBar.setPrimaryButton(b.build());
++        }
++        {
++            var b = new FooterButton.Builder(this);
++            b.setText(R.string.duress_pwd_cancel_button);
++            b.setButtonType(FooterButton.ButtonType.CANCEL);
++            b.setListener(v -> finish());
++            b.setTheme(com.google.android.setupdesign.R.style.SudGlifButton_Secondary);
++            footerBar.setSecondaryButton(b.build());
++        }
++        for (var ct : DuressCredentialType.values()) {
++            for (int id : new int[] { ct.mainInputId, ct.confirmationInputId }) {
++                EditText ed = requireViewById(id);
++                ed.setTag(ct);
++                ed.setOnEditorActionListener(this);
++            }
++        }
++    }
++
++    // TextView.OnEditorActionListener
++    @Override
++    public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
++        if ((actionId != EditorInfo.IME_ACTION_NEXT && actionId != EditorInfo.IME_ACTION_DONE)) {
++            return false;
++        }
++
++        EditText ed = (EditText) v;
++        DuressCredentialType ct = (DuressCredentialType) ed.getTag();
++        int id = v.getId();
++
++        if (id == ct.mainInputId) {
++            return !checkCredentialInputErrors(ct);
++        }
++        if (id == ct.confirmationInputId) {
++            return !checkCredentialConfirmationError(ct);
++        }
++        return false;
++    }
++
++    private void save() {
++        boolean credentialCheckRes = true;
++        for (DuressCredentialType ct : DuressCredentialType.values()) {
++            credentialCheckRes &= checkCredentialInputErrors(ct);
++            credentialCheckRes &= checkCredentialConfirmationError(ct);
++        }
++        if (!credentialCheckRes) {
++            return;
++        }
++
++        var userCredential = getIntent().getParcelableExtra(EXTRA_USER_CREDENTIAL, LockscreenCredential.class);
++        Objects.requireNonNull(userCredential, EXTRA_USER_CREDENTIAL);
++        LockscreenCredential pin = DuressCredentialType.PIN.createCredential(this);
++        LockscreenCredential password = DuressCredentialType.PASSWORD.createCredential(this);
++        LockPatternUtils lockPatternUtils = getLockPatternUtils();
++
++        Runnable save = () -> {
++            try {
++                lockPatternUtils.setDuressCredentials(userCredential, pin, password);
++            } catch (Exception e) {
++                Log.e(TAG, "setDuressCredentials failed", e);
++
++                var d = new AlertDialog.Builder(this);
++                d.setMessage(getString(R.string.duress_pwd_save_error, e.toString()));
++                d.setNeutralButton(R.string.duress_pwd_error_dialog_dismiss, null);
++                d.show();
++                return;
++            }
++            Toast.makeText(this,
++                    isUpdate ? R.string.duress_pwd_toast_updated : R.string.duress_pwd_toast_added,
++                    Toast.LENGTH_LONG).show();
++            finish();
++        };
++
++        if (isUpdate) {
++            save.run();
++        } else {
++            var warning = new AlertDialog.Builder(this);
++            warning.setTitle(R.string.duress_pwd_save_warning_title);
++            warning.setMessage(R.string.duress_pwd_save_warning_text);
++            warning.setNegativeButton(R.string.duress_pwd_cancel_button, null);
++            warning.setPositiveButton(R.string.duress_pwd_proceed_button, (d, w) -> {
++                save.run();
++            });
++            warning.show();
++        }
++    }
++
++    private boolean checkCredentialInputErrors(DuressCredentialType ct) {
++        EditText ed = requireViewById(ct.mainInputId);
++        String text = ed.getText().toString();
++        LockscreenCredential c = ct.credenialCreator.apply(text);
++
++        List<PasswordValidationError> errors = LockPatternUtils.validateDuressCredential(c);
++        String error = null;
++        boolean res = true;
++        if (!errors.isEmpty()) {
++            res = false;
++            var pvec = new PasswordValidationErrorConverter(this, c.isPassword(), ChooseLockPassword.ChooseLockPasswordFragment.ProfileType.None, errors);
++            error = String.join("\n", pvec.convertErrorCodeToMessages());
++        }
++        ed.setError(error);
++        return res;
++    }
++
++    private boolean checkCredentialConfirmationError(DuressCredentialType ct) {
++        EditText main = requireViewById(ct.mainInputId);
++        EditText confirmation = requireViewById(ct.confirmationInputId);
++
++        boolean res = main.getText().toString().equals(confirmation.getText().toString());
++        confirmation.setError(res ? null : getText(ct.confirmationMismatchText));
++        return res;
++    }
++}
+diff --git a/src/com/android/settings/wifi/WifiConfigController.java b/src/com/android/settings/wifi/WifiConfigController.java
+index 5abd64d..098b4b3 100644
+--- a/src/com/android/settings/wifi/WifiConfigController.java
++++ b/src/com/android/settings/wifi/WifiConfigController.java
+@@ -70,6 +70,7 @@ import com.android.settings.network.SubscriptionUtil;
+ import com.android.settings.utils.AndroidKeystoreAliasLoader;
+ import com.android.settings.widget.EnhancedSettingsSpinnerAdapter;
+ import com.android.settings.wifi.details2.WifiPrivacyPreferenceController;
++import com.android.settings.wifi.details2.WifiPrivacyPreferenceController2;
+ import com.android.settings.wifi.dpp.WifiDppUtils;
+ import com.android.settings.wifi.utils.TextInputGroup;
+ import com.android.settings.wifi.utils.TextInputValidator;
+@@ -151,8 +152,9 @@ public class WifiConfigController implements TextWatcher,
+     };
+ 
+     // Should be the same index value as wifi_privacy_entries in arrays.xml
+-    @VisibleForTesting static final int PRIVACY_SPINNER_INDEX_RANDOMIZED_MAC = 0;
+-    @VisibleForTesting static final int PRIVACY_SPINNER_INDEX_DEVICE_MAC = 1;
++    public static final int PRIVACY_PREF_INDEX_PER_CONNECTION_RANDOMIZED_MAC = 0;
++    public static final int PRIVACY_PREF_INDEX_PER_NETWORK_RANDOMIZED_MAC = 1;
++    public static final int PRIVACY_PREF_INDEX_DEVICE_MAC = 2;
+ 
+     // Should be the same index value as wifi_dhcp_entries in arrays.xml
+     @VisibleForTesting static final int DHCP_SPINNER_INDEX_SEND_DHCP_HOST_NAME_ENABLE = 0;
+@@ -311,7 +313,7 @@ public class WifiConfigController implements TextWatcher,
+         mHiddenSettingsSpinner = mView.findViewById(R.id.hidden_settings);
+         mHiddenSettingsSpinner.setAdapter(getSpinnerAdapter(R.array.wifi_hidden_entries));
+         mPrivacySettingsSpinner = mView.findViewById(R.id.privacy_settings);
+-        mPrivacySettingsSpinner.setAdapter(getSpinnerAdapter(R.array.wifi_privacy_entries));
++        mPrivacySettingsSpinner.setAdapter(getSpinnerAdapter(R.array.wifi_privacy_entries_ext));
+         mDhcpSettingsSpinner = mView.findViewById(R.id.dhcp_settings);
+         mDhcpSettingsSpinner.setAdapter(getSpinnerAdapter(R.array.wifi_dhcp_entries));
+         if (mWifiManager.isConnectedMacRandomizationSupported()) {
+@@ -342,9 +344,9 @@ public class WifiConfigController implements TextWatcher,
+                         ? HIDDEN_NETWORK
+                         : NOT_HIDDEN_NETWORK);
+ 
+-                mPrivacySettingsSpinner.setSelection(
+-                        config.macRandomizationSetting == WifiConfiguration.RANDOMIZATION_PERSISTENT
+-                        ? PRIVACY_SPINNER_INDEX_RANDOMIZED_MAC : PRIVACY_SPINNER_INDEX_DEVICE_MAC);
++                int selection = WifiPrivacyPreferenceController2
++                        .translateWifiEntryPrivacyToPrefValue(config.macRandomizationSetting);
++                mPrivacySettingsSpinner.setSelection(selection);
+ 
+                 mDhcpSettingsSpinner.setSelection(
+                         config.isSendDhcpHostnameEnabled()
+@@ -813,10 +815,8 @@ public class WifiConfigController implements TextWatcher,
+         }
+ 
+         if (mPrivacySettingsSpinner != null) {
+-            config.macRandomizationSetting = mPrivacySettingsSpinner.getSelectedItemPosition()
+-                    == PRIVACY_SPINNER_INDEX_RANDOMIZED_MAC
+-                    ? WifiConfiguration.RANDOMIZATION_PERSISTENT
+-                    : WifiConfiguration.RANDOMIZATION_NONE;
++            config.macRandomizationSetting = WifiPrivacyPreferenceController2
++                    .translatePrefValueToWifiConfigSetting(mPrivacySettingsSpinner.getSelectedItemPosition());
+         }
+ 
+         if (mDhcpSettingsSpinner != null) {
+diff --git a/src/com/android/settings/wifi/WifiConfigController2.java b/src/com/android/settings/wifi/WifiConfigController2.java
+index 4e0ac00..e4e62cd 100644
+--- a/src/com/android/settings/wifi/WifiConfigController2.java
++++ b/src/com/android/settings/wifi/WifiConfigController2.java
+@@ -337,7 +337,7 @@ public class WifiConfigController2 implements TextWatcher,
+         mHiddenSettingsSpinner.setAdapter(getSpinnerAdapter(R.array.wifi_hidden_entries));
+         if (!mHideMeteredAndPrivacy && mWifiManager.isConnectedMacRandomizationSupported()) {
+             mPrivacySettingsSpinner = mView.findViewById(R.id.privacy_settings);
+-            mPrivacySettingsSpinner.setAdapter(getSpinnerAdapter(R.array.wifi_privacy_entries));
++            mPrivacySettingsSpinner.setAdapter(getSpinnerAdapter(R.array.wifi_privacy_entries_ext));
+             if (Flags.androidVWifiApi()) {
+                 mDhcpSettingsSpinner = mView.findViewById(R.id.dhcp_settings);
+                 mDhcpSettingsSpinner.setAdapter(getSpinnerAdapter(R.array.wifi_dhcp_entries));
+diff --git a/src/com/android/settings/wifi/details2/WifiDetailPreferenceController2.java b/src/com/android/settings/wifi/details2/WifiDetailPreferenceController2.java
+index 593ab01..820e23b 100644
+--- a/src/com/android/settings/wifi/details2/WifiDetailPreferenceController2.java
++++ b/src/com/android/settings/wifi/details2/WifiDetailPreferenceController2.java
+@@ -724,7 +724,7 @@ public class WifiDetailPreferenceController2 extends AbstractPreferenceControlle
+     }
+ 
+     private int getMacAddressTitle() {
+-        if (mWifiEntry.getPrivacy() == WifiEntry.PRIVACY_RANDOMIZED_MAC) {
++        if (mWifiEntry.getPrivacy() != WifiEntry.PRIVACY_DEVICE_MAC) {
+             return mWifiEntry.getConnectedState() == WifiEntry.CONNECTED_STATE_CONNECTED
+                     ? R.string.wifi_advanced_randomized_mac_address_title
+                     : R.string.wifi_advanced_randomized_mac_address_disconnected_title;
+diff --git a/src/com/android/settings/wifi/details2/WifiPrivacyPageProvider.kt b/src/com/android/settings/wifi/details2/WifiPrivacyPageProvider.kt
+index 94a1168..ca323f9 100644
+--- a/src/com/android/settings/wifi/details2/WifiPrivacyPageProvider.kt
++++ b/src/com/android/settings/wifi/details2/WifiPrivacyPageProvider.kt
+@@ -90,8 +90,8 @@ fun WifiPrivacyPage(wifiEntry: WifiEntry) {
+     ) {
+         Column {
+             val title = stringResource(id = R.string.wifi_privacy_mac_settings)
+-            val wifiPrivacyEntries = stringArrayResource(R.array.wifi_privacy_entries)
+-            val wifiPrivacyValues = stringArrayResource(R.array.wifi_privacy_values)
++            val wifiPrivacyEntries = stringArrayResource(R.array.wifi_privacy_entries_ext)
++            val wifiPrivacyValues = stringArrayResource(R.array.wifi_privacy_values_ext)
+             val textsSelectedId = rememberSaveable { mutableIntStateOf(wifiEntry.privacy) }
+             val dataList = remember {
+                 wifiPrivacyEntries.mapIndexed { index, text ->
+diff --git a/src/com/android/settings/wifi/details2/WifiPrivacyPreferenceController2.java b/src/com/android/settings/wifi/details2/WifiPrivacyPreferenceController2.java
+index bd1b4ca..d01682b 100644
+--- a/src/com/android/settings/wifi/details2/WifiPrivacyPreferenceController2.java
++++ b/src/com/android/settings/wifi/details2/WifiPrivacyPreferenceController2.java
+@@ -31,6 +31,10 @@ import com.android.settings.wifi.WifiUtils;
+ import com.android.wifi.flags.Flags;
+ import com.android.wifitrackerlib.WifiEntry;
+ 
++import static com.android.settings.wifi.WifiConfigController.PRIVACY_PREF_INDEX_DEVICE_MAC;
++import static com.android.settings.wifi.WifiConfigController.PRIVACY_PREF_INDEX_PER_CONNECTION_RANDOMIZED_MAC;
++import static com.android.settings.wifi.WifiConfigController.PRIVACY_PREF_INDEX_PER_NETWORK_RANDOMIZED_MAC;
++
+ /**
+  * A controller that controls whether the Wi-Fi network is mac randomized or not.
+  */
+@@ -97,9 +101,6 @@ public class WifiPrivacyPreferenceController2 extends BasePreferenceController i
+         return mWifiEntry.getPrivacy();
+     }
+ 
+-    private static final int PREF_RANDOMIZATION_PERSISTENT = 0;
+-    private static final int PREF_RANDOMIZATION_NONE = 1;
+-
+     /**
+      * Translates a WifiEntry.Privacy value to the matching preference index value.
+      *
+@@ -107,8 +108,12 @@ public class WifiPrivacyPreferenceController2 extends BasePreferenceController i
+      * @return index value of preference
+      */
+     public static int translateWifiEntryPrivacyToPrefValue(@WifiEntry.Privacy int privacy) {
+-        return (privacy == WifiEntry.PRIVACY_RANDOMIZED_MAC)
+-            ? PREF_RANDOMIZATION_PERSISTENT : PREF_RANDOMIZATION_NONE;
++        return switch (privacy) {
++            case WifiEntry.PRIVACY_RANDOMIZATION_ALWAYS -> PRIVACY_PREF_INDEX_PER_CONNECTION_RANDOMIZED_MAC;
++            case WifiEntry.PRIVACY_RANDOMIZED_MAC -> PRIVACY_PREF_INDEX_PER_NETWORK_RANDOMIZED_MAC;
++            case WifiEntry.PRIVACY_DEVICE_MAC -> PRIVACY_PREF_INDEX_DEVICE_MAC;
++            default -> PRIVACY_PREF_INDEX_DEVICE_MAC;
++        };
+     }
+ 
+     /**
+@@ -118,8 +123,12 @@ public class WifiPrivacyPreferenceController2 extends BasePreferenceController i
+      * @return WifiConfiguration.MacRandomizationSetting value
+      */
+     public static int translatePrefValueToWifiConfigSetting(int prefMacRandomized) {
+-        return (prefMacRandomized == PREF_RANDOMIZATION_PERSISTENT)
+-            ? WifiConfiguration.RANDOMIZATION_AUTO : WifiConfiguration.RANDOMIZATION_NONE;
++        return switch (prefMacRandomized) {
++            case PRIVACY_PREF_INDEX_DEVICE_MAC -> WifiConfiguration.RANDOMIZATION_NONE;
++            case PRIVACY_PREF_INDEX_PER_NETWORK_RANDOMIZED_MAC -> WifiConfiguration.RANDOMIZATION_PERSISTENT;
++            case PRIVACY_PREF_INDEX_PER_CONNECTION_RANDOMIZED_MAC -> WifiConfiguration.RANDOMIZATION_ALWAYS;
++            default -> WifiConfiguration.RANDOMIZATION_ALWAYS;
++        };
+     }
+ 
+     private void updateSummary(ListPreference preference, int macRandomized) {
+diff --git a/tests/robotests/src/com/android/settings/wifi/WifiConfigControllerTest.java b/tests/robotests/src/com/android/settings/wifi/WifiConfigControllerTest.java
+index e3c684f..88bc63d 100644
+--- a/tests/robotests/src/com/android/settings/wifi/WifiConfigControllerTest.java
++++ b/tests/robotests/src/com/android/settings/wifi/WifiConfigControllerTest.java
+@@ -16,11 +16,12 @@
+ 
+ package com.android.settings.wifi;
+ 
+-import static com.android.settings.wifi.WifiConfigController.PRIVACY_SPINNER_INDEX_DEVICE_MAC;
+-import static com.android.settings.wifi.WifiConfigController.PRIVACY_SPINNER_INDEX_RANDOMIZED_MAC;
++import static com.android.settings.wifi.WifiConfigController.PRIVACY_PREF_INDEX_DEVICE_MAC;
++import static com.android.settings.wifi.WifiConfigController.PRIVACY_PREF_INDEX_PER_CONNECTION_RANDOMIZED_MAC;
+ import static com.android.settings.wifi.WifiConfigController.DHCP_SPINNER_INDEX_SEND_DHCP_HOST_NAME_ENABLE;
+ import static com.android.settings.wifi.WifiConfigController.DHCP_SPINNER_INDEX_SEND_DHCP_HOST_NAME_DISABLE;
+ 
++import static com.android.settings.wifi.details2.WifiPrivacyPreferenceController2.translateWifiEntryPrivacyToPrefValue;
+ import static com.google.common.truth.Truth.assertThat;
+ 
+ import static org.mockito.Mockito.mock;
+@@ -358,7 +359,7 @@ public class WifiConfigControllerTest {
+ 
+         assertThat(privacySetting.getVisibility()).isEqualTo(View.VISIBLE);
+         assertThat(privacySetting.getSelectedItemPosition()).isEqualTo(
+-                PRIVACY_SPINNER_INDEX_RANDOMIZED_MAC);
++                PRIVACY_PREF_INDEX_PER_CONNECTION_RANDOMIZED_MAC);
+     }
+ 
+     @Test
+@@ -383,8 +384,7 @@ public class WifiConfigControllerTest {
+ 
+         assertThat(privacySetting.getVisibility()).isEqualTo(View.VISIBLE);
+         assertThat(privacySetting.getSelectedItemPosition()).isEqualTo(
+-                macRandomizedValue == WifiConfiguration.RANDOMIZATION_PERSISTENT
+-                ? PRIVACY_SPINNER_INDEX_RANDOMIZED_MAC : PRIVACY_SPINNER_INDEX_DEVICE_MAC);
++                translateWifiEntryPrivacyToPrefValue(macRandomizedValue));
+     }
+ 
+     @Test
+@@ -397,7 +397,7 @@ public class WifiConfigControllerTest {
+     @Test
+     public void saveMacRandomizedValue_ChangedToDeviceMac_shouldGetNone() {
+         final Spinner privacySetting = mView.findViewById(R.id.privacy_settings);
+-        privacySetting.setSelection(PRIVACY_SPINNER_INDEX_DEVICE_MAC);
++        privacySetting.setSelection(PRIVACY_PREF_INDEX_DEVICE_MAC);
+ 
+         WifiConfiguration config = mController.getConfig();
+         assertThat(config.macRandomizationSetting).isEqualTo(WifiConfiguration.RANDOMIZATION_NONE);
+diff --git a/tests/spa_unit/src/com/android/settings/wifi/details2/WifiPrivacyPageProviderTest.kt b/tests/spa_unit/src/com/android/settings/wifi/details2/WifiPrivacyPageProviderTest.kt
+index 5c9a1a4..a3893a8 100644
+--- a/tests/spa_unit/src/com/android/settings/wifi/details2/WifiPrivacyPageProviderTest.kt
++++ b/tests/spa_unit/src/com/android/settings/wifi/details2/WifiPrivacyPageProviderTest.kt
+@@ -85,7 +85,7 @@ class WifiPrivacyPageProviderTest {
+         composeTestRule.setContent {
+             WifiPrivacyPage(mockWifiEntry)
+         }
+-        val wifiPrivacyEntries = context.resources.getStringArray(R.array.wifi_privacy_entries)
++        val wifiPrivacyEntries = context.resources.getStringArray(R.array.wifi_privacy_entries_ext)
+         for (entry in wifiPrivacyEntries) {
+             composeTestRule.onNodeWithText(
+                 entry
+@@ -98,7 +98,7 @@ class WifiPrivacyPageProviderTest {
+         composeTestRule.setContent {
+             WifiPrivacyPage(mockWifiEntry)
+         }
+-        val wifiPrivacyEntries = context.resources.getStringArray(R.array.wifi_privacy_entries)
++        val wifiPrivacyEntries = context.resources.getStringArray(R.array.wifi_privacy_entries_ext)
+         for (entry in wifiPrivacyEntries) {
+             composeTestRule.onNodeWithText(
+                 entry
+@@ -111,8 +111,8 @@ class WifiPrivacyPageProviderTest {
+         composeTestRule.setContent {
+             WifiPrivacyPage(mockWifiEntry)
+         }
+-        val wifiPrivacyEntries = context.resources.getStringArray(R.array.wifi_privacy_entries)
+-        val wifiPrivacyValues = context.resources.getStringArray(R.array.wifi_privacy_values)
++        val wifiPrivacyEntries = context.resources.getStringArray(R.array.wifi_privacy_entries_ext)
++        val wifiPrivacyValues = context.resources.getStringArray(R.array.wifi_privacy_values_ext)
+         composeTestRule.onNodeWithText(
+             wifiPrivacyEntries[wifiPrivacyValues.indexOf("0")]
+         ).assertIsSelected()
+@@ -126,7 +126,7 @@ class WifiPrivacyPageProviderTest {
+         composeTestRule.setContent {
+             WifiPrivacyPage(mockWifiEntry)
+         }
+-        val wifiPrivacyEntries = context.resources.getStringArray(R.array.wifi_privacy_entries)
++        val wifiPrivacyEntries = context.resources.getStringArray(R.array.wifi_privacy_entries_ext)
+         for (entry in wifiPrivacyEntries) {
+             composeTestRule.onNodeWithText(entry).assertIsNotEnabled()
+         }
+@@ -176,4 +176,4 @@ class WifiPrivacyPageProviderTest {
+             context.getString(R.string.wifi_privacy_send_device_name_toggle_title)
+         ).assertIsOff()
+     }
+-}
+\ No newline at end of file
++}
+diff --git a/tests/spa_unit/src/com/android/settings/wifi/details2/WifiPrivacyPreferenceController2Test.kt b/tests/spa_unit/src/com/android/settings/wifi/details2/WifiPrivacyPreferenceController2Test.kt
+index 9b69e9d..3df37ae 100644
+--- a/tests/spa_unit/src/com/android/settings/wifi/details2/WifiPrivacyPreferenceController2Test.kt
++++ b/tests/spa_unit/src/com/android/settings/wifi/details2/WifiPrivacyPreferenceController2Test.kt
+@@ -69,11 +69,11 @@ class WifiPrivacyPreferenceController2Test {
+ 
+     private var preference =
+         ListPreference(context).apply {
+-            setEntries(R.array.wifi_privacy_entries)
+-            setEntryValues(R.array.wifi_privacy_values)
++            setEntries(R.array.wifi_privacy_entries_ext)
++            setEntryValues(R.array.wifi_privacy_values_ext)
+         }
+ 
+-    private var preferenceStrings = context.resources.getStringArray(R.array.wifi_privacy_entries)
++    private var preferenceStrings = context.resources.getStringArray(R.array.wifi_privacy_entries_ext)
+ 
+     @Test
+     fun updateState_wifiPrivacy_setCorrectValue() {

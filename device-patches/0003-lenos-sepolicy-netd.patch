@@ -1,0 +1,44 @@
+From a1dd206256b2e009eaa47acd589cfb08b27d2bb2 Mon Sep 17 00:00:00 2001
+From: lenOS <lenos@lenos.invalid>
+Date: Mon, 21 Sep 2026 02:26:10 +0300
+Subject: [PATCH] lenOS: sepolicy domain for the network enforcement daemon
+
+Defines lenos_netd (init seclabel), grants reading of the Settings.Global
+database file, and the capabilities/netlink access needed to manage the
+lenOS-owned iptables and ip6tables chains directly in-domain.
+---
+ sepolicy/vendor/lenos_netd.te | 22 ++++++++++++++++++++++
+ 1 file changed, 22 insertions(+)
+ create mode 100644 sepolicy/vendor/lenos_netd.te
+
+diff --git a/sepolicy/vendor/lenos_netd.te b/sepolicy/vendor/lenos_netd.te
+new file mode 100644
+index 0000000..fb13762
+--- /dev/null
++++ b/sepolicy/vendor/lenos_netd.te
+@@ -0,0 +1,22 @@
++# lenOS network enforcement daemon (system_ext, started by init with an
++# explicit seclabel). Reads its state from the Settings.Global database
++# file and manages lenOS-owned iptables/ip6tables chains directly in this
++# domain (no exec transition into a separate iptables domain, because
++# iptables_exec is not visible to vendor policy).
++
++type lenos_netd, domain;
++
++# Execute its own script and the system utilities it uses (sh, toybox
++# applets, iptables/ip6tables are system_file).
++allow lenos_netd system_ext_file:file { r_file_perms execute map };
++allow lenos_netd system_file:file { r_file_perms execute execute_no_trans map };
++
++# Read the Settings.Global database XML.
++allow lenos_netd system_data_file:dir { search getattr open read };
++allow lenos_netd system_data_file:file { getattr open read };
++
++# Chain manipulation.
++allow lenos_netd self:capability { net_admin net_raw };
++allow lenos_netd self:netlink_socket { create read write bind getattr getopt setopt shutdown };
++allow lenos_netd proc_net:dir search;
++allow lenos_netd proc_net:file { getattr open read };
+-- 
+2.55.0
+

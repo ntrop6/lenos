@@ -1,0 +1,85 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: lenOS <security@lenos.invalid>
+Date: Sat, 8 Aug 2026 20:30:00 +0000
+Subject: [PATCH] lenOS: expose per-connection Wi-Fi privacy mode
+
+GrapheneOS 16 QPR2 provenance:
+- 7d5ddd0adde3546652c80976d32b08df867c4c9a
+
+Maps the new framework mode into WifiTrackerLib while retaining per-network and
+device-MAC compatibility choices.
+
+---
+diff --git a/libs/WifiTrackerLib/src/com/android/wifitrackerlib/StandardWifiEntry.java b/libs/WifiTrackerLib/src/com/android/wifitrackerlib/StandardWifiEntry.java
+index f076573..cb783c9 100644
+--- a/libs/WifiTrackerLib/src/com/android/wifitrackerlib/StandardWifiEntry.java
++++ b/libs/WifiTrackerLib/src/com/android/wifitrackerlib/StandardWifiEntry.java
+@@ -285,7 +285,7 @@ public class StandardWifiEntry extends WifiEntry {
+                 return wifiInfoMac;
+             }
+         }
+-        if (mTargetWifiConfig == null || getPrivacy() != PRIVACY_RANDOMIZED_MAC) {
++        if (mTargetWifiConfig == null || getPrivacy() == PRIVACY_DEVICE_MAC) {
+             final String[] factoryMacs = mWifiManager.getFactoryMacAddresses();
+             if (factoryMacs.length > 0) {
+                 return factoryMacs[0];
+@@ -597,12 +597,18 @@ public class StandardWifiEntry extends WifiEntry {
+     @Override
+     @Privacy
+     public synchronized int getPrivacy() {
+-        if (mTargetWifiConfig != null
+-                && mTargetWifiConfig.macRandomizationSetting
+-                == WifiConfiguration.RANDOMIZATION_NONE) {
+-            return PRIVACY_DEVICE_MAC;
++        if (mTargetWifiConfig != null) {
++            switch (mTargetWifiConfig.macRandomizationSetting) {
++                case WifiConfiguration.RANDOMIZATION_NONE:
++                    return PRIVACY_DEVICE_MAC;
++                case WifiConfiguration.RANDOMIZATION_ALWAYS:
++                    return PRIVACY_RANDOMIZATION_ALWAYS;
++                default:
++                    // WifiConfiguration.RANDOMIZATION_AUTO and WifiConfiguration.RANDOMIZATION_PERSISTENT
++                    return PRIVACY_RANDOMIZED_MAC;
++            }
+         } else {
+-            return PRIVACY_RANDOMIZED_MAC;
++            return PRIVACY_RANDOMIZATION_ALWAYS;
+         }
+     }
+ 
+@@ -614,11 +620,21 @@ public class StandardWifiEntry extends WifiEntry {
+         // Refresh the current config so we don't overwrite any changes that we haven't gotten
+         // the CONFIGURED_NETWORKS_CHANGED broadcast for yet.
+         refreshTargetWifiConfig();
+-        mTargetWifiConfig.macRandomizationSetting = privacy == PRIVACY_RANDOMIZED_MAC
+-                ? WifiConfiguration.RANDOMIZATION_AUTO : WifiConfiguration.RANDOMIZATION_NONE;
++        mTargetWifiConfig.macRandomizationSetting = translatePrivacyToWifiConfigurationValues(privacy);
+         mWifiManager.save(mTargetWifiConfig, null /* listener */);
+     }
+ 
++    private static int translatePrivacyToWifiConfigurationValues(int privacyValue) {
++        switch (privacyValue) {
++            case PRIVACY_RANDOMIZED_MAC:
++                return WifiConfiguration.RANDOMIZATION_PERSISTENT;
++            case PRIVACY_DEVICE_MAC:
++                return WifiConfiguration.RANDOMIZATION_NONE;
++            default:
++                return WifiConfiguration.RANDOMIZATION_ALWAYS;
++        }
++    }
++
+     @Override
+     public synchronized boolean isAutoJoinEnabled() {
+         if (mTargetWifiConfig == null) {
+diff --git a/libs/WifiTrackerLib/src/com/android/wifitrackerlib/WifiEntry.java b/libs/WifiTrackerLib/src/com/android/wifitrackerlib/WifiEntry.java
+index 84c51d9..df6cd4d 100644
+--- a/libs/WifiTrackerLib/src/com/android/wifitrackerlib/WifiEntry.java
++++ b/libs/WifiTrackerLib/src/com/android/wifitrackerlib/WifiEntry.java
+@@ -148,6 +148,7 @@ public class WifiEntry {
+     public static final int PRIVACY_DEVICE_MAC = 0;
+     public static final int PRIVACY_RANDOMIZED_MAC = 1;
+     public static final int PRIVACY_UNKNOWN = 2;
++    public static final int PRIVACY_RANDOMIZATION_ALWAYS = 100;
+ 
+     @Retention(RetentionPolicy.SOURCE)
+     @IntDef(value = {
