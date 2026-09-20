@@ -1,24 +1,24 @@
-From f1116010f4416033a09ee59bb64ec29b6280504b Mon Sep 17 00:00:00 2001
+From de1be1515bfef300f7615a85004d8baf540663cb Mon Sep 17 00:00:00 2001
 From: lenOS <lenos@lenos.invalid>
-Date: Mon, 21 Sep 2026 02:26:10 +0300
+Date: Mon, 21 Sep 2026 02:31:34 +0300
 Subject: [PATCH] lenOS: integration makefile
 
-Adds the lenOS product integration: native LenOS settings app, fleet-
-consistent identity props, build-time removal of camera/browser/SIM
-toolkit/gallery/contacts/recorder/calendar (plus Lineage music and updater
-and their overlays), boot animation replacement, and the vendored runtime
-files (sysctl rc, network enforcement daemon, privapp permissions).
+Adds the lenOS product integration: build-time removal of camera/browser/
+SIM toolkit/gallery/contacts/recorder/calendar (plus Lineage music and
+updater and their overlays), boot animation replacement, the vendored
+runtime (sysctl rc, network enforcement daemon) and the Cromite browser
+hook. Contains no lenOS-identifying build strings.
 ---
- lenos.mk | 63 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++
- 1 file changed, 63 insertions(+)
+ lenos.mk | 54 ++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 54 insertions(+)
  create mode 100644 lenos.mk
 
 diff --git a/lenos.mk b/lenos.mk
 new file mode 100644
-index 0000000..e464a90
+index 0000000..5b3e93a
 --- /dev/null
 +++ b/lenos.mk
-@@ -0,0 +1,63 @@
+@@ -0,0 +1,54 @@
 +#
 +# SPDX-FileCopyrightText: 2026 lenOS contributors
 +# SPDX-License-Identifier: MIT
@@ -26,28 +26,19 @@ index 0000000..e464a90
 +
 +# lenOS product integration. Everything here is additive except the two
 +# explicit removal filters. Files referenced from vendor/lenos are copied
-+# into the tree by the lenOS integrator before the build.
++# into the tree by the lenOS integrator before the build. Nothing in this
++# file writes lenOS-identifying strings into the system image.
 +
 +# Cromite browser (presigned prebuilt, sha256-pinned; see
 +# tools/fetch-cromite.sh). Skipped with a warning when the APK is absent so
 +# a build never silently ships without a browser decision.
 +$(call inherit-product-if-exists, vendor/lenos/cromite.mk)
 +
-+# Native lenOS settings app: network shield, strict firewall, system app
-+# removal. Built from vendored source, platform-signed privapp.
-+PRODUCT_PACKAGES += \
-+    LenOS
-+
-+# lenOS identity properties. Fleet-consistent: identical for every device
-+# of the same release.
-+PRODUCT_SYSTEM_EXT_PROPERTIES += \
-+    ro.lenos.version=1.0.0 \
-+    ro.lenos.device=asteroids
-+
-+# Build-time removal of stock apps (the user's lenOS app list):
-+# camera, browser, SIM toolkit, gallery, contacts, recorder, calendar, plus
-+# the Lineage music app and updater. Aperture RRO overlays are dropped with
-+# the camera app they belong to.
++# Build-time removal of stock apps (the user's list): camera, browser, SIM
++# toolkit, gallery, contacts, recorder, calendar, plus the Lineage music
++# app and updater. Aperture RRO overlays go with the camera app they
++# belong to. The remaining Lineage apps stay uninstallable at runtime from
++# the lenOS panel in Settings (pm uninstall --user 0).
 +LENOS_REMOVED_PACKAGES := \
 +    Aperture \
 +    AsteroidsApertureOverlay \
@@ -71,13 +62,13 @@ index 0000000..e464a90
 +    vendor/lenos/bootanimation/bootanimation.zip:$(TARGET_COPY_OUT_SYSTEM)/media/bootanimation.zip
 +endif
 +
-+# lenOS runtime: sysctl hardening, network enforcement daemon, privapp
-+# permissions for the LenOS app.
++# lenOS runtime: sysctl hardening and the network enforcement daemon. The
++# daemon's toggles live in Settings.Global, written from the lenOS panel in
++# the Settings app.
 +PRODUCT_COPY_FILES += \
 +    vendor/lenos/init/lenos_sysctl.rc:$(TARGET_COPY_OUT_SYSTEM_EXT)/etc/init/lenos_sysctl.rc \
 +    vendor/lenos/init/lenos_net.rc:$(TARGET_COPY_OUT_SYSTEM_EXT)/etc/init/lenos_net.rc \
-+    vendor/lenos/bin/lenos-netd:$(TARGET_COPY_OUT_SYSTEM_EXT)/bin/lenos-netd \
-+    vendor/lenos/privapp/privapp-permissions-lenos.xml:$(TARGET_COPY_OUT_SYSTEM_EXT)/etc/permissions/privapp-permissions-lenos.xml
++    vendor/lenos/bin/lenos-netd:$(TARGET_COPY_OUT_SYSTEM_EXT)/bin/lenos-netd
 +
 +# The kernel hardening fragment referenced by BoardConfig
 +# (vendor/lenos_hardening.config) is written into the kernel tree by the

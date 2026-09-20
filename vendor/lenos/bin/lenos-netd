@@ -1,0 +1,103 @@
+#!/system/bin/sh
+#
+# lenOS network enforcement daemon.
+#
+# State lives in Settings.Global (toggles from the lenOS panel in Settings)
+# and is read directly from the settings database file, with no binder
+# dependency. Rules are rebuilt only when the state changes.
+#
+#   lenos_killswitch       1 (default)  reject plaintext DNS (UDP/TCP 53)
+#                                       outside loopback and tun interfaces
+#   lenos_strict_firewall  0 (default)  default-drop all output except
+#                                       loopback, established connections,
+#                                       tun interfaces and allowed UIDs
+#   lenos_vpn_uids         ""           comma-separated UIDs allowed outside
+#                                       tun interfaces while strict is on
+#
+# Owned chains: lenos_dns_block, lenos_strict. Fail-open semantics: if this
+# daemon dies between re-applies, previously applied rules persist.
+#
+
+INTERVAL=10
+SETTINGS_XML=/data/system/users/0/settings_global.xml
+
+get_setting() {
+    # $1 = key, $2 = default
+    _v=""
+    if [ -r "$SETTINGS_XML" ]; then
+        _v=$(sed -n "s/.*name=\"$1\"[^>]*value=\"\\([^\"]*\\)\".*/\\1/p" \
+                "$SETTINGS_XML" 2>/dev/null | tail -1)
+    fi
+    [ -z "$_v" ] && _v="$2"
+    printf '%s' "$_v"
+}
+
+ensure_jump() {
+    iptables  -w -C OUTPUT -j "$1" 2>/dev/null || iptables  -w -I OUTPUT 1 -j "$1"
+    ip6tables -w -C OUTPUT -j "$1" 2>/dev/null || ip6tables -w -I OUTPUT 1 -j "$1"
+}
+
+remove_jump() {
+    while iptables  -w -C OUTPUT -j "$1" 2>/dev/null; do iptables  -w -D OUTPUT -j "$1"; done
+    while ip6tables -w -C OUTPUT -j "$1" 2>/dev/null; do ip6tables -w -D OUTPUT -j "$1"; done
+}
+
+apply_dns() {
+    iptables  -w -N lenos_dns_block 2>/dev/null
+    ip6tables -w -N lenos_dns_block 2>/dev/null
+    iptables  -w -F lenos_dns_block
+    ip6tables -w -F lenos_dns_block
+    if [ "$dns" = "1" ]; then
+        iptables -w -A lenos_dns_block -o lo -j RETURN
+        iptables -w -A lenos_dns_block -o tun+ -j RETURN
+        iptables -w -A lenos_dns_block -p udp -m udp --dport 53 -j REJECT
+        iptables -w -A lenos_dns_block -p tcp -m tcp --dport 53 -j REJECT
+        ip6tables -w -A lenos_dns_block -o lo -j RETURN
+        ip6tables -w -A lenos_dns_block -o tun+ -j RETURN
+        ip6tables -w -A lenos_dns_block -p udp -m udp --dport 53 -j REJECT
+        ip6tables -w -A lenos_dns_block -p tcp -m tcp --dport 53 -j REJECT
+    fi
+    ensure_jump lenos_dns_block
+}
+
+apply_strict() {
+    iptables  -w -N lenos_strict 2>/dev/null
+    ip6tables -w -N lenos_strict 2>/dev/null
+    iptables  -w -F lenos_strict
+    ip6tables -w -F lenos_strict
+    if [ "$strict" = "1" ]; then
+        iptables -w -A lenos_strict -o lo -j ACCEPT
+        iptables -w -A lenos_strict -m state --state ESTABLISHED,RELATED -j ACCEPT
+        iptables -w -A lenos_strict -o tun+ -j ACCEPT
+        ip6tables -w -A lenos_strict -o lo -j ACCEPT
+        ip6tables -w -A lenos_strict -m state --state ESTABLISHED,RELATED -j ACCEPT
+        ip6tables -w -A lenos_strict -o tun+ -j ACCEPT
+        ip6tables -w -A lenos_strict -p ipv6-icmp -j ACCEPT
+        for _u in $(printf '%s' "$uids" | tr ',' ' '); do
+            case "$_u" in
+                ''|*[!0-9]*) continue ;;
+                *) iptables  -w -A lenos_strict -m owner --uid-owner "$_u" -j ACCEPT
+                   ip6tables -w -A lenos_strict -m owner --uid-owner "$_u" -j ACCEPT ;;
+            esac
+        done
+        iptables  -w -A lenos_strict -j REJECT
+        ip6tables -w -A lenos_strict -j REJECT
+        ensure_jump lenos_strict
+    else
+        remove_jump lenos_strict
+    fi
+}
+
+prev=""
+while :; do
+    dns=$(get_setting lenos_killswitch 1)
+    strict=$(get_setting lenos_strict_firewall 0)
+    uids=$(get_setting lenos_vpn_uids "")
+    state="$dns|$strict|$uids"
+    if [ "$state" != "$prev" ]; then
+        apply_dns
+        apply_strict
+        prev="$state"
+    fi
+    sleep "$INTERVAL"
+done

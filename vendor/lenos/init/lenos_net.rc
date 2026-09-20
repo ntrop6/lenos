@@ -1,0 +1,11 @@
+# lenOS network enforcement. The daemon applies lenOS-owned iptables and
+# ip6tables chains and re-evaluates its state from the Settings.Global
+# database; toggles are written from the lenOS panel in the Settings app.
+on property:sys.boot_completed=1
+    start lenos-netd
+
+service lenos-netd /system_ext/bin/lenos-netd
+    user root
+    group root
+    seclabel u:r:lenos_netd:s0
+    oneshot

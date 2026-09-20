@@ -1,0 +1,11 @@
+// Cromite presigned system app import. The APK keeps its upstream
+// signature (presigned: true); its sha256 pin lives in config/VERSIONS.sh
+// and is enforced by tools/fetch-cromite.sh.
+android_app_import {
+    name: "Cromite",
+    apk: "Cromite.apk",
+    presigned: true,
+    dex_preopt: {
+        enabled: false,
+    },
+}

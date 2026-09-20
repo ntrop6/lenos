@@ -1,0 +1,372 @@
+From: lenOS <security@lenos.invalid>
+Subject: [PATCH] lenOS: security panel at the top of Settings
+
+Adds a lenOS category above every other homepage category, opening a
+fragment with the DNS enforcement and strict firewall toggles, the VPN
+UID allowlist, and system app removal for user 0.
+
+State lives in Settings.Global (lenos_killswitch, lenos_strict_firewall,
+lenos_vpn_uids); the lenos-netd daemon in system_ext applies it
+kernel-side. The Settings app already declares WRITE_SECURE_SETTINGS and
+DELETE_PACKAGES and runs as the system UID, so no manifest or privapp
+whitelist changes are required.
+
+The lenOS category itself carries no lenOS-identifying strings into
+build props; its strings live only inside the Settings app.
+
+diff --git a/res/values/lenos_strings.xml b/res/values/lenos_strings.xml
+new file mode 100644
+index 0000000..66f93c2
+--- /dev/null
++++ b/res/values/lenos_strings.xml
+@@ -0,0 +1,26 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- lenOS strings. In-UI only: no lenOS strings are written to build props. -->
++<resources>
++    <string name="lenos_title">lenOS security</string>
++    <string name="lenos_summary">Network shield and device hygiene</string>
++    <string name="lenos_network_category">Network shield</string>
++    <string name="lenos_dns_enforce">Block plaintext DNS</string>
++    <string name="lenos_dns_enforce_summary">Rejects UDP and TCP port 53 outside VPN tunnels at all times. DoT providers and VPN-tunnel DNS keep working.</string>
++    <string name="lenos_strict_firewall">Strict firewall</string>
++    <string name="lenos_strict_firewall_summary">Default-drop all output except loopback, established connections, tun interfaces and the allowed VPN UIDs. Requires an always-on VPN; daily drivers should use the platform lockdown instead.</string>
++    <string name="lenos_vpn_uids">Allowed VPN UIDs</string>
++    <string name="lenos_vpn_uids_summary">Comma-separated UIDs allowed outside tun interfaces in strict mode (the VPN app transport UIDs)</string>
++    <string name="lenos_apps_category">Applications</string>
++    <string name="lenos_remove_apps">Remove system apps</string>
++    <string name="lenos_remove_apps_summary">Uninstall non-critical system apps for this user</string>
++    <string name="lenos_about_category">About</string>
++    <string name="lenos_version_title">lenOS version</string>
++    <string name="lenos_version_value">1.0</string>
++    <string name="lenos_remove_confirm_title">Remove %s?</string>
++    <string name="lenos_remove_confirm_text">Uninstalls for this user (user 0). An OTA or factory reset restores the app.</string>
++    <string name="lenos_remove_action">Remove</string>
++    <string name="lenos_remove_done">Removed %s</string>
++    <string name="lenos_invalid_uids">Invalid list: use comma-separated numeric UIDs</string>
++    <string name="lenos_remove_failed">Removal failed: %s</string>
++    <string name="lenos_none_removable">No removable system apps</string>
++</resources>
+diff --git a/res/xml/lenos_security_settings.xml b/res/xml/lenos_security_settings.xml
+new file mode 100644
+index 0000000..bf01095
+--- /dev/null
++++ b/res/xml/lenos_security_settings.xml
+@@ -0,0 +1,47 @@
++<?xml version="1.0" encoding="utf-8"?>
++<PreferenceScreen
++    xmlns:android="http://schemas.android.com/apk/res/android"
++    android:key="lenos_security_screen">
++
++    <PreferenceCategory
++        android:key="lenos_network_category"
++        android:title="@string/lenos_network_category">
++
++        <SwitchPreferenceCompat
++            android:key="lenos_killswitch"
++            android:title="@string/lenos_dns_enforce"
++            android:summary="@string/lenos_dns_enforce_summary"/>
++
++        <SwitchPreferenceCompat
++            android:key="lenos_strict_firewall"
++            android:title="@string/lenos_strict_firewall"
++            android:summary="@string/lenos_strict_firewall_summary"/>
++
++        <EditTextPreference
++            android:key="lenos_vpn_uids"
++            android:title="@string/lenos_vpn_uids"
++            android:summary="@string/lenos_vpn_uids_summary"
++            android:dialogTitle="@string/lenos_vpn_uids"/>
++    </PreferenceCategory>
++
++    <PreferenceCategory
++        android:key="lenos_apps_category"
++        android:title="@string/lenos_apps_category">
++
++        <Preference
++            android:key="lenos_remove_apps"
++            android:title="@string/lenos_remove_apps"
++            android:summary="@string/lenos_remove_apps_summary"/>
++    </PreferenceCategory>
++
++    <PreferenceCategory
++        android:key="lenos_about_category"
++        android:title="@string/lenos_about_category">
++
++        <Preference
++            android:key="lenos_version"
++            android:title="@string/lenos_version_title"
++            android:summary="@string/lenos_version_value"
++            android:selectable="false"/>
++    </PreferenceCategory>
++</PreferenceScreen>
+diff --git a/res/xml/top_level_settings.xml b/res/xml/top_level_settings.xml
+index 975a97a..df46c61 100644
+--- a/res/xml/top_level_settings.xml
++++ b/res/xml/top_level_settings.xml
+@@ -20,6 +20,22 @@
+     xmlns:settings="http://schemas.android.com/apk/res-auto"
+     android:key="top_level_settings">
+ 
++    <!-- lenOS security panel (added by the lenOS patch set). Sits above
++         every other homepage category. -->
++    <PreferenceCategory
++        android:order="-150"
++        android:key="top_level_lenos_category"
++        android:layout="@layout/settingslib_untitled_preference_category">
++
++        <com.android.settings.widget.HomepagePreference
++            android:fragment="com.android.settings.lenos.LenosSecurityFragment"
++            android:icon="@drawable/ic_homepage_security"
++            android:key="top_level_lenos"
++            android:order="-30"
++            android:title="@string/lenos_title"
++            android:summary="@string/lenos_summary"/>
++    </PreferenceCategory>
++
+     <PreferenceCategory
+         android:order="-140"
+         android:key="top_level_account_category"
+diff --git a/src/com/android/settings/lenos/LenosAppsFragment.java b/src/com/android/settings/lenos/LenosAppsFragment.java
+new file mode 100644
+index 0000000..3597218
+--- /dev/null
++++ b/src/com/android/settings/lenos/LenosAppsFragment.java
+@@ -0,0 +1,137 @@
++/*
++ * System app removal for user 0. Lists installed system packages except a
++ * critical denylist and uninstalls them for the current user through the
++ * pm command (the Settings app already declares DELETE_PACKAGES and runs
++ * as the system UID). The APK stays on the read-only partition; an OTA or
++ * factory reset restores it.
++ */
++package com.android.settings.lenos;
++
++import android.app.AlertDialog;
++import android.content.pm.ApplicationInfo;
++import android.content.pm.PackageManager;
++import android.os.Bundle;
++import android.widget.Toast;
++
++import androidx.preference.Preference;
++import androidx.preference.PreferenceScreen;
++
++import com.android.settings.R;
++import com.android.settings.SettingsPreferenceFragment;
++import com.android.settingslib.core.instrumentation.Instrumentable;
++
++import java.io.BufferedReader;
++import java.io.InputStreamReader;
++import java.util.ArrayList;
++import java.util.Arrays;
++import java.util.Collections;
++import java.util.HashSet;
++import java.util.List;
++import java.util.Set;
++
++public class LenosAppsFragment extends SettingsPreferenceFragment {
++
++    private static final Set<String> DENY = new HashSet<>(Arrays.asList(
++            "android",
++            "com.android.settings",
++            "com.android.systemui",
++            "com.android.launcher3",
++            "com.android.phone",
++            "com.android.server.telecom",
++            "com.android.inputmethod.latin",
++            "com.android.providers.telephony",
++            "com.android.providers.settings",
++            "com.android.providers.media",
++            "com.android.keychain",
++            "com.android.deskclock"
++    ));
++
++    public String getLogTag() {
++        return "LenosApps";
++    }
++
++    @Override
++    public int getMetricsCategory() {
++        return Instrumentable.METRICS_CATEGORY_UNKNOWN;
++    }
++
++    @Override
++    public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
++        rebuild();
++    }
++
++    private void rebuild() {
++        final PackageManager pm = getContext().getPackageManager();
++        final PreferenceScreen screen =
++                getPreferenceManager().createPreferenceScreen(getContext());
++        final List<String> rows = new ArrayList<>();
++        for (ApplicationInfo ai : pm.getInstalledPackages(PackageManager.GET_META_DATA)) {
++            if ((ai.flags & ApplicationInfo.FLAG_SYSTEM) == 0
++                    || DENY.contains(ai.packageName)) {
++                continue;
++            }
++            final CharSequence label = pm.getApplicationLabel(ai);
++            rows.add(ai.packageName + "|" + (label != null ? label : ai.packageName));
++        }
++        Collections.sort(rows, String.CASE_INSENSITIVE_ORDER);
++        if (rows.isEmpty()) {
++            final Preference none = new Preference(getContext());
++            none.setKey("lenos_none_removable");
++            none.setTitle(R.string.lenos_none_removable);
++            none.setSelectable(false);
++            screen.addPreference(none);
++        }
++        for (String row : rows) {
++            final int sep = row.indexOf('|');
++            final String pkg = row.substring(0, sep);
++            final String label = row.substring(sep + 1);
++            final Preference p = new Preference(getContext());
++            p.setKey("lenos_app_" + pkg);
++            p.setTitle(label);
++            p.setSummary(pkg);
++            p.setOnPreferenceClickListener(preference -> {
++                confirmUninstall(pkg);
++                return true;
++            });
++            screen.addPreference(p);
++        }
++        setPreferenceScreen(screen);
++    }
++
++    private void confirmUninstall(final String pkg) {
++        new AlertDialog.Builder(getContext())
++                .setTitle(String.format(getString(R.string.lenos_remove_confirm_title), pkg))
++                .setMessage(R.string.lenos_remove_confirm_text)
++                .setPositiveButton(R.string.lenos_remove_action,
++                        (dialog, which) -> uninstall(pkg))
++                .setNegativeButton(android.R.string.cancel, null)
++                .show();
++    }
++
++    private void uninstall(String pkg) {
++        String result;
++        try {
++            final Process p = new ProcessBuilder(
++                    "pm", "uninstall", "--user", "0", pkg)
++                    .redirectErrorStream(true).start();
++            final StringBuilder out = new StringBuilder();
++            try (BufferedReader r = new BufferedReader(
++                    new InputStreamReader(p.getInputStream()))) {
++                String line;
++                while ((line = r.readLine()) != null) {
++                    out.append(line).append('\n');
++                }
++            }
++            final int rc = p.waitFor();
++            result = rc == 0
++                    ? String.format(getString(R.string.lenos_remove_done), pkg)
++                    : String.format(getString(R.string.lenos_remove_failed),
++                            out.toString().trim());
++        } catch (Exception e) {
++            result = String.format(getString(R.string.lenos_remove_failed),
++                    e.getClass().getSimpleName());
++        }
++        Toast.makeText(getContext(), result, Toast.LENGTH_LONG).show();
++        rebuild();
++    }
++}
+diff --git a/src/com/android/settings/lenos/LenosSecurityFragment.java b/src/com/android/settings/lenos/LenosSecurityFragment.java
+new file mode 100644
+index 0000000..fb8c17a
+--- /dev/null
++++ b/src/com/android/settings/lenos/LenosSecurityFragment.java
+@@ -0,0 +1,95 @@
++/*
++ * lenOS security panel. Writes the enforcement state into Settings.Global;
++ * the lenos-netd daemon (shipped in system_ext) applies it kernel-side.
++ * Keys: lenos_killswitch, lenos_strict_firewall, lenos_vpn_uids.
++ */
++package com.android.settings.lenos;
++
++import android.content.Context;
++import android.os.Bundle;
++import android.provider.Settings;
++import android.widget.Toast;
++
++import androidx.preference.EditTextPreference;
++import androidx.preference.Preference;
++import androidx.preference.SwitchPreferenceCompat;
++
++import com.android.settings.R;
++import com.android.settings.SettingsPreferenceFragment;
++import com.android.settings.core.SubSettingLauncher;
++import com.android.settingslib.core.instrumentation.Instrumentable;
++
++import java.util.regex.Pattern;
++
++public class LenosSecurityFragment extends SettingsPreferenceFragment {
++
++    private static final String KEY_KILLSWITCH = "lenos_killswitch";
++    private static final String KEY_STRICT = "lenos_strict_firewall";
++    private static final String KEY_VPN_UIDS = "lenos_vpn_uids";
++    private static final Pattern UID_LIST = Pattern.compile("[0-9]*(,[0-9]+)*");
++
++    public String getLogTag() {
++        return "LenosSecurity";
++    }
++
++    @Override
++    public int getMetricsCategory() {
++        return Instrumentable.METRICS_CATEGORY_UNKNOWN;
++    }
++
++    @Override
++    public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
++        addPreferencesFromResource(R.xml.lenos_security_settings);
++
++        final Context context = getContext();
++        final SwitchPreferenceCompat kill =
++                (SwitchPreferenceCompat) findPreference(KEY_KILLSWITCH);
++        kill.setChecked(Settings.Global.getInt(
++                context.getContentResolver(), KEY_KILLSWITCH, 1) != 0);
++        kill.setOnPreferenceChangeListener((preference, newValue) ->
++                putGlobal(KEY_KILLSWITCH, (Boolean) newValue ? "1" : "0"));
++
++        final SwitchPreferenceCompat strict =
++                (SwitchPreferenceCompat) findPreference(KEY_STRICT);
++        strict.setChecked(Settings.Global.getInt(
++                context.getContentResolver(), KEY_STRICT, 0) != 0);
++        strict.setOnPreferenceChangeListener((preference, newValue) ->
++                putGlobal(KEY_STRICT, (Boolean) newValue ? "1" : "0"));
++
++        final EditTextPreference uids = (EditTextPreference) findPreference(KEY_VPN_UIDS);
++        final String current = Settings.Global.getString(
++                context.getContentResolver(), KEY_VPN_UIDS);
++        if (current != null) {
++            uids.setText(current);
++        }
++        uids.setOnPreferenceChangeListener((preference, newValue) -> {
++            final String value = String.valueOf(newValue).trim();
++            if (!UID_LIST.matcher(value).matches()) {
++                Toast.makeText(context, R.string.lenos_invalid_uids,
++                        Toast.LENGTH_LONG).show();
++                return false;
++            }
++            return putGlobal(KEY_VPN_UIDS, value);
++        });
++
++        final Preference remove = findPreference("lenos_remove_apps");
++        remove.setOnPreferenceClickListener(preference -> {
++            new SubSettingLauncher(context)
++                    .setDestination(LenosAppsFragment.class.getName())
++                    .setSourceMetricsCategory(getMetricsCategory())
++                    .launch();
++            return true;
++        });
++    }
++
++    private boolean putGlobal(String key, String value) {
++        try {
++            Settings.Global.putString(getContext().getContentResolver(), key, value);
++            return true;
++        } catch (SecurityException e) {
++            Toast.makeText(getContext(), "Write failed: " + e.getMessage(),
++                    Toast.LENGTH_LONG).show();
++            return false;
++        }
++    }
++}

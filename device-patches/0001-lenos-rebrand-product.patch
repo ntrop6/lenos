@@ -1,16 +1,17 @@
-From 7b8b737b5839d693625ae1ca20b013683c3c250f Mon Sep 17 00:00:00 2001
+From ce618c7a1aae5ff5a2ebe1e60e0dc162e2cec715 Mon Sep 17 00:00:00 2001
 From: lenOS <lenos@lenos.invalid>
-Date: Mon, 21 Sep 2026 02:26:10 +0300
-Subject: [PATCH] lenOS: rebrand the product to lenos_asteroids
+Date: Mon, 21 Sep 2026 02:31:34 +0300
+Subject: [PATCH] lenOS: rename product to lenos_asteroids
 
-Renames the product makefile, points AndroidProducts at it, inherits the
-lenOS integration makefile, and pins a fleet-consistent BUILD_DISPLAY_ID.
-The lunch target becomes lenos_asteroids-userdebug.
+Renames the product makefile, points AndroidProducts at it, and inherits
+the lenOS integration makefile. The booted image keeps the upstream stock
+Nothing build identity: no lenOS display id, no lenOS props, no lenOS
+package names (anti-fingerprinting; see DESIGN.md).
 ---
  AndroidProducts.mk                         | 2 +-
  lineage_asteroids.mk => lenos_asteroids.mk | 9 ++++++++-
  2 files changed, 9 insertions(+), 2 deletions(-)
- rename lineage_asteroids.mk => lenos_asteroids.mk (67%)
+ rename lineage_asteroids.mk => lenos_asteroids.mk (62%)
 
 diff --git a/AndroidProducts.mk b/AndroidProducts.mk
 index f204e05..befd9d4 100644
@@ -23,10 +24,10 @@ index f204e05..befd9d4 100644
 -    $(LOCAL_DIR)/lineage_asteroids.mk
 +    $(LOCAL_DIR)/lenos_asteroids.mk
 diff --git a/lineage_asteroids.mk b/lenos_asteroids.mk
-similarity index 67%
+similarity index 62%
 rename from lineage_asteroids.mk
 rename to lenos_asteroids.mk
-index 98f109a..484510c 100644
+index 98f109a..d1748d9 100644
 --- a/lineage_asteroids.mk
 +++ b/lenos_asteroids.mk
 @@ -1,5 +1,6 @@
@@ -36,13 +37,18 @@ index 98f109a..484510c 100644
  # SPDX-License-Identifier: Apache-2.0
  #
  
-@@ -7,13 +8,14 @@ $(call inherit-product, $(SRC_TARGET_DIR)/product/core_64_bit_only.mk)
+@@ -7,13 +8,19 @@ $(call inherit-product, $(SRC_TARGET_DIR)/product/core_64_bit_only.mk)
  $(call inherit-product, $(SRC_TARGET_DIR)/product/full_base_telephony.mk)
  
  $(call inherit-product, device/nothing/asteroids/device.mk)
 +$(call inherit-product, device/nothing/asteroids/lenos.mk)
  $(call inherit-product, vendor/lineage/config/common_full_phone.mk)
  
++# lenOS anti-fingerprinting rule: the image presents the exact upstream stock
++# Nothing build identity and adds no lenOS-revealing props, display ids or
++# package names. Everything lenOS-specific lives behind build-time artifacts
++# or the Settings panel. The lunch target name is the one unavoidable
++# lenOS-identifying string and lives outside the booted system image.
  PRODUCT_BRAND := Nothing
  PRODUCT_DEVICE := asteroids
  PRODUCT_MANUFACTURER := Nothing
@@ -52,15 +58,6 @@ index 98f109a..484510c 100644
  
  PRODUCT_GMS_CLIENTID_BASE := android-nothing
  
-@@ -24,3 +26,8 @@ PRODUCT_BUILD_PROP_OVERRIDES += \
-     DeviceProduct=Asteroids \
-     SystemDevice=Asteroids \
-     SystemName=Asteroids
-+
-+# lenOS: fleet-consistent display identity. Every lenOS install of the same
-+# release presents the identical build identity (DESIGN.md: herd immunity
-+# over camouflage); no per-device randomization of build strings.
-+PRODUCT_BUILD_PROP_OVERRIDES += BUILD_DISPLAY_ID=lenOS-1.0
 -- 
 2.55.0
 

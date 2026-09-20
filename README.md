@@ -21,9 +21,9 @@ source.
 | Correlation | Per-connection Wi-Fi MAC randomization, DHCP state unlinkability, no DHCP hostname, Settings UI | patches 0010/0011/0012/0013 |
 | Sensors | `OTHER_SENSORS` runtime permission, SensorService enforcement | patches 0001/0002/0003 |
 | Network | Plaintext DNS (UDP+TCP/53) blocked kernel-side at all times; optional strict output killswitch (allow only tun/loopback/VPN UIDs) | vendor/lenos firewall + sepolicy |
-| Identity | Fleet-consistent lenOS identity (`ro.lenos.*`, fixed display ID) — one herd, not per-device camouflage | device-patches |
-| Apps | Camera, browser, SIM toolkit, gallery, contacts, recorder, calendar removed at build; Cromite shipped; the rest uninstallable | device-patches + LenOS app |
-| Settings | Native lenOS app (platform-signed privapp): killswitch, strict firewall, system app removal | packages/apps/LenOS |
+| Identity | The image presents the upstream stock Nothing build identity: no lenOS display ID, no `ro.lenos.*` props, no lenOS package names | device-patches |
+| Apps | Camera, browser, SIM toolkit, gallery, contacts, recorder, calendar removed at build; Cromite shipped; the rest uninstallable | device-patches + Settings panel |
+| Settings | A "lenOS security" category above every other Settings entry: DNS shield, strict firewall, VPN UIDs, system app removal | patch 0014 (Settings app) |
 | Root | ReSukiSU LKM in init_boot ramdisk; presigned manager preinstalled | build pipeline |
 | Verified boot | Custom AVB/OTA keys, relock supported | build pipeline (avbroot) |
 | Kernel | Hardened config fragments + sysctl baseline | integrate step + device patch |
@@ -76,13 +76,13 @@ key, a relocked device is a paperweight.
 - `manifest/lenos-asteroids.xml` — pinned local manifest (every patched repo).
 - `device-patches/` — `git am`-format commits against the pinned NullDebris
   device tree: rebrand, integration makefile, sepolicy, kernel fragment.
-- `patches/` — the 13 GrapheneOS-derived platform patches (build-time).
+- `patches/` — the 13 GrapheneOS-derived platform patches plus patch 0014,
+  which adds the lenOS security panel at the top of the Settings app
+  (authored against the pinned Settings revision).
 - `vendor/lenos/` — vendored runtime: init rc files, firewall daemon,
-  Cromite import + pinned fetcher, privapp permissions, LenOS settings app
-  source.
-- `packages/apps/LenOS/` — source of the native lenOS settings app
-  (built from source during the ROM build, shipped platform-signed).
-- `tools/` — signing/verification tooling, bootanimation generator.
+  Cromite import + pinned fetcher.
+- `tools/` — signing/verification tooling, bootanimation generator,
+  Cromite fetcher.
 - `build/lenos.sh` — the pipeline.
 - `config/VERSIONS.sh` — every external pin (sha256-verified).
 

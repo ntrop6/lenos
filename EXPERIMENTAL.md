@@ -64,6 +64,24 @@ design before code.
   jurisdictions, breaks emergency services. Rejected.
 - Per-device randomized model/fingerprint: consistency-check failure; makes
   devices MORE unique. Rejected (DESIGN.md §2).
+- lenOS-identifying strings in the system image (display id, `ro.lenos.*`
+  props, a lenOS settings *app package*): they shrink the herd. Rejected;
+  the brand lives in build-time artifacts, the Settings panel and the boot
+  animation only.
 - Killing 2G/SMS fallback without user toggle: daily-drivability violation.
 - Shipped GMS or microG: rejected fleet-wide; those who need them can sideload
   and accept the tradeoff consciously.
+- A publicly shared platform signing key (maximal herd, zero security):
+  anyone could sign platform-privileged code against the device. Rejected.
+
+## Candidate follow-ups requiring verification against the build
+
+- **Neutralize `ro.product.name` to the stock value.** The global
+  `ro.product.name` currently reads `lenos_asteroids` (as upstream's
+  `lineage_asteroids`); per-partition product props already spoof to the
+  stock values. Verify how buildinfo maps `PRODUCT_BUILD_PROP_OVERRIDES` on
+  23.2 before attempting, and re-check any consistency check that compares
+  fingerprint vs product name.
+- **Shared per-identity signing set.** Generate the key set once, reuse
+  across all devices you control; signature herd = your own device fleet.
+  Tradeoff: one leaked key burns the fleet.

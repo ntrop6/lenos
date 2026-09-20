@@ -9,11 +9,17 @@ reasoning, and states the limits explicitly.
    device-tree commit applied against pinned revisions. Xposed modules and
    Magisk-module spoofing are Java-layer and can be bypassed by native code
    and by consistency checks; framework-level enforcement cannot.
-2. **Herd immunity over camouflage.** Every lenOS device of the same release
-   is byte-identical in its observable identity (same build fingerprint, same
-   `ro.build.*`, same `ro.lenos.*`). We do not randomize per-device build
-   identity: rotating fake model strings is *more* unique than a stable
-   pseudonym and fails consistency checks (performance timing, sensors).
+2. **Anti-fingerprinting means blending into the largest honest herd.**
+   Every lenOS install presents the *stock Nothing 3a build identity* that
+   the upstream device tree already spoofs — the same fingerprint, the same
+   props, no lenOS display ID, no `ro.lenos.*` properties, no lenOS package
+   names. Adding lenOS branding to observable strings would make every
+   lenOS device MORE identifiable as a member of a tiny herd, so nothing
+   lenOS-named enters the booted image: the brand exists only in the build
+   tree (lunch target), the Settings panel (in-app strings), and the boot
+   animation (device-local). Per-device randomization of model strings is
+   rejected outright: rotating fake identities fails consistency checks
+   (performance timing, sensors) and is MORE unique than a stable one.
    Where randomization is genuinely per-connection state (Wi-Fi MAC), we
    randomize aggressively instead.
 3. **Daily drivability is a requirement, not a failure.** Captive portals,
@@ -31,10 +37,11 @@ reasoning, and states the limits explicitly.
 | Covert sensor reading (accel, proximity…) | `OTHER_SENSORS` runtime permission | patches 0001/0002/0003 | revoke-able per app |
 | Wi-Fi correlation | New MAC per connection, DHCP lease state flushed, DHCP hostname suppressed, per-connection UI | patches 0010/0011/0012/0013 | strongest practical anti-correlation layer that survives daily use |
 | DNS leaks | UDP+TCP/53 REJECT kernel-side except loopback/VPN tunnels, always | vendor firewall daemon (system_ext, init-managed, sepolicy domain `lenos_netd`) | apps cannot fall back to plaintext DNS; DoT/DoH and VPN DNS keep working |
-| Full network lockdown | Strict mode: default-DROP output except loopback, established, `tun+` interfaces and configured VPN UIDs | same daemon, toggle in LenOS app (`lenos_strict_firewall`) | for use with always-on VPN; AOSP lockdown remains the daily-driver killswitch |
-| App-visible identity | Fleet-consistent build props, `ro.lenos.*`, display id | device-patches (lenos.mk / product overrides) | no per-device randomization by design |
+| Full network lockdown | Strict mode: default-DROP output except loopback, established, `tun+` interfaces and configured VPN UIDs | same daemon, toggled from the lenOS Settings panel (`lenos_strict_firewall`) | for use with always-on VPN; AOSP lockdown remains the daily-driver killswitch |
+| Settings surface | "lenOS security" category above every other Settings entry | patch 0014 | writes `lenos_killswitch` / `lenos_strict_firewall` / `lenos_vpn_uids` to Settings.Global; no separate app package to fingerprint |
+| App-visible identity | Stock Nothing build identity preserved (upstream spoof); zero lenOS strings in props | device-patches | only `ro.product.name` remains custom-ROM-shaped (as upstream); neutralization is an EXPERIMENTAL item |
 | Browser fingerprinting | Cromite (hardened Chromium fork) as the only shipped browser; stock browser/camera/gallery/etc. removed | device-patches + pinned presigned import | fingerprinting defense belongs in the browser, not the ROM |
-| Bloat/uninstall | Remaining Lineage apps uninstallable | LenOS app (`pm uninstall --user 0` via `DELETE_PACKAGES`) | denylist protects critical components |
+| Bloat/uninstall | Remaining Lineage apps uninstallable | lenOS Settings panel (`pm uninstall --user 0`) | denylist protects critical components |
 | Root detection surface | ReSukiSU LKM (KernelSU family) | build pipeline (init_boot injection) | root is a chosen tradeoff; relock restores AVB |
 | Seizure/forensics | FBE (stock), BFU reboot (above), duress (above), relocked verified boot | platform + pipeline | |
 
@@ -64,6 +71,15 @@ Because the bootloader verifies your key, `fastboot flashing lock` is safe
 after install and future OTAs signed with the same keys verify. The BFU
 reboot timer lives in init (PID 1) so a rooted-but-compromised system_server
 still loses the race to data-at-rest.
+
+**Signature visibility (honest note):** any app can read the signing
+certificate of system packages. With per-builder keys, that signature is
+unique to you — a fingerprinting vector lenOS cannot remove while keeping
+your platform key private (a *public* shared key would blend into a herd but
+let anyone sign platform-privileged code against your device: rejected).
+If you run several lenOS devices under one identity, generate the keys once
+and reuse them across those devices; see EXPERIMENTAL.md. The AVB key is
+not app-visible (bootloader-layer only).
 
 ## The firewall daemon
 
