@@ -2,24 +2,25 @@ From: lenOS <security@lenos.invalid>
 Subject: [PATCH] lenOS: security panel at the top of Settings
 
 Adds a lenOS category above every other homepage category, opening a
-fragment with the DNS enforcement and strict firewall toggles, the VPN
-UID allowlist, and system app removal for user 0.
+fragment with: DNS enforcement and time-sync shield toggles, the strict
+firewall with VPN UID allowlist, an LTE-only radio switch (drops the
+2G/3G downgrade surface via TelephonyManager, a GrapheneOS LTE-only
+parity item), a captive-portal detection switch (default off: zero
+connectivity probes), and system app removal for user 0.
 
-State lives in Settings.Global (lenos_killswitch, lenos_strict_firewall,
-lenos_vpn_uids); the lenos-netd daemon in system_ext applies it
-kernel-side. The Settings app already declares WRITE_SECURE_SETTINGS and
-DELETE_PACKAGES and runs as the system UID, so no manifest or privapp
-whitelist changes are required.
-
-The lenOS category itself carries no lenOS-identifying strings into
-build props; its strings live only inside the Settings app.
+State lives in Settings.Global; the lenos-netd daemon in system_ext
+applies it kernel-side. The Settings app already declares
+WRITE_SECURE_SETTINGS, DELETE_PACKAGES and MODIFY_PHONE_STATE and runs
+as the system UID, so no manifest or privapp whitelist changes are
+required. No lenOS strings enter build props; the panel strings live
+inside the Settings app only.
 
 diff --git a/res/values/lenos_strings.xml b/res/values/lenos_strings.xml
 new file mode 100644
-index 0000000..66f93c2
+index 0000000..692c692
 --- /dev/null
 +++ b/res/values/lenos_strings.xml
-@@ -0,0 +1,26 @@
+@@ -0,0 +1,32 @@
 +<?xml version="1.0" encoding="utf-8"?>
 +<!-- lenOS strings. In-UI only: no lenOS strings are written to build props. -->
 +<resources>
@@ -28,10 +29,16 @@ index 0000000..66f93c2
 +    <string name="lenos_network_category">Network shield</string>
 +    <string name="lenos_dns_enforce">Block plaintext DNS</string>
 +    <string name="lenos_dns_enforce_summary">Rejects UDP and TCP port 53 outside VPN tunnels at all times. DoT providers and VPN-tunnel DNS keep working.</string>
++    <string name="lenos_dns_time_summary">Also rejects time sync (UDP 123) outside VPN tunnels, keeping clock-disclosure off the open network.</string>
 +    <string name="lenos_strict_firewall">Strict firewall</string>
 +    <string name="lenos_strict_firewall_summary">Default-drop all output except loopback, established connections, tun interfaces and the allowed VPN UIDs. Requires an always-on VPN; daily drivers should use the platform lockdown instead.</string>
 +    <string name="lenos_vpn_uids">Allowed VPN UIDs</string>
 +    <string name="lenos_vpn_uids_summary">Comma-separated UIDs allowed outside tun interfaces in strict mode (the VPN app transport UIDs)</string>
++    <string name="lenos_radio_category">Radio</string>
++    <string name="lenos_lte_only">LTE-only radio</string>
++    <string name="lenos_lte_only_summary">Drops 2G and 3G radio code paths (the classic IMSI-catcher and downgrade surface) and keeps LTE/5G data. Turn off only when a legacy network is essential.</string>
++    <string name="lenos_captive_portal">Captive portal detection</string>
++    <string name="lenos_captive_portal_summary">Off by default: the device sends no connectivity probes and does not auto-open hotel or airport login pages. When on, probes go to Google endpoints (stock behavior).</string>
 +    <string name="lenos_apps_category">Applications</string>
 +    <string name="lenos_remove_apps">Remove system apps</string>
 +    <string name="lenos_remove_apps_summary">Uninstall non-critical system apps for this user</string>
@@ -42,16 +49,16 @@ index 0000000..66f93c2
 +    <string name="lenos_remove_confirm_text">Uninstalls for this user (user 0). An OTA or factory reset restores the app.</string>
 +    <string name="lenos_remove_action">Remove</string>
 +    <string name="lenos_remove_done">Removed %s</string>
-+    <string name="lenos_invalid_uids">Invalid list: use comma-separated numeric UIDs</string>
 +    <string name="lenos_remove_failed">Removal failed: %s</string>
 +    <string name="lenos_none_removable">No removable system apps</string>
++    <string name="lenos_invalid_uids">Invalid list: use comma-separated numeric UIDs</string>
 +</resources>
 diff --git a/res/xml/lenos_security_settings.xml b/res/xml/lenos_security_settings.xml
 new file mode 100644
-index 0000000..bf01095
+index 0000000..419157e
 --- /dev/null
 +++ b/res/xml/lenos_security_settings.xml
-@@ -0,0 +1,47 @@
+@@ -0,0 +1,67 @@
 +<?xml version="1.0" encoding="utf-8"?>
 +<PreferenceScreen
 +    xmlns:android="http://schemas.android.com/apk/res/android"
@@ -67,6 +74,11 @@ index 0000000..bf01095
 +            android:summary="@string/lenos_dns_enforce_summary"/>
 +
 +        <SwitchPreferenceCompat
++            android:key="lenos_ntp_shield"
++            android:title="Time-sync shield"
++            android:summary="@string/lenos_dns_time_summary"/>
++
++        <SwitchPreferenceCompat
 +            android:key="lenos_strict_firewall"
 +            android:title="@string/lenos_strict_firewall"
 +            android:summary="@string/lenos_strict_firewall_summary"/>
@@ -76,6 +88,21 @@ index 0000000..bf01095
 +            android:title="@string/lenos_vpn_uids"
 +            android:summary="@string/lenos_vpn_uids_summary"
 +            android:dialogTitle="@string/lenos_vpn_uids"/>
++    </PreferenceCategory>
++
++    <PreferenceCategory
++        android:key="lenos_radio_category"
++        android:title="@string/lenos_radio_category">
++
++        <SwitchPreferenceCompat
++            android:key="lenos_lte_only"
++            android:title="@string/lenos_lte_only"
++            android:summary="@string/lenos_lte_only_summary"/>
++
++        <SwitchPreferenceCompat
++            android:key="lenos_captive_portal"
++            android:title="@string/lenos_captive_portal"
++            android:summary="@string/lenos_captive_portal_summary"/>
 +    </PreferenceCategory>
 +
 +    <PreferenceCategory
@@ -271,20 +298,24 @@ index 0000000..3597218
 +}
 diff --git a/src/com/android/settings/lenos/LenosSecurityFragment.java b/src/com/android/settings/lenos/LenosSecurityFragment.java
 new file mode 100644
-index 0000000..fb8c17a
+index 0000000..b26b680
 --- /dev/null
 +++ b/src/com/android/settings/lenos/LenosSecurityFragment.java
-@@ -0,0 +1,95 @@
+@@ -0,0 +1,171 @@
 +/*
 + * lenOS security panel. Writes the enforcement state into Settings.Global;
 + * the lenos-netd daemon (shipped in system_ext) applies it kernel-side.
-+ * Keys: lenos_killswitch, lenos_strict_firewall, lenos_vpn_uids.
++ * Keys: lenos_killswitch, lenos_ntp_shield, lenos_strict_firewall,
++ * lenos_vpn_uids, lenos_captive_portal. The LTE-only radio switch talks to
++ * TelephonyManager directly (MODIFY_PHONE_STATE is declared by the Settings
++ * app and granted to the system UID).
 + */
 +package com.android.settings.lenos;
 +
 +import android.content.Context;
 +import android.os.Bundle;
 +import android.provider.Settings;
++import android.telephony.TelephonyManager;
 +import android.widget.Toast;
 +
 +import androidx.preference.EditTextPreference;
@@ -301,9 +332,34 @@ index 0000000..fb8c17a
 +public class LenosSecurityFragment extends SettingsPreferenceFragment {
 +
 +    private static final String KEY_KILLSWITCH = "lenos_killswitch";
++    private static final String KEY_NTP_SHIELD = "lenos_ntp_shield";
 +    private static final String KEY_STRICT = "lenos_strict_firewall";
 +    private static final String KEY_VPN_UIDS = "lenos_vpn_uids";
++    private static final String KEY_CAPTIVE = "lenos_captive_portal";
++    private static final String KEY_LTE_ONLY = "lenos_lte_only";
 +    private static final Pattern UID_LIST = Pattern.compile("[0-9]*(,[0-9]+)*");
++
++    private static final long LTE_NR_ONLY =
++            TelephonyManager.NETWORK_TYPE_BITMASK_LTE
++            | TelephonyManager.NETWORK_TYPE_BITMASK_NR;
++
++    private static final long ALL_NETWORK_TYPES =
++            TelephonyManager.NETWORK_TYPE_BITMASK_GSM
++            | TelephonyManager.NETWORK_TYPE_BITMASK_GPRS
++            | TelephonyManager.NETWORK_TYPE_BITMASK_EDGE
++            | TelephonyManager.NETWORK_TYPE_BITMASK_CDMA
++            | TelephonyManager.NETWORK_TYPE_BITMASK_1XRTT
++            | TelephonyManager.NETWORK_TYPE_BITMASK_IDEN
++            | TelephonyManager.NETWORK_TYPE_BITMASK_EVDO_0
++            | TelephonyManager.NETWORK_TYPE_BITMASK_EVDO_A
++            | TelephonyManager.NETWORK_TYPE_BITMASK_EVDO_B
++            | TelephonyManager.NETWORK_TYPE_BITMASK_UMTS
++            | TelephonyManager.NETWORK_TYPE_BITMASK_TD_SCDMA
++            | TelephonyManager.NETWORK_TYPE_BITMASK_HSDPA
++            | TelephonyManager.NETWORK_TYPE_BITMASK_HSUPA
++            | TelephonyManager.NETWORK_TYPE_BITMASK_HSPAP
++            | TelephonyManager.NETWORK_TYPE_BITMASK_LTE
++            | TelephonyManager.NETWORK_TYPE_BITMASK_NR;
 +
 +    public String getLogTag() {
 +        return "LenosSecurity";
@@ -319,12 +375,20 @@ index 0000000..fb8c17a
 +        addPreferencesFromResource(R.xml.lenos_security_settings);
 +
 +        final Context context = getContext();
++
 +        final SwitchPreferenceCompat kill =
 +                (SwitchPreferenceCompat) findPreference(KEY_KILLSWITCH);
 +        kill.setChecked(Settings.Global.getInt(
 +                context.getContentResolver(), KEY_KILLSWITCH, 1) != 0);
 +        kill.setOnPreferenceChangeListener((preference, newValue) ->
 +                putGlobal(KEY_KILLSWITCH, (Boolean) newValue ? "1" : "0"));
++
++        final SwitchPreferenceCompat ntp =
++                (SwitchPreferenceCompat) findPreference(KEY_NTP_SHIELD);
++        ntp.setChecked(Settings.Global.getInt(
++                context.getContentResolver(), KEY_NTP_SHIELD, 1) != 0);
++        ntp.setOnPreferenceChangeListener((preference, newValue) ->
++                putGlobal(KEY_NTP_SHIELD, (Boolean) newValue ? "1" : "0"));
 +
 +        final SwitchPreferenceCompat strict =
 +                (SwitchPreferenceCompat) findPreference(KEY_STRICT);
@@ -349,6 +413,17 @@ index 0000000..fb8c17a
 +            return putGlobal(KEY_VPN_UIDS, value);
 +        });
 +
++        final SwitchPreferenceCompat captive =
++                (SwitchPreferenceCompat) findPreference(KEY_CAPTIVE);
++        captive.setChecked(Settings.Global.getInt(
++                context.getContentResolver(), "captive_portal_mode", 2) == 0);
++        captive.setOnPreferenceChangeListener((preference, newValue) ->
++                putGlobal("captive_portal_mode", (Boolean) newValue ? "0" : "2"));
++
++        final SwitchPreferenceCompat lte =
++                (SwitchPreferenceCompat) findPreference(KEY_LTE_ONLY);
++        bindLteOnly(context, lte);
++
 +        final Preference remove = findPreference("lenos_remove_apps");
 +        remove.setOnPreferenceClickListener(preference -> {
 +            new SubSettingLauncher(context)
@@ -356,6 +431,34 @@ index 0000000..fb8c17a
 +                    .setSourceMetricsCategory(getMetricsCategory())
 +                    .launch();
 +            return true;
++        });
++    }
++
++    private void bindLteOnly(Context context, SwitchPreferenceCompat lte) {
++        boolean on = false;
++        try {
++            final TelephonyManager tm =
++                    context.getSystemService(TelephonyManager.class);
++            final long mask = tm.getAllowedNetworkTypesForReason(
++                    TelephonyManager.ALLOWED_NETWORK_TYPES_REASON_USER);
++            on = mask != 0 && (mask & ~LTE_NR_ONLY) == 0;
++        } catch (RuntimeException e) {
++            lte.setEnabled(false);
++        }
++        lte.setChecked(on);
++        lte.setOnPreferenceChangeListener((preference, newValue) -> {
++            try {
++                final TelephonyManager tm =
++                        context.getSystemService(TelephonyManager.class);
++                tm.setAllowedNetworkTypesForReason(
++                        TelephonyManager.ALLOWED_NETWORK_TYPES_REASON_USER,
++                        (Boolean) newValue ? LTE_NR_ONLY : ALL_NETWORK_TYPES);
++                return true;
++            } catch (RuntimeException e) {
++                Toast.makeText(context, "Radio change failed: " + e.getMessage(),
++                        Toast.LENGTH_LONG).show();
++                return false;
++            }
 +        });
 +    }
 +

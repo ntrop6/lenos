@@ -1,6 +1,14 @@
 # lenOS network enforcement. The daemon applies lenOS-owned iptables and
 # ip6tables chains and re-evaluates its state from the Settings.Global
 # database; toggles are written from the lenOS panel in the Settings app.
+#
+# Started as early as post-fs-data so DNS and time-sync are already blocked
+# during the boot window (the state file is unreadable before first unlock;
+# the daemon then applies the fail-closed defaults) and restarted/refreshed
+# once boot completes.
+on post-fs-data
+    start lenos-netd
+
 on property:sys.boot_completed=1
     start lenos-netd
 

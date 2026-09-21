@@ -1,0 +1,35 @@
+From: lenOS <security@lenos.invalid>
+Subject: [PATCH] lenOS: strip build id and timezone from screenshot metadata
+
+GrapheneOS-derived "private screenshots": the stock exporter stamps
+TAG_SOFTWARE with the OS build display id and TAG_OFFSET_TIME_ORIGINAL
+with the capture timezone; both correlate a shared screenshot with the
+exact build and the current location. Width/height and local capture
+time are kept (user-facing value); the per-capture random UUID stays
+(never repeats, cannot track).
+
+diff --git a/packages/SystemUI/src/com/android/systemui/screenshot/ImageExporter.java b/packages/SystemUI/src/com/android/systemui/screenshot/ImageExporter.java
+index 3fb02cc..3ec666a 100644
+--- a/packages/SystemUI/src/com/android/systemui/screenshot/ImageExporter.java
++++ b/packages/SystemUI/src/com/android/systemui/screenshot/ImageExporter.java
+@@ -517,17 +517,17 @@ public class ImageExporter {
+             ZonedDateTime captureTime) {
+         exif.setAttribute(ExifInterface.TAG_IMAGE_UNIQUE_ID, uniqueId.toString());
+ 
+-        exif.setAttribute(ExifInterface.TAG_SOFTWARE, "Android " + Build.DISPLAY);
++        // lenOS: no build display id in screenshot metadata.
+         exif.setAttribute(ExifInterface.TAG_IMAGE_WIDTH, Integer.toString(width));
+         exif.setAttribute(ExifInterface.TAG_IMAGE_LENGTH, Integer.toString(height));
+ 
+         String dateTime = DateTimeFormatter.ofPattern("yyyy:MM:dd HH:mm:ss").format(captureTime);
+         String subSec = DateTimeFormatter.ofPattern("SSS").format(captureTime);
+-        String timeZone = DateTimeFormatter.ofPattern("xxx").format(captureTime);
+ 
+         exif.setAttribute(ExifInterface.TAG_DATETIME_ORIGINAL, dateTime);
+         exif.setAttribute(ExifInterface.TAG_SUBSEC_TIME_ORIGINAL, subSec);
+-        exif.setAttribute(ExifInterface.TAG_OFFSET_TIME_ORIGINAL, timeZone);
++        // lenOS: no capture timezone offset in screenshot metadata (the offset
++        // correlates with the device's current location when images are shared).
+     }
+ 
+     static String getMimeType(CompressFormat format) {

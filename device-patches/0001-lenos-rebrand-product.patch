@@ -1,7 +1,7 @@
-From ce618c7a1aae5ff5a2ebe1e60e0dc162e2cec715 Mon Sep 17 00:00:00 2001
+From 63e213b43ec42c8bf941430cdbe6e1ec71953c65 Mon Sep 17 00:00:00 2001
 From: lenOS <lenos@lenos.invalid>
-Date: Mon, 21 Sep 2026 02:31:34 +0300
-Subject: [PATCH] lenOS: rename product to lenos_asteroids
+Date: Mon, 21 Sep 2026 17:24:07 +0300
+Subject: [PATCH 1/5] lenOS: rename product to lenos_asteroids
 
 Renames the product makefile, points AndroidProducts at it, and inherits
 the lenOS integration makefile. The booted image keeps the upstream stock

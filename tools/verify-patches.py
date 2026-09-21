@@ -36,7 +36,7 @@ def validate_patch(path: Path):
     text = path.read_text()
     if path.parent.name == "device-patches":
         check(text.startswith("From "), f"{path.name}: git-am header")
-        check("Subject: [PATCH]" in text, f"{path.name}: git-am subject")
+        check("Subject: [PATCH" in text, f"{path.name}: git-am subject")
     else:
         check("From: lenOS <security@lenos.invalid>" in text,
               f"{path.name}: lenOS author header")
@@ -64,7 +64,7 @@ def validate_patch(path: Path):
 def main() -> int:
     for d, label in (("patches", "platform"), ("device-patches", "device")):
         paths = sorted((ROOT / d).glob("*.patch"))
-        check(len(paths) >= 14 if d == "patches" else len(paths) == 4,
+        check(len(paths) >= 15 if d == "patches" else len(paths) == 5,
               f"{d}: expected patch count ({len(paths)})")
         for p in paths:
             validate_patch(p)

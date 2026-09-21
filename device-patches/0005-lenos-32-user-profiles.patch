@@ -1,0 +1,82 @@
+From 8c40f360750f19aa4d2c7d29253a02edd3143dfe Mon Sep 17 00:00:00 2001
+From: lenOS <lenos@lenos.invalid>
+Date: Mon, 21 Sep 2026 17:24:07 +0300
+Subject: [PATCH 5/5] lenOS: enable 32 user profiles via framework overlay
+
+Adds a static framework-res RRO raising config_multiuserMaximumUsers to
+32 (GrapheneOS parity) and registers it from the lenOS integration
+makefile. Secondary users and the work-profile compartmentalization UI
+become available on the device.
+---
+ lenos.mk                                            |  5 +++++
+ rro_overlays/LenosFrameworkResOverlay/Android.bp    |  9 +++++++++
+ .../LenosFrameworkResOverlay/AndroidManifest.xml    | 13 +++++++++++++
+ .../LenosFrameworkResOverlay/res/values/config.xml  |  7 +++++++
+ 4 files changed, 34 insertions(+)
+ create mode 100644 rro_overlays/LenosFrameworkResOverlay/Android.bp
+ create mode 100644 rro_overlays/LenosFrameworkResOverlay/AndroidManifest.xml
+ create mode 100644 rro_overlays/LenosFrameworkResOverlay/res/values/config.xml
+
+diff --git a/lenos.mk b/lenos.mk
+index 5b3e93a..e2cd863 100644
+--- a/lenos.mk
++++ b/lenos.mk
+@@ -52,3 +52,8 @@ PRODUCT_COPY_FILES += \
+ # The kernel hardening fragment referenced by BoardConfig
+ # (vendor/lenos_hardening.config) is written into the kernel tree by the
+ # lenOS integrator; the profile (standard/full/strict) selects its content.
++
++# Multi-user support at GrapheneOS parity: raise the phone user cap so the
++# work-profile/secondary-user compartmentalization UI is available.
++PRODUCT_PACKAGES += \
++    LenosFrameworkResOverlay
+diff --git a/rro_overlays/LenosFrameworkResOverlay/Android.bp b/rro_overlays/LenosFrameworkResOverlay/Android.bp
+new file mode 100644
+index 0000000..2647038
+--- /dev/null
++++ b/rro_overlays/LenosFrameworkResOverlay/Android.bp
+@@ -0,0 +1,9 @@
++//
++// SPDX-FileCopyrightText: 2026 lenOS contributors
++// SPDX-License-Identifier: MIT
++//
++
++runtime_resource_overlay {
++    name: "LenosFrameworkResOverlay",
++    device_specific: true,
++}
+diff --git a/rro_overlays/LenosFrameworkResOverlay/AndroidManifest.xml b/rro_overlays/LenosFrameworkResOverlay/AndroidManifest.xml
+new file mode 100644
+index 0000000..1647f68
+--- /dev/null
++++ b/rro_overlays/LenosFrameworkResOverlay/AndroidManifest.xml
+@@ -0,0 +1,13 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!--
++     SPDX-FileCopyrightText: 2026 lenOS contributors
++     SPDX-License-Identifier: MIT
++-->
++<manifest xmlns:android="http://schemas.android.com/apk/res/android"
++    package="org.lenos.frameworkres.overlay">
++
++    <overlay
++        android:isStatic="true"
++        android:priority="800"
++        android:targetPackage="android" />
++</manifest>
+diff --git a/rro_overlays/LenosFrameworkResOverlay/res/values/config.xml b/rro_overlays/LenosFrameworkResOverlay/res/values/config.xml
+new file mode 100644
+index 0000000..0352ec2
+--- /dev/null
++++ b/rro_overlays/LenosFrameworkResOverlay/res/values/config.xml
+@@ -0,0 +1,7 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <!-- lenOS: user-profile support at GrapheneOS parity (32 profiles
++         instead of the phone default of a few). Profiles are the strongest
++         practical compartmentalization tool on a rooted phone. -->
++    <integer name="config_multiuserMaximumUsers">32</integer>
++</resources>
+-- 
+2.55.0
+

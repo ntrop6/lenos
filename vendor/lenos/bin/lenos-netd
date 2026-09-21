@@ -8,14 +8,25 @@
 #
 #   lenos_killswitch       1 (default)  reject plaintext DNS (UDP/TCP 53)
 #                                       outside loopback and tun interfaces
+#   lenos_ntp_shield       1 (default)  additionally reject NTP (UDP 123)
+#                                       outside tun interfaces: clock
+#                                       disclosure stays off the open net
 #   lenos_strict_firewall  0 (default)  default-drop all output except
 #                                       loopback, established connections,
 #                                       tun interfaces and allowed UIDs
+#                                       (implies mDNS/SSDP and NTP drops)
 #   lenos_vpn_uids         ""           comma-separated UIDs allowed outside
 #                                       tun interfaces while strict is on
 #
-# Owned chains: lenos_dns_block, lenos_strict. Fail-open semantics: if this
-# daemon dies between re-applies, previously applied rules persist.
+# One-time first-boot seeding: captive_portal_mode=2 (ignore) — the device
+# sends no connectivity probes and does not auto-open captive portals; the
+# toggle lives in the lenOS panel. uid 0 is granted WRITE_SECURE_SETTINGS
+# by the permission service.
+#
+# Owned chains: lenos_dns_block (baseline), lenos_strict. Fail-open
+# semantics: if this daemon dies between re-applies, previously applied
+# rules persist; it re-evaluates every 10 s. Started from post-fs-data:
+# before the settings file exists, the fail-closed defaults apply.
 #
 
 INTERVAL=10
@@ -32,6 +43,15 @@ get_setting() {
     printf '%s' "$_v"
 }
 
+seed_defaults() {
+    # Idempotent one-time defaults. Only runs once the settings database is
+    # readable; keys the user (or panel) has already set are never touched.
+    [ -r "$SETTINGS_XML" ] || return 0
+    if ! grep -q 'name="captive_portal_mode"' "$SETTINGS_XML" 2>/dev/null; then
+        cmd settings put global captive_portal_mode 2 2>/dev/null || true
+    fi
+}
+
 ensure_jump() {
     iptables  -w -C OUTPUT -j "$1" 2>/dev/null || iptables  -w -I OUTPUT 1 -j "$1"
     ip6tables -w -C OUTPUT -j "$1" 2>/dev/null || ip6tables -w -I OUTPUT 1 -j "$1"
@@ -42,7 +62,9 @@ remove_jump() {
     while ip6tables -w -C OUTPUT -j "$1" 2>/dev/null; do ip6tables -w -D OUTPUT -j "$1"; done
 }
 
-apply_dns() {
+apply_baseline() {
+    # Baseline chain: plaintext DNS and (shielded) time sync never leave the
+    # device except through loopback or a VPN tunnel.
     iptables  -w -N lenos_dns_block 2>/dev/null
     ip6tables -w -N lenos_dns_block 2>/dev/null
     iptables  -w -F lenos_dns_block
@@ -56,6 +78,10 @@ apply_dns() {
         ip6tables -w -A lenos_dns_block -o tun+ -j RETURN
         ip6tables -w -A lenos_dns_block -p udp -m udp --dport 53 -j REJECT
         ip6tables -w -A lenos_dns_block -p tcp -m tcp --dport 53 -j REJECT
+    fi
+    if [ "$ntp" = "1" ]; then
+        iptables  -w -A lenos_dns_block -p udp -m udp --dport 123 -j REJECT
+        ip6tables -w -A lenos_dns_block -p udp -m udp --dport 123 -j REJECT
     fi
     ensure_jump lenos_dns_block
 }
@@ -88,14 +114,20 @@ apply_strict() {
     fi
 }
 
+seeded=0
 prev=""
 while :; do
+    if [ "$seeded" = 0 ] && [ -r "$SETTINGS_XML" ]; then
+        seed_defaults
+        seeded=1
+    fi
     dns=$(get_setting lenos_killswitch 1)
+    ntp=$(get_setting lenos_ntp_shield 1)
     strict=$(get_setting lenos_strict_firewall 0)
     uids=$(get_setting lenos_vpn_uids "")
-    state="$dns|$strict|$uids"
+    state="$dns|$ntp|$strict|$uids"
     if [ "$state" != "$prev" ]; then
-        apply_dns
+        apply_baseline
         apply_strict
         prev="$state"
     fi

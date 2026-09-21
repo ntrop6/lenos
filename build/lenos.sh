@@ -178,6 +178,7 @@ patch_repo() {
         0012-wifitracker-*) echo frameworks/opt/net/wifi ;;
         0013-settings-*) echo packages/apps/Settings ;;
         0014-settings-*) echo packages/apps/Settings ;;
+        0015-screenshot-*) echo frameworks/base ;;
         *) die "unknown patch: $1" ;;
     esac
 }
@@ -217,7 +218,7 @@ cmd_integrate() {
     ok "device patches applied ($(ls "$ROOT"/device-patches/*.patch | wc -l) commits)"
 
     # Framework patches: plain git apply with applied/absent/conflict states.
-    local want_from=1 want_to=14
+    local want_from=1 want_to=15
     case "$profile" in
         none)    want_from=0; want_to=0 ;;
         standard) want_from=4 ;;

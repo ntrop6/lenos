@@ -1,7 +1,7 @@
-From de1be1515bfef300f7615a85004d8baf540663cb Mon Sep 17 00:00:00 2001
+From f8d2f88bb7c9e5853e35d2ba89335cdcbade7340 Mon Sep 17 00:00:00 2001
 From: lenOS <lenos@lenos.invalid>
-Date: Mon, 21 Sep 2026 02:31:34 +0300
-Subject: [PATCH] lenOS: integration makefile
+Date: Mon, 21 Sep 2026 17:24:07 +0300
+Subject: [PATCH 2/5] lenOS: integration makefile
 
 Adds the lenOS product integration: build-time removal of camera/browser/
 SIM toolkit/gallery/contacts/recorder/calendar (plus Lineage music and

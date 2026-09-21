@@ -16,6 +16,14 @@ when an app is (re)installed, so uninstall/reinstall breaks a tracking key.
   copy yet — write it, don't paste it.
 - Risk: settings database migrations; test upgrade paths.
 
+## 1b. Longer lockscreen passwords (128 chars)
+
+GrapheneOS raises the password cap from 16 to 128. Bounded investigation
+against the pinned tree found no length cap in `LockSettingsService`,
+`LockPatternUtils`, `LockscreenCredential`, or `ChooseLockPassword`; locate
+the actual enforcement site (likely keyguard input or `PasswordMetrics`)
+before authoring. Do not guess.
+
 ## 2. Cromite as the system WebView
 
 `arm64_SystemWebView.apk` exists in the pinned Cromite release. Swapping the
