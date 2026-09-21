@@ -16,4 +16,5 @@ service lenos-netd /system_ext/bin/lenos-netd
     user root
     group root
     seclabel u:r:lenos_netd:s0
+    stdio_to_klog
     oneshot

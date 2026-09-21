@@ -18,10 +18,13 @@
 #   lenos_vpn_uids         ""           comma-separated UIDs allowed outside
 #                                       tun interfaces while strict is on
 #
-# One-time first-boot seeding: captive_portal_mode=2 (ignore) — the device
-# sends no connectivity probes and does not auto-open captive portals; the
-# toggle lives in the lenOS panel. uid 0 is granted WRITE_SECURE_SETTINGS
-# by the permission service.
+# One-time first-boot seeding: captive_portal_mode=0 (IGNORE) — the only
+# documented value that disables detection entirely: no probes, no portal
+# auto-open, no disconnects. 1 is the stock default (PROMPT; probes go to
+# Google endpoints), 2 is AVOID (disconnect and blacklist portal networks —
+# NOT probe-free). uid 0 is granted WRITE_SECURE_SETTINGS by the permission
+# service; failures are visible in the kernel log (stdio_to_klog) and the
+# seed retries every cycle until the key exists.
 #
 # Owned chains: lenos_dns_block (baseline), lenos_strict. Fail-open
 # semantics: if this daemon dies between re-applies, previously applied
@@ -44,11 +47,14 @@ get_setting() {
 }
 
 seed_defaults() {
-    # Idempotent one-time defaults. Only runs once the settings database is
-    # readable; keys the user (or panel) has already set are never touched.
+    # Defaults for strong network privacy. Only writes keys that are still
+    # absent, so panel toggles are never overridden; retried each cycle
+    # until the key exists so a transient boot failure cannot leave the
+    # default silently unset.
     [ -r "$SETTINGS_XML" ] || return 0
     if ! grep -q 'name="captive_portal_mode"' "$SETTINGS_XML" 2>/dev/null; then
-        cmd settings put global captive_portal_mode 2 2>/dev/null || true
+        cmd settings put global captive_portal_mode 0 2>/dev/null \
+            || echo "lenos-netd: seeding captive_portal_mode failed (will retry)"
     fi
 }
 
@@ -114,13 +120,9 @@ apply_strict() {
     fi
 }
 
-seeded=0
 prev=""
 while :; do
-    if [ "$seeded" = 0 ] && [ -r "$SETTINGS_XML" ]; then
-        seed_defaults
-        seeded=1
-    fi
+    seed_defaults
     dns=$(get_setting lenos_killswitch 1)
     ntp=$(get_setting lenos_ntp_shield 1)
     strict=$(get_setting lenos_strict_firewall 0)

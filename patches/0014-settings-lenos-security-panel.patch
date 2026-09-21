@@ -4,9 +4,11 @@ Subject: [PATCH] lenOS: security panel at the top of Settings
 Adds a lenOS category above every other homepage category, opening a
 fragment with: DNS enforcement and time-sync shield toggles, the strict
 firewall with VPN UID allowlist, an LTE-only radio switch (drops the
-2G/3G downgrade surface via TelephonyManager, a GrapheneOS LTE-only
-parity item), a captive-portal detection switch (default off: zero
-connectivity probes), and system app removal for user 0.
+2G/3G downgrade surface via TelephonyManager; GrapheneOS LTE-only is
+partial here — 5G stays), a captive-portal detection switch (default
+off: Settings.Global captive_portal_mode=0 IGNORE, the only documented
+probe-free value; on writes 1 PROMPT, the stock behavior), and system
+app removal for user 0.
 
 State lives in Settings.Global; the lenos-netd daemon in system_ext
 applies it kernel-side. The Settings app already declares
@@ -298,10 +300,10 @@ index 0000000..3597218
 +}
 diff --git a/src/com/android/settings/lenos/LenosSecurityFragment.java b/src/com/android/settings/lenos/LenosSecurityFragment.java
 new file mode 100644
-index 0000000..b26b680
+index 0000000..5fe32e7
 --- /dev/null
 +++ b/src/com/android/settings/lenos/LenosSecurityFragment.java
-@@ -0,0 +1,171 @@
+@@ -0,0 +1,196 @@
 +/*
 + * lenOS security panel. Writes the enforcement state into Settings.Global;
 + * the lenos-netd daemon (shipped in system_ext) applies it kernel-side.
@@ -337,18 +339,22 @@ index 0000000..b26b680
 +    private static final String KEY_VPN_UIDS = "lenos_vpn_uids";
 +    private static final String KEY_CAPTIVE = "lenos_captive_portal";
 +    private static final String KEY_LTE_ONLY = "lenos_lte_only";
++    private static final String KEY_LTE_SAVED = "lenos_lte_saved";
 +    private static final Pattern UID_LIST = Pattern.compile("[0-9]*(,[0-9]+)*");
 +
 +    private static final long LTE_NR_ONLY =
 +            TelephonyManager.NETWORK_TYPE_BITMASK_LTE
 +            | TelephonyManager.NETWORK_TYPE_BITMASK_NR;
 +
++    // Every real radio type in the pinned TelephonyManager (IWLAN and
++    // UNKNOWN excluded; NETWORK_TYPE_BITMASK_1xRTT is spelled with a
++    // lowercase x).
 +    private static final long ALL_NETWORK_TYPES =
 +            TelephonyManager.NETWORK_TYPE_BITMASK_GSM
 +            | TelephonyManager.NETWORK_TYPE_BITMASK_GPRS
 +            | TelephonyManager.NETWORK_TYPE_BITMASK_EDGE
 +            | TelephonyManager.NETWORK_TYPE_BITMASK_CDMA
-+            | TelephonyManager.NETWORK_TYPE_BITMASK_1XRTT
++            | TelephonyManager.NETWORK_TYPE_BITMASK_1xRTT
 +            | TelephonyManager.NETWORK_TYPE_BITMASK_IDEN
 +            | TelephonyManager.NETWORK_TYPE_BITMASK_EVDO_0
 +            | TelephonyManager.NETWORK_TYPE_BITMASK_EVDO_A
@@ -358,7 +364,10 @@ index 0000000..b26b680
 +            | TelephonyManager.NETWORK_TYPE_BITMASK_HSDPA
 +            | TelephonyManager.NETWORK_TYPE_BITMASK_HSUPA
 +            | TelephonyManager.NETWORK_TYPE_BITMASK_HSPAP
++            | TelephonyManager.NETWORK_TYPE_BITMASK_HSPA
++            | TelephonyManager.NETWORK_TYPE_BITMASK_EHRPD
 +            | TelephonyManager.NETWORK_TYPE_BITMASK_LTE
++            | TelephonyManager.NETWORK_TYPE_BITMASK_LTE_CA
 +            | TelephonyManager.NETWORK_TYPE_BITMASK_NR;
 +
 +    public String getLogTag() {
@@ -413,12 +422,21 @@ index 0000000..b26b680
 +            return putGlobal(KEY_VPN_UIDS, value);
 +        });
 +
++        // captive_portal_mode per Settings.Global javadoc: 0 = IGNORE (no
++        // detection, no probes), 1 = PROMPT (stock default; probes go to
++        // Google), 2 = AVOID (disconnect and blacklist portal networks).
++        // The switch is ON for detection (1), OFF for none (0); the AOSP
++        // default when the key is unset is PROMPT, so unset reads as ON.
 +        final SwitchPreferenceCompat captive =
 +                (SwitchPreferenceCompat) findPreference(KEY_CAPTIVE);
 +        captive.setChecked(Settings.Global.getInt(
-+                context.getContentResolver(), "captive_portal_mode", 2) == 0);
++                context.getContentResolver(), "captive_portal_mode",
++                Settings.Global.CAPTIVE_PORTAL_MODE_PROMPT)
++                != Settings.Global.CAPTIVE_PORTAL_MODE_IGNORE);
 +        captive.setOnPreferenceChangeListener((preference, newValue) ->
-+                putGlobal("captive_portal_mode", (Boolean) newValue ? "0" : "2"));
++                putGlobal("captive_portal_mode", (Boolean) newValue
++                        ? String.valueOf(Settings.Global.CAPTIVE_PORTAL_MODE_PROMPT)
++                        : String.valueOf(Settings.Global.CAPTIVE_PORTAL_MODE_IGNORE)));
 +
 +        final SwitchPreferenceCompat lte =
 +                (SwitchPreferenceCompat) findPreference(KEY_LTE_ONLY);
@@ -435,24 +453,33 @@ index 0000000..b26b680
 +    }
 +
 +    private void bindLteOnly(Context context, SwitchPreferenceCompat lte) {
-+        boolean on = false;
-+        try {
-+            final TelephonyManager tm =
-+                    context.getSystemService(TelephonyManager.class);
-+            final long mask = tm.getAllowedNetworkTypesForReason(
-+                    TelephonyManager.ALLOWED_NETWORK_TYPES_REASON_USER);
-+            on = mask != 0 && (mask & ~LTE_NR_ONLY) == 0;
-+        } catch (RuntimeException e) {
-+            lte.setEnabled(false);
-+        }
++        boolean on = Settings.Global.getInt(
++                context.getContentResolver(), KEY_LTE_ONLY, 0) != 0;
 +        lte.setChecked(on);
 +        lte.setOnPreferenceChangeListener((preference, newValue) -> {
++            final TelephonyManager tm = context.getSystemService(TelephonyManager.class);
 +            try {
-+                final TelephonyManager tm =
-+                        context.getSystemService(TelephonyManager.class);
-+                tm.setAllowedNetworkTypesForReason(
-+                        TelephonyManager.ALLOWED_NETWORK_TYPES_REASON_USER,
-+                        (Boolean) newValue ? LTE_NR_ONLY : ALL_NETWORK_TYPES);
++                if ((Boolean) newValue) {
++                    // Remember the unrestricted mask so switching back
++                    // restores exactly what the carrier config allowed.
++                    final long saved = tm.getAllowedNetworkTypesForReason(
++                            TelephonyManager.ALLOWED_NETWORK_TYPES_REASON_USER);
++                    putGlobal(KEY_LTE_SAVED, String.valueOf(saved));
++                    tm.setAllowedNetworkTypesForReason(
++                            TelephonyManager.ALLOWED_NETWORK_TYPES_REASON_USER,
++                            LTE_NR_ONLY);
++                } else {
++                    long restore;
++                    try {
++                        restore = Long.parseLong(Settings.Global.getString(
++                                context.getContentResolver(), KEY_LTE_SAVED));
++                    } catch (RuntimeException notSet) {
++                        restore = ALL_NETWORK_TYPES;
++                    }
++                    tm.setAllowedNetworkTypesForReason(
++                            TelephonyManager.ALLOWED_NETWORK_TYPES_REASON_USER,
++                            restore);
++                }
 +                return true;
 +            } catch (RuntimeException e) {
 +                Toast.makeText(context, "Radio change failed: " + e.getMessage(),
