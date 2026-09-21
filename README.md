@@ -26,7 +26,7 @@ source.
 | Sensors | `OTHER_SENSORS` runtime permission, SensorService enforcement | patches 0001/0002/0003 |
 | Privacy surface | Screenshots carry no OS build id and no capture timezone (EXIF stripped) | patch 0015 |
 | Radio | LTE-only radio toggle (drops the 2G/3G downgrade surface), via TelephonyManager | patch 0014 (Settings panel) |
-| Probes | Captive-portal detection off by default — zero connectivity probes, ever | lenos-netd seed + panel toggle |
+| Probes | Captive-portal detection off by default — zero connectivity probes, ever | panel first-open seed + toggle |
 | Network | Plaintext DNS (UDP+TCP/53) **and** NTP (UDP/123) blocked kernel-side at all times, from `post-fs-data` (no boot-window leak); optional strict output killswitch (allow only tun/loopback/VPN UIDs) | vendor/lenos firewall + sepolicy |
 | Identity | The image presents the upstream stock Nothing build identity: no lenOS display ID, no `ro.lenos.*` props, no lenOS package names | device-patches |
 | Apps | Camera, browser, SIM toolkit, gallery, contacts, recorder, calendar removed at build; Cromite shipped; the rest uninstallable | device-patches + Settings panel |
@@ -87,8 +87,20 @@ key, a relocked device is a paperweight.
    `init_boot.img`, `vendor_boot.img`, `recovery.img` plus the super_empty
    image; follow avbroot's printed fastboot instructions (flash the signed
    images or the whole OTA via sideload).
-3. Boot, complete setup, confirm ReSukiSU shows LKM mode and root works.
-4. Relock: `fastboot flashing lock`. The device now verifies **your** key.
+3. **Before relocking**, install your AVB public key as the bootloader's
+   custom root of trust (Nothing supports `avb_custom_key`; verify against
+   your Nothing firmware's behavior):
+
+   ```bash
+   fastboot reboot-bootloader
+   fastboot erase avb_custom_key
+   fastboot flash avb_custom_key keys/avb.pkmd.bin
+   ```
+
+   Cross-check the flashed key against the hash recorded in
+   `release-info.txt` ("avb public key (PKMD) sha256").
+4. Boot, complete setup, confirm ReSukiSU shows LKM mode and root works.
+5. Relock: `fastboot flashing lock`. The device now verifies **your** key.
    Every subsequent lenOS OTA (signed with the same keys) installs cleanly.
 
 ## Repository layout
@@ -97,9 +109,10 @@ key, a relocked device is a paperweight.
 - `device-patches/` — `git am`-format commits against the pinned NullDebris
   device tree: rebrand, integration makefile, sepolicy, kernel fragment,
   32-user overlay.
-- `patches/` — the 13 GrapheneOS-derived platform patches, the lenOS Settings
-  panel (0014), and the screenshot-privacy patch (0015), authored against the
-  pinned revisions.
+- `patches/` — 13 platform patches (11 of them GrapheneOS-derived, with
+  per-patch provenance; 0004/0005 flip LineageOS-native defaults), the lenOS
+  Settings panel (0014), and the screenshot-privacy patch (0015), authored
+  against the pinned revisions.
 - `vendor/lenos/` — vendored runtime: init rc files, firewall daemon,
   Cromite import + pinned fetcher.
 - `tools/` — signing/verification tooling, bootanimation generator,

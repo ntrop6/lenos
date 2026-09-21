@@ -4,14 +4,16 @@ Subject: [PATCH] lenOS: security panel at the top of Settings
 Adds a lenOS category above every other homepage category, opening a
 fragment with: DNS enforcement and time-sync shield toggles, the strict
 firewall with VPN UID allowlist, an LTE-only radio switch (drops the
-2G/3G downgrade surface via TelephonyManager; GrapheneOS LTE-only is
-partial here — 5G stays), a captive-portal detection switch (default
-off: Settings.Global captive_portal_mode=0 IGNORE, the only documented
-probe-free value; on writes 1 PROMPT, the stock behavior), and system
-app removal for user 0.
+2G/3G downgrade surface via TelephonyManager; partial GrapheneOS
+LTE-only parity — 5G stays; the unrestricted mask is snapshotted once
+and restored on disable; the switch state persists in Settings.Global
+so the UI cannot desync), a captive-portal detection switch (the panel
+also performs the one privileged first-open write: captive_portal_mode=0
+IGNORE, the only probe-free value; on writes 1 PROMPT), and system app
+removal for user 0 with a critical-component denylist.
 
-State lives in Settings.Global; the lenos-netd daemon in system_ext
-applies it kernel-side. The Settings app already declares
+State lives in Settings.Global; the lenos-netd daemon in system_ext is
+iptables-only and reads the same keys. The Settings app already declares
 WRITE_SECURE_SETTINGS, DELETE_PACKAGES and MODIFY_PHONE_STATE and runs
 as the system UID, so no manifest or privapp whitelist changes are
 required. No lenOS strings enter build props; the panel strings live
@@ -300,10 +302,10 @@ index 0000000..3597218
 +}
 diff --git a/src/com/android/settings/lenos/LenosSecurityFragment.java b/src/com/android/settings/lenos/LenosSecurityFragment.java
 new file mode 100644
-index 0000000..5fe32e7
+index 0000000..487215b
 --- /dev/null
 +++ b/src/com/android/settings/lenos/LenosSecurityFragment.java
-@@ -0,0 +1,196 @@
+@@ -0,0 +1,212 @@
 +/*
 + * lenOS security panel. Writes the enforcement state into Settings.Global;
 + * the lenos-netd daemon (shipped in system_ext) applies it kernel-side.
@@ -381,9 +383,19 @@ index 0000000..5fe32e7
 +
 +    @Override
 +    public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
-+        addPreferencesFromResource(R.xml.lenos_security_settings);
-+
 +        final Context context = getContext();
++
++        // First-open default: captive_portal_mode=0 (IGNORE — the only
++        // probe-free value per the Settings.Global javadoc) when the key
++        // has never been set. The lenOS firewall daemon is iptables-only
++        // and reads state; this panel performs the one privileged write.
++        if (Settings.Global.getString(
++                context.getContentResolver(), "captive_portal_mode") == null) {
++            putGlobal("captive_portal_mode",
++                    String.valueOf(Settings.Global.CAPTIVE_PORTAL_MODE_IGNORE));
++        }
++
++        addPreferencesFromResource(R.xml.lenos_security_settings);
 +
 +        final SwitchPreferenceCompat kill =
 +                (SwitchPreferenceCompat) findPreference(KEY_KILLSWITCH);
@@ -460,14 +472,19 @@ index 0000000..5fe32e7
 +            final TelephonyManager tm = context.getSystemService(TelephonyManager.class);
 +            try {
 +                if ((Boolean) newValue) {
-+                    // Remember the unrestricted mask so switching back
-+                    // restores exactly what the carrier config allowed.
-+                    final long saved = tm.getAllowedNetworkTypesForReason(
-+                            TelephonyManager.ALLOWED_NETWORK_TYPES_REASON_USER);
-+                    putGlobal(KEY_LTE_SAVED, String.valueOf(saved));
++                    if (Settings.Global.getInt(
++                            context.getContentResolver(), KEY_LTE_ONLY, 0) == 0) {
++                        // Snapshot the unrestricted mask exactly once, while
++                        // the restriction is still off; never overwrite it
++                        // with an already-restricted mask.
++                        final long saved = tm.getAllowedNetworkTypesForReason(
++                                TelephonyManager.ALLOWED_NETWORK_TYPES_REASON_USER);
++                        putGlobal(KEY_LTE_SAVED, String.valueOf(saved));
++                    }
 +                    tm.setAllowedNetworkTypesForReason(
 +                            TelephonyManager.ALLOWED_NETWORK_TYPES_REASON_USER,
 +                            LTE_NR_ONLY);
++                    putGlobal(KEY_LTE_ONLY, "1");
 +                } else {
 +                    long restore;
 +                    try {
@@ -479,6 +496,7 @@ index 0000000..5fe32e7
 +                    tm.setAllowedNetworkTypesForReason(
 +                            TelephonyManager.ALLOWED_NETWORK_TYPES_REASON_USER,
 +                            restore);
++                    putGlobal(KEY_LTE_ONLY, "0");
 +                }
 +                return true;
 +            } catch (RuntimeException e) {

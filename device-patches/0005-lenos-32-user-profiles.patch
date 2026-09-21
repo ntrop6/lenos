@@ -1,6 +1,6 @@
-From 8c40f360750f19aa4d2c7d29253a02edd3143dfe Mon Sep 17 00:00:00 2001
+From 1f3d4125c779275c243b53e844b1a3b94f0dc4c3 Mon Sep 17 00:00:00 2001
 From: lenOS <lenos@lenos.invalid>
-Date: Mon, 21 Sep 2026 17:24:07 +0300
+Date: Mon, 21 Sep 2026 18:51:59 +0300
 Subject: [PATCH 5/5] lenOS: enable 32 user profiles via framework overlay
 
 Adds a static framework-res RRO raising config_multiuserMaximumUsers to
@@ -18,10 +18,10 @@ become available on the device.
  create mode 100644 rro_overlays/LenosFrameworkResOverlay/res/values/config.xml
 
 diff --git a/lenos.mk b/lenos.mk
-index 5b3e93a..e2cd863 100644
+index 2411d51..03f00a6 100644
 --- a/lenos.mk
 +++ b/lenos.mk
-@@ -52,3 +52,8 @@ PRODUCT_COPY_FILES += \
+@@ -51,3 +51,8 @@ PRODUCT_COPY_FILES += \
  # The kernel hardening fragment referenced by BoardConfig
  # (vendor/lenos_hardening.config) is written into the kernel tree by the
  # lenOS integrator; the profile (standard/full/strict) selects its content.

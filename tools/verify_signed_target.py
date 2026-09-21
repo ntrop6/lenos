@@ -169,22 +169,52 @@ def unwrap_apex(data: bytes, name: str) -> bytes:
         raise AuditError(f"malformed compressed APEX {name}: {exc}") from exc
 
 
+def _apex_partition_name(avbtool: Path, image: Path, label: str) -> str:
+    # lenOS fix (vendored file was audited lenOS 2.8.1 tooling): avbtool's
+    # verify_image resolves hashtree descriptors relative to the CWD using
+    # the descriptor's Partition Name, NOT the --image path, so the payload
+    # must be materialized as "<partition name>.img" in the working
+    # directory. The partition name is read from info_image.
+    proc = subprocess.run(
+        [str(avbtool), "info_image", "--image", str(image)],
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        timeout=180,
+    )
+    m = re.search(r"^Partition Name:\s+(\S+)", proc.stdout, re.M)
+    if not m:
+        raise AuditError(
+            f"could not read the partition name from APEX payload {label}:\n{proc.stdout}"
+        )
+    return m.group(1)
+
+
 def verify_apex_payload(avbtool: Path, apex_data: bytes, key: Path, temp: Path, label: str) -> None:
     try:
         with zipfile.ZipFile(io.BytesIO(apex_data)) as zf:
             payload = zf.read("apex_payload.img")
     except (KeyError, zipfile.BadZipFile) as exc:
         raise AuditError(f"APEX {label} has no valid apex_payload.img: {exc}") from exc
-    image = temp / (hashlib.sha256(label.encode()).hexdigest() + ".img")
-    image.write_bytes(payload)
-    proc = subprocess.run(
-        [str(avbtool), "verify_image", "--image", str(image), "--key", str(key)],
-        text=True,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT,
-        timeout=180,
-    )
-    image.unlink(missing_ok=True)
+    probe = temp / "probe.img"
+    probe.write_bytes(payload)
+    try:
+        name = _apex_partition_name(avbtool, probe, label)
+        image = temp / f"{name}.img"
+        if image != probe:
+            probe.replace(image)
+        proc = subprocess.run(
+            [str(avbtool), "verify_image", "--image", str(image), "--key", str(key)],
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            timeout=180,
+            cwd=str(temp),
+        )
+    finally:
+        probe.unlink(missing_ok=True)
+        for stale in temp.glob("*.img"):
+            stale.unlink(missing_ok=True)
     if proc.returncode:
         raise AuditError(f"APEX payload key/content verification failed for {label}:\n{proc.stdout}")
 

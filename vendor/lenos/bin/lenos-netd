@@ -18,13 +18,13 @@
 #   lenos_vpn_uids         ""           comma-separated UIDs allowed outside
 #                                       tun interfaces while strict is on
 #
-# One-time first-boot seeding: captive_portal_mode=0 (IGNORE) — the only
+# One-time first-boot default: captive_portal_mode=0 (IGNORE) — the only
 # documented value that disables detection entirely: no probes, no portal
 # auto-open, no disconnects. 1 is the stock default (PROMPT; probes go to
 # Google endpoints), 2 is AVOID (disconnect and blacklist portal networks —
-# NOT probe-free). uid 0 is granted WRITE_SECURE_SETTINGS by the permission
-# service; failures are visible in the kernel log (stdio_to_klog) and the
-# seed retries every cycle until the key exists.
+# NOT probe-free). The write is performed by the lenOS panel on first open
+# (the Settings app holds WRITE_SECURE_SETTINGS); this daemon stays
+# iptables-only and only READS the state file.
 #
 # Owned chains: lenos_dns_block (baseline), lenos_strict. Fail-open
 # semantics: if this daemon dies between re-applies, previously applied
@@ -44,18 +44,6 @@ get_setting() {
     fi
     [ -z "$_v" ] && _v="$2"
     printf '%s' "$_v"
-}
-
-seed_defaults() {
-    # Defaults for strong network privacy. Only writes keys that are still
-    # absent, so panel toggles are never overridden; retried each cycle
-    # until the key exists so a transient boot failure cannot leave the
-    # default silently unset.
-    [ -r "$SETTINGS_XML" ] || return 0
-    if ! grep -q 'name="captive_portal_mode"' "$SETTINGS_XML" 2>/dev/null; then
-        cmd settings put global captive_portal_mode 0 2>/dev/null \
-            || echo "lenos-netd: seeding captive_portal_mode failed (will retry)"
-    fi
 }
 
 ensure_jump() {
@@ -122,7 +110,6 @@ apply_strict() {
 
 prev=""
 while :; do
-    seed_defaults
     dns=$(get_setting lenos_killswitch 1)
     ntp=$(get_setting lenos_ntp_shield 1)
     strict=$(get_setting lenos_strict_firewall 0)

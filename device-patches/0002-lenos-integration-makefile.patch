@@ -1,44 +1,44 @@
-From f8d2f88bb7c9e5853e35d2ba89335cdcbade7340 Mon Sep 17 00:00:00 2001
+From a1c0e07d08f417c8d59baa60f3eebf83a23d51a6 Mon Sep 17 00:00:00 2001
 From: lenOS <lenos@lenos.invalid>
-Date: Mon, 21 Sep 2026 17:24:07 +0300
+Date: Mon, 21 Sep 2026 18:51:59 +0300
 Subject: [PATCH 2/5] lenOS: integration makefile
 
-Adds the lenOS product integration: build-time removal of camera/browser/
-SIM toolkit/gallery/contacts/recorder/calendar (plus Lineage music and
-updater and their overlays), boot animation replacement, the vendored
-runtime (sysctl rc, network enforcement daemon) and the Cromite browser
-hook. Contains no lenOS-identifying build strings.
+Adds the lenOS product integration: the removal list (filtered at the tail
+of lenos_asteroids.mk because the Lineage inherits add these packages
+after this file is parsed), boot animation copies to /product/media under
+both candidate names, the vendored runtime (sysctl rc, network enforcement
+daemon), and the Cromite browser hook. Contains no lenOS-identifying
+build strings.
 ---
- lenos.mk | 54 ++++++++++++++++++++++++++++++++++++++++++++++++++++++
- 1 file changed, 54 insertions(+)
+ lenos.mk | 53 +++++++++++++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 53 insertions(+)
  create mode 100644 lenos.mk
 
 diff --git a/lenos.mk b/lenos.mk
 new file mode 100644
-index 0000000..5b3e93a
+index 0000000..2411d51
 --- /dev/null
 +++ b/lenos.mk
-@@ -0,0 +1,54 @@
+@@ -0,0 +1,53 @@
 +#
 +# SPDX-FileCopyrightText: 2026 lenOS contributors
 +# SPDX-License-Identifier: MIT
 +#
 +
-+# lenOS product integration. Everything here is additive except the two
-+# explicit removal filters. Files referenced from vendor/lenos are copied
-+# into the tree by the lenOS integrator before the build. Nothing in this
-+# file writes lenOS-identifying strings into the system image.
++# lenOS product integration. Everything here is additive except the app
++# removal performed at the tail of lenos_asteroids.mk (it must run after
++# every inherit). Files referenced from vendor/lenos are copied into the
++# tree by the lenOS integrator before the build. Nothing in this file
++# writes lenOS-identifying strings into the system image.
 +
 +# Cromite browser (presigned prebuilt, sha256-pinned; see
 +# tools/fetch-cromite.sh). Skipped with a warning when the APK is absent so
 +# a build never silently ships without a browser decision.
 +$(call inherit-product-if-exists, vendor/lenos/cromite.mk)
 +
-+# Build-time removal of stock apps (the user's list): camera, browser, SIM
-+# toolkit, gallery, contacts, recorder, calendar, plus the Lineage music
-+# app and updater. Aperture RRO overlays go with the camera app they
-+# belong to. The remaining Lineage apps stay uninstallable at runtime from
-+# the lenOS panel in Settings (pm uninstall --user 0).
++# The build-time removal list. Filtering happens at the tail of
++# lenos_asteroids.mk (GNU-make parse order: the Lineage inherits add these
++# packages after this file is parsed).
 +LENOS_REMOVED_PACKAGES := \
 +    Aperture \
 +    AsteroidsApertureOverlay \
@@ -52,14 +52,14 @@ index 0000000..5b3e93a
 +    Eleven \
 +    Updater
 +
-+PRODUCT_PACKAGES := $(filter-out $(LENOS_REMOVED_PACKAGES),$(PRODUCT_PACKAGES))
-+
-+# lenOS boot animation replaces the LineageOS one when the integrator has
-+# generated it (tools/make-bootanimation.py).
++# lenOS boot animation: installed at /product/media (higher probe priority
++# than /system/media; see frameworks BootAnimation.cpp) under both the
++# regular and the ro.boot.theme-selected dark name. The Lineage modules are
++# dropped at the tail of lenos_asteroids.mk.
 +ifneq (,$(wildcard vendor/lenos/bootanimation/bootanimation.zip))
-+PRODUCT_COPY_FILES := $(filter-out %bootanimation.zip,$(PRODUCT_COPY_FILES))
 +PRODUCT_COPY_FILES += \
-+    vendor/lenos/bootanimation/bootanimation.zip:$(TARGET_COPY_OUT_SYSTEM)/media/bootanimation.zip
++    vendor/lenos/bootanimation/bootanimation.zip:$(TARGET_COPY_OUT_PRODUCT)/media/bootanimation.zip \
++    vendor/lenos/bootanimation/bootanimation.zip:$(TARGET_COPY_OUT_PRODUCT)/media/bootanimation-dark.zip
 +endif
 +
 +# lenOS runtime: sysctl hardening and the network enforcement daemon. The

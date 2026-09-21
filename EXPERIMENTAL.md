@@ -66,6 +66,29 @@ Orbot-style integration as a built-in profile ("network privacy mode") that
 combines strict firewall + SOCKS routing for whitelisted apps. Large effort;
 design before code.
 
+## 7. Known rough edges flagged by the pre-build audit
+
+- **Auto-BFU failure is not surfaced in the UI.** Patch 0008 deliberately
+  fail-stops (LOG(ERROR), feature disabled) instead of crashing init when
+  `timer_create` fails, but patch 0013's UI cannot observe the failure and
+  can display an armed timer while none is. Fix: have init set an error
+  property the panel reads.
+- **On-device sepolicy confirmation.** The `lenos_netd` domain was written
+  conservatively (mirroring what pinned netd.te grants for iptables: generic
+  `netlink_socket`, `net_admin/net_raw`), but first-boot AVCs are still
+  expected. After booting: `adb shell dmesg | grep -E 'avc.*lenos_netd'`,
+  feed through audit2allow, iterate. The daemon is iptables-only by design
+  (no binder, no ART), so the grant surface is small.
+- **System app removal is one-way from the panel.** `pm uninstall --user 0`
+  keeps the APK on the read-only partition; restore with
+  `adb shell pm install-existing --user 0 <package>` from a PC. The panel's
+  denylist covers critical components but is not exhaustive — audit the list
+  before removing anything you cannot afford to lose.
+- **LTE-only persistence is device-dependent.** The switch records its
+  intent in Settings.Global (`lenos_lte_only`), but whether telephony
+  preserves the reason-mask across reboots must be verified on hardware; if
+  the radio resets it, re-toggling from the panel re-applies it.
+
 ## Explicitly rejected
 
 - IMEI/IMSI spoofing: not feasible in software on SM7635, illegal in many

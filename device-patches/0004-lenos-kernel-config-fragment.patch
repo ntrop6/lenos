@@ -1,6 +1,6 @@
-From d7d419d12edcbaf75e547a4c77b5ab91852702e0 Mon Sep 17 00:00:00 2001
+From ed6d762c423efe641563a5cadbc7c88e0c5db1b3 Mon Sep 17 00:00:00 2001
 From: lenOS <lenos@lenos.invalid>
-Date: Mon, 21 Sep 2026 17:24:07 +0300
+Date: Mon, 21 Sep 2026 18:51:59 +0300
 Subject: [PATCH 4/5] lenOS: merge the kernel hardening config fragment
 
 Appends vendor/lenos_hardening.config to TARGET_KERNEL_CONFIG. The

@@ -315,19 +315,29 @@ cmd_keys() {
             -out "$KEYS/avb.pem" 2>/dev/null
         ok "generated AVB key: $KEYS/avb.pem"
     fi
-    # OTA signing key (pk8 + x509).
-    if [[ ! -s "$KEYS/ota.pk8" || ! -s "$KEYS/ota.x509.pem" ]]; then
+    # AVB public key in the bootloader blob form (PKMD). Both avbroot's
+    # --public-key-avb and `fastboot flash avb_custom_key` require this
+    # binary form; an OpenSSL SPKI PEM does not parse (verified with the
+    # pinned avbroot: "Failed to decode public key as AVB format").
+    if [[ ! -s "$KEYS/avb.pkmd.bin" || "$KEYS/avb.pkmd.bin" -ot "$KEYS/avb.pem" ]]; then
+        "$AVBROOT_BIN" key encode-avb --key "$KEYS/avb.pem" \
+            --output "$KEYS/avb.pkmd.bin"
+        ok "encoded AVB public key blob: $KEYS/avb.pkmd.bin"
+    fi
+    # OTA signing key: avbroot loads --key-ota as PEM only (a PKCS#8 DER
+    # .pk8 fails key-load before the input is even opened — verified with
+    # the pinned avbroot). The pk8 form is only consumed by releasetools,
+    # which uses the per-package keys, never this one.
+    if [[ ! -s "$KEYS/ota.pem" || ! -s "$KEYS/ota.x509.pem" ]]; then
         local t; t=$(mktemp -d)
         openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:4096 -out "$t/k.pem" 2>/dev/null
         openssl req -new -x509 -sha256 -days 10000 -key "$t/k.pem" \
             -subj "/CN=lenOS OTA key/" -out "$t/c.pem" 2>/dev/null
-        openssl pkcs8 -topk8 -inform PEM -outform DER -nocrypt \
-            -in "$t/k.pem" -out "$KEYS/ota.pk8" 2>/dev/null
+        install -m 600 "$t/k.pem" "$KEYS/ota.pem"
         install -m 644 "$t/c.pem" "$KEYS/ota.x509.pem"
         rm -rf "$t"
-        ok "generated OTA key: $KEYS/ota.pk8 + $KEYS/ota.x509.pem"
+        ok "generated OTA key: $KEYS/ota.pem + $KEYS/ota.x509.pem"
     fi
-    openssl pkey -in "$KEYS/avb.pem" -pubout -out "$KEYS/avb.pem.pub" 2>/dev/null
     chmod 700 "$KEYS"
     warn "BACK UP $KEYS NOW (offline, never a cloud account)."
     warn "A relocked device without its AVB key is unrecoverable."
@@ -337,11 +347,17 @@ cmd_keys() {
 # ------------------------------------------------------- resukisu-prepare ---
 init_boot_ramdisk_check() {
     # $1 = image, $2 = stock|resukisu — reuses avbroot cpio tooling.
+    # avbroot's --output-* flags are path PREFIXES relative to the process
+    # CWD (boot.toml defaults there too), so the unpack must run inside the
+    # temp directory or this check never finds the ramdisk.
     local img="$1" mode="$2" t
     t=$(mktemp -d "$WORKSPACE/.initboot-check.XXXXXX")
-    "$AVBROOT_BIN" boot unpack --input "$img" --no-output-kernel \
-        --no-output-second --no-output-recovery-dtbo --no-output-dtb \
-        --no-output-bootconfig --output-ramdisk-prefix ramdisk.img. --quiet >/dev/null
+    (
+        cd "$t"
+        "$AVBROOT_BIN" boot unpack --input "$img" --no-output-kernel \
+            --no-output-second --no-output-recovery-dtbo --no-output-dtb \
+            --no-output-bootconfig --output-ramdisk-prefix ramdisk.img. --quiet >/dev/null
+    )
     local ramdisk
     ramdisk=$(find "$t" -maxdepth 1 -type f -name 'ramdisk.img.*' | sort | head -1)
     [[ -n "$ramdisk" ]] || { rm -rf "$t"; die "no ramdisk in $img"; }
@@ -429,7 +445,7 @@ cmd_package() {
     local patch_args=(
         ota patch --input "$OUT_BASE_OTA"
         --key-avb "$KEYS/avb.pem"
-        --key-ota "$KEYS/ota.pk8" --cert-ota "$KEYS/ota.x509.pem"
+        --key-ota "$KEYS/ota.pem" --cert-ota "$KEYS/ota.x509.pem"
         --clear-vbmeta-flags --zip-mode seekable
         --output "${final}.tmp"
     )
@@ -459,7 +475,7 @@ cmd_package() {
         echo "final OTA sha256: $(sha256_file "$final")"
         echo "target-files sha256: $(cat "$STATE/target-files.sha256")"
         echo "resukisu init_boot sha256: $(cat "$STATE/resukisu-init_boot.sha256" 2>/dev/null || echo n/a)"
-        echo "avb public key sha256: $(sha256_file "$KEYS/avb.pem.pub")"
+        echo "avb public key (PKMD) sha256: $(sha256_file "$KEYS/avb.pkmd.bin")"
         echo "ota cert sha256: $(sha256_file "$KEYS/ota.x509.pem")"
         echo "built at (UTC): $(date -u +%FT%TZ)"
     } >"$WORKSPACE/release-info.txt"
@@ -497,7 +513,7 @@ cmd_verify() {
     [[ -s "$STATE/final-ota.path" ]] || die "no final OTA; run package"
     local final; final=$(cat "$STATE/final-ota.path")
     "$AVBROOT_BIN" ota verify --input "$final" \
-        --cert-ota "$KEYS/ota.x509.pem" --public-key-avb "$KEYS/avb.pem.pub"
+        --cert-ota "$KEYS/ota.x509.pem" --public-key-avb "$KEYS/avb.pkmd.bin"
     ok "avbroot verifies the final OTA against your keys"
 
     python3 - "$final" "$STATE/root-mode" <<'PY'

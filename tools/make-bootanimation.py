@@ -2,8 +2,8 @@
 """Generate a minimal, dependency-free lenOS boot animation.
 
 Pure stdlib: renders the word "lenOS" with a tiny 5x7 bitmap font onto a
-black 1080x2400 canvas (two bytes-identical frames), writes desc.txt and
-packs bootanimation.zip. Run by the integrator:
+black 1080x2400 canvas (a single static frame, looped by desc.txt), writes
+desc.txt and packs bootanimation.zip. Run by the integrator:
 
     tools/make-bootanimation.py -o <tree>/vendor/lenos/bootanimation/bootanimation.zip
 """

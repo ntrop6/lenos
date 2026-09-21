@@ -1,17 +1,24 @@
-From 63e213b43ec42c8bf941430cdbe6e1ec71953c65 Mon Sep 17 00:00:00 2001
+From 2cf4412fe4c020a8744fdf1bf0bff9c81d6021cf Mon Sep 17 00:00:00 2001
 From: lenOS <lenos@lenos.invalid>
-Date: Mon, 21 Sep 2026 17:24:07 +0300
+Date: Mon, 21 Sep 2026 18:51:59 +0300
 Subject: [PATCH 1/5] lenOS: rename product to lenos_asteroids
 
 Renames the product makefile, points AndroidProducts at it, and inherits
 the lenOS integration makefile. The booted image keeps the upstream stock
 Nothing build identity: no lenOS display id, no lenOS props, no lenOS
 package names (anti-fingerprinting; see DESIGN.md).
+
+The end of the leaf product file is where the build-time app removal runs:
+the Lineage product configs add the stock apps late in the include chain,
+so the filter must be evaluated after every inherit, and it asserts with a
+build failure rather than silently re-shipping anything.
 ---
- AndroidProducts.mk                         | 2 +-
- lineage_asteroids.mk => lenos_asteroids.mk | 9 ++++++++-
- 2 files changed, 9 insertions(+), 2 deletions(-)
- rename lineage_asteroids.mk => lenos_asteroids.mk (62%)
+ AndroidProducts.mk   |  2 +-
+ lenos_asteroids.mk   | 53 ++++++++++++++++++++++++++++++++++++++++++++
+ lineage_asteroids.mk | 26 ----------------------
+ 3 files changed, 54 insertions(+), 27 deletions(-)
+ create mode 100644 lenos_asteroids.mk
+ delete mode 100644 lineage_asteroids.mk
 
 diff --git a/AndroidProducts.mk b/AndroidProducts.mk
 index f204e05..befd9d4 100644
@@ -23,41 +30,97 @@ index f204e05..befd9d4 100644
  PRODUCT_MAKEFILES := \
 -    $(LOCAL_DIR)/lineage_asteroids.mk
 +    $(LOCAL_DIR)/lenos_asteroids.mk
-diff --git a/lineage_asteroids.mk b/lenos_asteroids.mk
-similarity index 62%
-rename from lineage_asteroids.mk
-rename to lenos_asteroids.mk
-index 98f109a..d1748d9 100644
---- a/lineage_asteroids.mk
+diff --git a/lenos_asteroids.mk b/lenos_asteroids.mk
+new file mode 100644
+index 0000000..1b45bb5
+--- /dev/null
 +++ b/lenos_asteroids.mk
-@@ -1,5 +1,6 @@
- #
- # SPDX-FileCopyrightText: 2025 The LineageOS Project
+@@ -0,0 +1,53 @@
++#
++# SPDX-FileCopyrightText: 2025 The LineageOS Project
 +# SPDX-FileCopyrightText: 2026 lenOS contributors
- # SPDX-License-Identifier: Apache-2.0
- #
- 
-@@ -7,13 +8,19 @@ $(call inherit-product, $(SRC_TARGET_DIR)/product/core_64_bit_only.mk)
- $(call inherit-product, $(SRC_TARGET_DIR)/product/full_base_telephony.mk)
- 
- $(call inherit-product, device/nothing/asteroids/device.mk)
++# SPDX-License-Identifier: Apache-2.0
++#
++
++$(call inherit-product, $(SRC_TARGET_DIR)/product/core_64_bit_only.mk)
++$(call inherit-product, $(SRC_TARGET_DIR)/product/full_base_telephony.mk)
++
++$(call inherit-product, device/nothing/asteroids/device.mk)
 +$(call inherit-product, device/nothing/asteroids/lenos.mk)
- $(call inherit-product, vendor/lineage/config/common_full_phone.mk)
- 
++$(call inherit-product, vendor/lineage/config/common_full_phone.mk)
++
 +# lenOS anti-fingerprinting rule: the image presents the exact upstream stock
 +# Nothing build identity and adds no lenOS-revealing props, display ids or
 +# package names. Everything lenOS-specific lives behind build-time artifacts
 +# or the Settings panel. The lunch target name is the one unavoidable
 +# lenOS-identifying string and lives outside the booted system image.
- PRODUCT_BRAND := Nothing
- PRODUCT_DEVICE := asteroids
- PRODUCT_MANUFACTURER := Nothing
- PRODUCT_MODEL := A059
--PRODUCT_NAME := lineage_asteroids
++PRODUCT_BRAND := Nothing
++PRODUCT_DEVICE := asteroids
++PRODUCT_MANUFACTURER := Nothing
++PRODUCT_MODEL := A059
 +PRODUCT_NAME := lenos_asteroids
- 
- PRODUCT_GMS_CLIENTID_BASE := android-nothing
- 
++
++PRODUCT_GMS_CLIENTID_BASE := android-nothing
++
++PRODUCT_BUILD_PROP_OVERRIDES += \
++    BuildDesc="qssi_64-user 16 BQ2A.250721.001-BP2A.250605.031.A3 2606181048 release-keys" \
++    BuildFingerprint=Nothing/Asteroids/Asteroids:14/UKQ1.250612.001/2606181048:user/release-keys \
++    DeviceName=Asteroids \
++    DeviceProduct=Asteroids \
++    SystemDevice=Asteroids \
++    SystemName=Asteroids
++
++# lenOS: build-time app removal MUST be evaluated after every inherit — the
++# Lineage product configs add the stock apps late in the include chain, so a
++# filter inside lenos.mk (parsed between the inherits) silently misses them.
++# This is the last statement of the leaf product file, and it fails the
++# build instead of quietly re-shipping anything.
++PRODUCT_PACKAGES := $(filter-out $(LENOS_REMOVED_PACKAGES),$(PRODUCT_PACKAGES))
++
++# lenOS boot animation: Lineage ships the animation as prebuilt modules
++# (bootanimation.zip / bootanimation-dark.zip) that outrank /system/media,
++# so drop those modules when the lenOS zip exists and install ours at the
++# higher-priority /product/media location under both candidate names
++# (BootAnimation probes ro.boot.theme for the -dark variant).
++ifneq (,$(wildcard vendor/lenos/bootanimation/bootanimation.zip))
++PRODUCT_PACKAGES := $(filter-out bootanimation.zip bootanimation-dark.zip,$(PRODUCT_PACKAGES))
++endif
++
++ifneq (,$(filter $(LENOS_REMOVED_PACKAGES),$(PRODUCT_PACKAGES)))
++$(error lenOS: still present after filtering: $(filter $(LENOS_REMOVED_PACKAGES),$(PRODUCT_PACKAGES)))
++endif
+diff --git a/lineage_asteroids.mk b/lineage_asteroids.mk
+deleted file mode 100644
+index 98f109a..0000000
+--- a/lineage_asteroids.mk
++++ /dev/null
+@@ -1,26 +0,0 @@
+-#
+-# SPDX-FileCopyrightText: 2025 The LineageOS Project
+-# SPDX-License-Identifier: Apache-2.0
+-#
+-
+-$(call inherit-product, $(SRC_TARGET_DIR)/product/core_64_bit_only.mk)
+-$(call inherit-product, $(SRC_TARGET_DIR)/product/full_base_telephony.mk)
+-
+-$(call inherit-product, device/nothing/asteroids/device.mk)
+-$(call inherit-product, vendor/lineage/config/common_full_phone.mk)
+-
+-PRODUCT_BRAND := Nothing
+-PRODUCT_DEVICE := asteroids
+-PRODUCT_MANUFACTURER := Nothing
+-PRODUCT_MODEL := A059
+-PRODUCT_NAME := lineage_asteroids
+-
+-PRODUCT_GMS_CLIENTID_BASE := android-nothing
+-
+-PRODUCT_BUILD_PROP_OVERRIDES += \
+-    BuildDesc="qssi_64-user 16 BQ2A.250721.001-BP2A.250605.031.A3 2606181048 release-keys" \
+-    BuildFingerprint=Nothing/Asteroids/Asteroids:14/UKQ1.250612.001/2606181048:user/release-keys \
+-    DeviceName=Asteroids \
+-    DeviceProduct=Asteroids \
+-    SystemDevice=Asteroids \
+-    SystemName=Asteroids
 -- 
 2.55.0
 

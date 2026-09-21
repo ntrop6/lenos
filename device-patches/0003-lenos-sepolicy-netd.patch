@@ -1,28 +1,32 @@
-From f745e82d45868e490136d5e2b474f45f436d7b5d Mon Sep 17 00:00:00 2001
+From 9e82259694c7864c7b1b2eb716a7d6934ab3d012 Mon Sep 17 00:00:00 2001
 From: lenOS <lenos@lenos.invalid>
-Date: Mon, 21 Sep 2026 17:24:07 +0300
+Date: Mon, 21 Sep 2026 18:51:59 +0300
 Subject: [PATCH 3/5] lenOS: sepolicy domain for the network enforcement daemon
 
 Defines lenos_netd (init seclabel), grants reading of the Settings.Global
-database file, the capabilities/netlink access needed to manage the
-lenOS-owned iptables and ip6tables chains directly in-domain, and the
-binder path used for one-time first-boot defaults seeding.
+database file, and the capabilities/netlink access needed to manage the
+lenOS-owned iptables and ip6tables chains directly in-domain. The daemon
+is iptables-only by design; Settings.Global writes belong to the lenOS
+panel (system UID, WRITE_SECURE_SETTINGS), which avoids running app_process
+under a fresh vendor domain.
 ---
- sepolicy/vendor/lenos_netd.te | 28 ++++++++++++++++++++++++++++
- 1 file changed, 28 insertions(+)
+ sepolicy/vendor/lenos_netd.te | 26 ++++++++++++++++++++++++++
+ 1 file changed, 26 insertions(+)
  create mode 100644 sepolicy/vendor/lenos_netd.te
 
 diff --git a/sepolicy/vendor/lenos_netd.te b/sepolicy/vendor/lenos_netd.te
 new file mode 100644
-index 0000000..6cf3c33
+index 0000000..0a5a576
 --- /dev/null
 +++ b/sepolicy/vendor/lenos_netd.te
-@@ -0,0 +1,28 @@
+@@ -0,0 +1,26 @@
 +# lenOS network enforcement daemon (system_ext, started by init with an
 +# explicit seclabel). Reads its state from the Settings.Global database
 +# file and manages lenOS-owned iptables/ip6tables chains directly in this
-+# domain (no exec transition into a separate iptables domain, because
-+# iptables_exec is not visible to vendor policy).
++# domain. It is deliberately iptables-only: it never runs commands that
++# need binder or ART, and the Settings.Global state is written by the
++# lenOS panel in the Settings app (which holds WRITE_SECURE_SETTINGS),
++# not by this daemon.
 +
 +type lenos_netd, domain;
 +
@@ -35,17 +39,13 @@ index 0000000..6cf3c33
 +allow lenos_netd system_data_file:dir { search getattr open read };
 +allow lenos_netd system_data_file:file { getattr open read };
 +
-+# Chain manipulation.
++# Chain manipulation. Generic netlink_socket is the class netd itself uses
++# for iptables at the pinned system/sepolicy (private/netd.te), so no
++# netlink_netfilter_socket grant is needed.
 +allow lenos_netd self:capability { net_admin net_raw };
 +allow lenos_netd self:netlink_socket { create read write bind getattr getopt setopt shutdown };
 +allow lenos_netd proc_net:dir search;
 +allow lenos_netd proc_net:file { getattr open read };
-+
-+# Optional first-boot defaults seeding via the settings command: uid 0 is
-+# granted WRITE_SECURE_SETTINGS by the permission service, and the command
-+# talks binder to system_server.
-+allow lenos_netd settings_service:service_manager find;
-+binder_call(lenos_netd, system_server);
 -- 
 2.55.0
 
