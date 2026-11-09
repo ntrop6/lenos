@@ -274,6 +274,12 @@ class TestSecurityApp(ProductConfigTestCase):
             self.assertIn(perm, manifest)
             self.assertIn(perm, allowlist)
 
+    def test_platform_app_does_not_pin_a_stale_target_sdk(self):
+        # Platform apps inherit the platform target SDK. Pinning 36 here
+        # would opt the app out of Android 17 behavior on a 24.0 build.
+        manifest = self.text(f"{self.APP}/AndroidManifest.xml")
+        self.assertNotIn("<uses-sdk", manifest)
+
     def test_version_strings_are_1_0_0(self):
         manifest = self.text(f"{self.APP}/AndroidManifest.xml")
         self.assertIn('android:versionName="1.0.0"', manifest)

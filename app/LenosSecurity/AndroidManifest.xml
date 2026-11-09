@@ -4,7 +4,9 @@
     android:versionCode="4"
     android:versionName="1.0.0">
 
-    <uses-sdk android:minSdkVersion="34" android:targetSdkVersion="36" />
+    <!-- No uses-sdk: platform apps follow the platform's own target SDK. A
+         pinned targetSdkVersion would opt the app out of Android 17 behavior
+         and compatibility hardening. -->
 
     <!-- The platform signature satisfies both signature|privileged grants.
          The app writes Settings and LockSettingsService directly; it has no

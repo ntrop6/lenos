@@ -105,6 +105,11 @@ class TestExperimentalLayout(unittest.TestCase):
 
 
 class TestProductGate(unittest.TestCase):
+    def test_opsec_app_does_not_pin_a_stale_target_sdk(self):
+        manifest = (VENDOR / "experimental/app/LenosOpsec/AndroidManifest.xml").read_text(
+            encoding="utf-8")
+        self.assertNotIn("<uses-sdk", manifest)
+
     def test_default_product_does_not_name_experimental_packages(self):
         body = (VENDOR / "config/lenos.mk").read_text(encoding="utf-8")
         self.assertNotIn("LenosOpsec", body)

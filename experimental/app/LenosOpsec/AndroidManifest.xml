@@ -4,7 +4,7 @@
     android:versionCode="1"
     android:versionName="0.1">
 
-    <uses-sdk android:minSdkVersion="34" android:targetSdkVersion="36" />
+    <!-- No uses-sdk: platform apps follow the platform's own target SDK. -->
 
     <!-- The offline tile is platform-signed. Signature permissions do not
          require a privileged-app allowlist. -->
