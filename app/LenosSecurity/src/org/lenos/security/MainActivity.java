@@ -267,8 +267,7 @@ public class MainActivity extends Activity {
             secure = "error: " + e.getMessage();
         }
         statusBody.setText(
-                "profile " + sysProp("ro.lenos.hardening.profile", "?") + "\n"
-                        + "auto-BFU backend " + sysProp("ro.lenos.security.auto_bfu", "?") + "\n"
+                "auto-BFU backend " + sysProp("ro.lenos.security.auto_bfu", "?") + "\n"
                         + "duress backend " + sysProp("ro.lenos.security.duress", "?") + "\n"
                         + "wifi MAC + DHCP hostname privacy defaults (per-network)\n"
                         + "owner screen lock " + secure);
