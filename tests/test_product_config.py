@@ -1,7 +1,8 @@
 """lenOS product configuration (vendor/lenos itself, no upstream patches).
 
 Feature contract (see docs/features.md):
-* The product ships a minimal app set plus the lenOS security companion app.
+* The product ships the LineageOS app set (AudioFX excluded) plus the lenOS
+  security companion app.
 * Privacy-critical resource defaults live in static RROs, not in patched
   upstream files: framework-res NTP fallback, SettingsProvider first-boot
   defaults, NetworkStack connectivity-check endpoints.

@@ -1,8 +1,9 @@
-"""Minimal app set (vendor/lineage product config).
+"""Strip-package hook (vendor/lineage product config).
 
 Feature contract (see docs/features.md):
-* lenOS ships fewer bundled apps than LineageOS: the product makefile names
-  the packages to drop in LENOS_STRIP_PACKAGES.
+* ``LENOS_STRIP_PACKAGES`` lets the product makefile drop bundled apps.
+* LineageOS 24.0 no longer ships Gallery2, so lenOS's default list is empty;
+  the hook stays wired and tested for future policy changes.
 * Dropping is done by filtering the app lists where they are declared, so the
   mechanism works with the build system's product-inheritance model (product
   makefiles cannot filter inherited PRODUCT_PACKAGES values).
