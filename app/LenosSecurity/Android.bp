@@ -1,5 +1,7 @@
 // lenOS companion app. Built with the platform API surface (not the public
-// SDK): the app uses @SystemApi/@hide keyguard credential paths. Soong rejects
+// SDK) as a privileged system app. The hidden keyguard credential APIs are
+// reached through reflection; platform_apis is kept because this is a
+// platform-signed component with framework-coupled behavior. Soong rejects
 // sdk_version together with platform_apis, so only the latter is set.
 android_app {
     name: "LenosSecurity",

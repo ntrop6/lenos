@@ -8,8 +8,9 @@ import java.lang.reflect.Method;
 /**
  * Reflection wrapper over the hidden
  * {@code com.android.internal.widget.LockPatternUtils} and
- * {@code com.android.internal.widget.LockscreenCredential}, so the app builds
- * against the public android.jar only.
+ * {@code com.android.internal.widget.LockscreenCredential}, so the app source
+ * does not link against hidden framework classes at compile time. The module
+ * still uses the platform API surface to build as a privileged system app.
  *
  * Backed by the lenOS 1.0 framework patch
  * (frameworks/base/0005-lenos-duress-credentials), which adds:
