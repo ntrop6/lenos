@@ -258,17 +258,18 @@ class TestSecurityApp(ProductConfigTestCase):
     def test_holds_only_needed_privileged_permissions(self):
         # The GrapheneOS-faithful Wi-Fi redo removed the app's only
         # NETWORK_SETTINGS consumer (the global hostname clamp) and the only
-        # Settings.System writer (the old Lineage scramble key); neither
-        # permission may linger in the manifest or the allowlist.
+        # Settings.System writer (the old Lineage scramble key); the root
+        # helper removal also dropped the last telephony placeholder. None of
+        # these permissions may linger in the manifest or the allowlist.
         manifest = self.text(f"{self.APP}/AndroidManifest.xml")
         allowlist = self.text("config/privapp-permissions-org.lenos.security.xml")
         for perm in ("android.permission.NETWORK_SETTINGS",
-                     'android.permission.WRITE_SETTINGS"'):
+                     'android.permission.WRITE_SETTINGS"',
+                     "android.permission.READ_PRIVILEGED_PHONE_STATE"):
             self.assertNotIn(perm, manifest)
             self.assertNotIn(perm, allowlist)
         for perm in ("android.permission.ACCESS_KEYGUARD_SECURE_STORAGE",
-                     "android.permission.WRITE_SECURE_SETTINGS",
-                     "android.permission.READ_PRIVILEGED_PHONE_STATE"):
+                     "android.permission.WRITE_SECURE_SETTINGS"):
             self.assertIn(perm, manifest)
             self.assertIn(perm, allowlist)
 

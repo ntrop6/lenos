@@ -6,12 +6,11 @@
 
     <uses-sdk android:minSdkVersion="34" android:targetSdkVersion="36" />
 
-    <!-- signature|privileged|development: platform signature satisfies it if the
-         APK is signed with the ROM's platform key. All writes still fall back to
-         root (su) when the direct path is denied, so this is belt-and-suspenders. -->
+    <!-- The platform signature satisfies both signature|privileged grants.
+         The app writes Settings and LockSettingsService directly; it has no
+         root/su fallback and needs no telephony permissions. -->
     <uses-permission android:name="android.permission.ACCESS_KEYGUARD_SECURE_STORAGE" />
     <uses-permission android:name="android.permission.WRITE_SECURE_SETTINGS" />
-    <uses-permission android:name="android.permission.READ_PRIVILEGED_PHONE_STATE" />
 
     <application
         android:name=".CrashApp"

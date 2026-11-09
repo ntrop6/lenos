@@ -1,6 +1,5 @@
 // lenOS companion app. Built with the platform API surface (not the public
-// SDK): the app uses @SystemApi/@hide surface such as WifiManager's DHCP
-// hostname restriction and the keyguard credential paths. Soong rejects
+// SDK): the app uses @SystemApi/@hide keyguard credential paths. Soong rejects
 // sdk_version together with platform_apis, so only the latter is set.
 android_app {
     name: "LenosSecurity",
