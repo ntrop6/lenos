@@ -19,7 +19,7 @@ applies it.
 - strict DNS-over-TLS, non-Google time and captive-portal endpoints
 - hardened first-boot defaults, PIN scrambling, duress wipe, and memory clearing
   on lock
-- fewer bundled apps; no Google apps or services added
+- no Google apps or services added; AudioFX excluded
 - optional extras behind `LENOS_EXPERIMENTAL=1`
 
 The full list, including what does not work, is in
@@ -86,8 +86,8 @@ mka bacon
 ```
 
 The helper script in the repo root is optional. It automates a particular
-build/signing setup and is not required to use the patches. Details are in
-[`docs/build.md`](docs/build.md).
+build/signing setup, pins the external signing wizard by SHA-256, and is not
+required to use the patches. Details are in [`docs/build.md`](docs/build.md).
 
 To return the tree to its pinned state:
 

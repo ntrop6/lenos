@@ -105,9 +105,12 @@ build also copy `experimental/app/LenosOpsec` into
 
 `lenos-1.0-shizuku.sh` is a wrapper used for one local build/signing setup. It
 is not needed to build lenOS and it has extra dependencies (the LineageOS
-signing wizard, avbroot 3.33.0+ for packaging, and a key directory). `package`
-verifies the input OTA against your `ota.crt`/`avb_pkmd.bin`, and both the
-rootless and root paths verify the final `init_boot` ramdisk and OTA/AVB chain.
+signing wizard, avbroot 3.33.0+ for packaging, and a key directory). The wrapper
+pins the exact external wizard it was audited with by SHA-256; set
+`LENOS_WIZARD_SHA256` only for a different copy you have reviewed yourself.
+`package` verifies the input OTA against your `ota.crt`/`avb_pkmd.bin`, and both
+the rootless and root paths verify the final `init_boot` ramdisk and OTA/AVB
+chain.
 If you use it, keep the patchkit outside the build tree:
 
 ```bash
