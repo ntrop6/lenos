@@ -38,8 +38,10 @@ import java.util.Map;
  * in this build (auto-BFU timer in init, duress in LockSettingsService,
  * etc.).
  *
- * Every privileged write tries the direct Settings/LockPatternUtils path first
- * and falls back to root (BakaSU su) on denial. Secrets travel on stdin only.
+ * Every privileged write goes through the platform Settings/LockPatternUtils
+ * APIs. The app is platform-signed, privileged, and holds
+ * WRITE_SECURE_SETTINGS and ACCESS_KEYGUARD_SECURE_STORAGE, so there is no
+ * root/su fallback.
  */
 public class MainActivity extends Activity {
     static final String BFU_SETTING = "settings_reboot_after_timeout";
@@ -227,7 +229,7 @@ public class MainActivity extends Activity {
                     return; // programmatic re-sync, not a user change
                 }
                 if (!writeBfu(value)) {
-                    toast("Could not write BFU. Grant BakaSU root to this app.");
+                    toast("Could not write BFU. Check the platform signature/privileged allowlist.");
                     refreshBfu();
                     return;
                 }
@@ -274,13 +276,12 @@ public class MainActivity extends Activity {
 
     private boolean writeBfu(int value) {
         try {
-            if (Settings.Global.putInt(getContentResolver(), BFU_SETTING, value)) {
-                return true;
-            }
+            return Settings.Global.putInt(getContentResolver(), BFU_SETTING, value);
         } catch (Throwable ignored) {
-            // Not privileged: fall through to root.
+            // The app is platform-signed and holds WRITE_SECURE_SETTINGS.
+            // Do not fall back to a root shell.
+            return false;
         }
-        return RootShell.settingsPutGlobal(BFU_SETTING, Integer.toString(value)).ok();
     }
 
     private void refreshBfu() {
@@ -318,13 +319,12 @@ public class MainActivity extends Activity {
 
     private boolean writeScramble(int value) {
         try {
-            if (Settings.Secure.putInt(getContentResolver(), SCRAMBLE_KEY, value)) {
-                return true;
-            }
+            return Settings.Secure.putInt(getContentResolver(), SCRAMBLE_KEY, value);
         } catch (Throwable ignored) {
-            // Not privileged: fall through to root.
+            // The app is platform-signed and holds WRITE_SECURE_SETTINGS.
+            // Do not fall back to a root shell.
+            return false;
         }
-        return RootShell.settingsPutSecure(SCRAMBLE_KEY, Integer.toString(value)).ok();
     }
 
     private void checkDuress() {
@@ -332,19 +332,7 @@ public class MainActivity extends Activity {
         try {
             requireLock();
             owner = ownerCredential();
-            boolean has;
-            try {
-                has = lock.hasDuress(owner);
-            } catch (Exception e) {
-                if (!isPrivError(e)) {
-                    throw e;
-                }
-                RootShell.Result r = RootShell.duress(this, "HAS\n" + textOf(ownerPin) + "\n");
-                if (!r.ok()) {
-                    throw new IllegalStateException(rootFail(r, e));
-                }
-                has = r.out.contains("HAS=1");
-            }
+            boolean has = lock.hasDuress(owner);
             duressStatus.setText(has
                     ? "Duress credentials are set. You can update or delete them."
                     : "No duress credentials are set.");
@@ -395,18 +383,7 @@ public class MainActivity extends Activity {
             owner = ownerCredential();
             dPin = lock.createPin(pin);
             dPass = lock.createPassword(pass);
-            try {
-                lock.setDuress(owner, dPin, dPass);
-            } catch (Exception e) {
-                if (!isPrivError(e)) {
-                    throw e;
-                }
-                RootShell.Result r = RootShell.duress(this,
-                        "SET\n" + textOf(ownerPin) + "\n" + pin + "\n" + pass + "\n");
-                if (!r.ok() || !r.out.contains("SET=OK")) {
-                    throw new IllegalStateException(rootFail(r, e));
-                }
-            }
+            lock.setDuress(owner, dPin, dPass);
             duressStatus.setText("Duress credentials saved.");
             duressStatus.setTextColor(ACCENT);
             duressPin.setText("");
@@ -443,17 +420,7 @@ public class MainActivity extends Activity {
         try {
             requireLock();
             owner = ownerCredential();
-            try {
-                lock.deleteDuress(owner);
-            } catch (Exception e) {
-                if (!isPrivError(e)) {
-                    throw e;
-                }
-                RootShell.Result r = RootShell.duress(this, "DELETE\n" + textOf(ownerPin) + "\n");
-                if (!r.ok() || !r.out.contains("DELETE=OK")) {
-                    throw new IllegalStateException(rootFail(r, e));
-                }
-            }
+            lock.deleteDuress(owner);
             duressStatus.setText("Duress credentials deleted.");
             duressStatus.setTextColor(MUTED);
             toast("Duress credentials deleted");
@@ -471,7 +438,8 @@ public class MainActivity extends Activity {
                 lock = new LockBridge(this);
             } catch (Throwable t) {
                 throw new IllegalStateException(
-                        "Lock APIs blocked. Grant BakaSU Superuser to lenOS security, then retry. "
+                        "Lock APIs blocked. This app must be built with the platform "
+                                + "certificate and the privileged allowlist. "
                                 + t.getClass().getSimpleName() + ": " + t.getMessage());
             }
         }
@@ -514,7 +482,8 @@ public class MainActivity extends Activity {
             return "FRP is still active.";
         }
         if (isPrivError(e)) {
-            return "Need BakaSU Superuser for \u201clenOS security\u201d, then retry.";
+            return "lenOS security lacks ACCESS_KEYGUARD_SECURE_STORAGE. "
+                    + "Check the platform signature and the privileged allowlist.";
         }
         return msg;
     }
@@ -528,17 +497,6 @@ public class MainActivity extends Activity {
                 || msg.contains("LockSettingsWrite")
                 || msg.contains("Permission Denial")
                 || e instanceof SecurityException;
-    }
-
-    private static String rootFail(RootShell.Result r, Exception first) {
-        if (r.code == 127) {
-            return "Root not available. In BakaSU grant Superuser to \u201clenOS security\u201d, then tap again.";
-        }
-        String detail = r.err.isEmpty() ? r.out : r.err;
-        if (detail == null || detail.isEmpty()) {
-            detail = first.getMessage();
-        }
-        return "Root helper failed: " + detail;
     }
 
     private void toast(String s) {

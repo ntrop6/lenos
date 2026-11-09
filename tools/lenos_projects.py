@@ -24,6 +24,7 @@ PROJECT_ALIASES = {
     "packages/modules/NetworkStack": "packages_modules_NetworkStack",
     "packages/providers/MediaProvider": "packages_providers_MediaProvider",
     "system/netd": "system_netd",
+    "system/sepolicy": "system_sepolicy",
     "system/vold": "system_vold",
     "system/core": "system_core",
     "system/ca-certificates": "system_ca-certificates",

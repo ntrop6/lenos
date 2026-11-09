@@ -611,14 +611,32 @@ def command_prepare(args: argparse.Namespace) -> int:
     manager_asset = profile["manager"]
     lkm_asset = profile["lkm"]
     init_asset = profile["init"]
-    lkm_hint = " ".join(
-        str(lkm_asset.get(key, "")) for key in ("member", "name", "url")
-    )
-    embedded_lkm = lkm_asset.get("embedded")
-    if isinstance(embedded_lkm, dict):
-        lkm_hint += " " + str(embedded_lkm.get("member", ""))
-    if kmi not in lkm_hint:
-        raise RootError(f"{mode} LKM is not pinned for KMI {kmi}")
+    local_lkm = Path(args.lkm).expanduser() if args.lkm else None
+    if local_lkm is not None:
+        if not local_lkm.is_file() or local_lkm.stat().st_size == 0:
+            raise RootError(f"missing local LKM: {local_lkm}")
+        lkm_source = "local"
+        lkm_name = local_lkm.name
+    else:
+        if not args.allow_unvalidated_lkm:
+            raise RootError(
+                "the pinned kernel module was built for Google's GKI KMI, not "
+                "this hardened lenOS kernel (RANDOM_KMALLOC_CACHES and related "
+                "options change the allocator layout). Build the module against "
+                "this tree and pass --lkm /path/to/kernelsu.ko, or pass "
+                "--allow-unvalidated-lkm to accept that the pinned module may "
+                "not load or may misbehave."
+            )
+        lkm_hint = " ".join(
+            str(lkm_asset.get(key, "")) for key in ("member", "name", "url")
+        )
+        embedded_lkm = lkm_asset.get("embedded")
+        if isinstance(embedded_lkm, dict):
+            lkm_hint += " " + str(embedded_lkm.get("member", ""))
+        if kmi not in lkm_hint:
+            raise RootError(f"{mode} LKM is not pinned for KMI {kmi}")
+        lkm_source = "pinned-unvalidated"
+        lkm_name = str(lkm_asset.get("name") or "kernelsu.ko")
     patcher = download(
         patcher_asset["url"],
         cache_dir / asset_filename(patcher_asset),
@@ -635,7 +653,10 @@ def command_prepare(args: argparse.Namespace) -> int:
     work = Path(tempfile.mkdtemp(prefix=".prepare.", dir=cache_dir))
     work.chmod(0o700)
     try:
-        if isinstance(lkm_asset.get("embedded"), dict):
+        if local_lkm is not None:
+            lkm = work / "kernelsu.ko"
+            shutil.copy2(local_lkm, lkm)
+        elif isinstance(lkm_asset.get("embedded"), dict):
             lkm = extract_embedded_asset(
                 manager, lkm_asset, work / "kernelsu.ko"
             )
@@ -754,6 +775,8 @@ def command_prepare(args: argparse.Namespace) -> int:
             "stock_init_sha256": stock_info["init_sha256"],
             "ksuinit_sha256": patched_info["init_sha256"],
             "lkm_sha256": patched_info["lkm_sha256"],
+            "lkm_source": lkm_source,
+            "lkm_name": lkm_name,
             "manager_name": manager_asset["name"],
             "manager_sha256": require_hex(
                 manager_asset["sha256"], "manager sha256"
@@ -883,6 +906,8 @@ def command_status(args: argparse.Namespace) -> int:
     print(f"partition_limit={state['partition_limit']}")
     print(f"manager_name={state.get('manager_name', '')}")
     print(f"manager_sha256={manager_hash}")
+    print(f"lkm_source={state.get('lkm_source', 'unknown')}")
+    print(f"lkm_name={state.get('lkm_name', '')}")
     print(f"state_dir={state_dir}")
     if manager_hash == "missing":
         raise RootError(f"manager APK is missing: {manager}")
@@ -923,6 +948,16 @@ def make_parser() -> argparse.ArgumentParser:
     prepare.add_argument("--source", required=True)
     prepare.add_argument("--avbroot", required=True)
     prepare.add_argument("--profiles", default=str(DEFAULT_PROFILES))
+    prepare.add_argument(
+        "--lkm",
+        default="",
+        help="kernel module built against this tree's kernel (recommended for root)",
+    )
+    prepare.add_argument(
+        "--allow-unvalidated-lkm",
+        action="store_true",
+        help="accept the pinned GKI kernel module on a hardened lenOS kernel",
+    )
     prepare.set_defaults(func=command_prepare)
 
     source = sub.add_parser(

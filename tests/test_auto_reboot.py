@@ -145,6 +145,30 @@ class TestAutoRebootFramework(LenosPatchTest):
         )
 
 
+class TestAutoRebootSepolicy(LenosPatchTest):
+    PROJECT = "system/sepolicy"
+    PATCHES = ["0001-lenos-auto-reboot-property.patch"]
+    CONTEXTS = "private/property_contexts"
+    PROPERTY = "private/property.te"
+    SYSTEM_SERVER = "private/system_server.te"
+
+    def test_control_property_has_a_dedicated_type(self):
+        self.assert_contains(
+            self.CONTEXTS,
+            "sys.auto_reboot_ctl     u:object_r:auto_reboot_ctl_prop:s0",
+        )
+        self.assert_contains(
+            self.PROPERTY,
+            "system_internal_prop(auto_reboot_ctl_prop)",
+        )
+
+    def test_system_server_can_write_the_property(self):
+        self.assert_contains(
+            self.SYSTEM_SERVER,
+            "set_prop(system_server, auto_reboot_ctl_prop)",
+        )
+
+
 class TestAutoRebootProductWiring(unittest.TestCase):
     def test_backend_status_prop_is_init(self):
         self.assertIn("ro.lenos.security.auto_bfu=init", read_vendor("config/lenos.mk"))

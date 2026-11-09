@@ -178,7 +178,7 @@ class TestDuressProductWiring(unittest.TestCase):
                       read_vendor("config/lenos.mk"))
 
     def test_app_text_lists_the_esim_erasure(self):
-        for name in ("MainActivity.java", "LockBridge.java", "DuressCli.java"):
+        for name in ("MainActivity.java", "LockBridge.java"):
             errors = java_syntax_errors(VENDOR / APP_DIR / name)
             self.assertEqual(errors, 0, f"{name}: {errors} Java parse errors")
         main = read_vendor(f"{APP_DIR}/MainActivity.java")
@@ -186,11 +186,23 @@ class TestDuressProductWiring(unittest.TestCase):
         self.assertIn("erases stored eSIM profiles", main)
         self.assertIn("erase stored eSIM profiles", main)
 
-    def test_app_ui_uses_the_owner_gated_path_first(self):
+    def test_app_uses_the_owner_gated_path_directly(self):
         main = read_vendor(f"{APP_DIR}/MainActivity.java")
         self.assertIn("lock.setDuress(owner, dPin, dPass);", main)
         self.assertIn("lock.hasDuress(owner)", main)
         self.assertIn("lock.deleteDuress(owner)", main)
+
+    def test_platform_signed_app_has_no_root_shell_fallback(self):
+        # The app is platform-signed and holds ACCESS_KEYGUARD_SECURE_STORAGE
+        # and WRITE_SECURE_SETTINGS. A su/app_process fallback would add an
+        # unnecessary root path and hide permission failures.
+        for name in ("MainActivity.java", "LockBridge.java"):
+            body = read_vendor(f"{APP_DIR}/{name}")
+            self.assertNotIn("RootShell", body)
+            self.assertNotIn('"su"', body)
+            self.assertNotIn("app_process", body)
+        self.assertFalse((VENDOR / APP_DIR / "RootShell.java").exists())
+        self.assertFalse((VENDOR / APP_DIR / "DuressCli.java").exists())
 
 
 if __name__ == "__main__":

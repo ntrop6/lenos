@@ -41,7 +41,7 @@ their content until the user explicitly allows it.
 | SSAID (Android ID) rotates on reinstall | `frameworks/base/0001` | same app reinstall gets a new ID; setting `Settings.Secure`/user-visible to disable; units tested |
 | Generic device name by default | `device_nothing_asteroids/0006` | "Android" instead of "Nothing Phone (3a)" — the device name is the Bluetooth adapter / Wi-Fi Direct name neighbours see; user can rename |
 | Generic tether SSID | `device_nothing_asteroids/0002` | `AndroidAP`, no model name |
-| Build fingerprint / product identity | *untouched by design* | keeps app compatibility, attestation, Nothing factory tooling |
+| Build fingerprint / product identity | *unchanged by lenOS* | the device tree's `PRODUCT_BUILD_PROP_OVERRIDES` (`BuildFingerprint=Nothing/Asteroids/Asteroids:…`) keeps the stock Nothing string. This does not preserve Play Integrity/attestation: a custom AVB key and an unlocked bootloader already break that |
 
 ## Users and profiles
 
@@ -81,7 +81,7 @@ their content until the user explicitly allows it.
 | Quick settings require unlock | `frameworks_base/0004` | GrapheneOS port: every tile action (click, secondary click, long click) goes through `QSTileImpl#handleAction`. While a secure keyguard is up, non-allow-listed tiles do nothing until the user authenticates — the keyguard bouncer is shown and the action runs only after a successful unlock. A locked device cannot toggle radios/connectivity (e.g. airplane mode to break remote tracking). Allow-list as in GrapheneOS: flashlight (both variants), QR scanner, color inversion/correction, Night Light, reduce bright colors, dark theme, rotation lock, battery saver, device controls |
 | PIN keypad scrambling | `frameworks_base/0008` + `packages_apps_Settings/0001` (+ default in `0006`) | GrapheneOS port: the keypad is shuffled with `SecureRandom` on every setup and hardware keys route through the digit→view map; the keyguard reads `ExtSettings.SCRAMBLE_LOCKSCREEN_PIN_LAYOUT_PRIMARY`, SIM PIN/PUK views read the inheriting `SCRAMBLE_SIM_PIN_LAYOUT`. lenOS deviation: default **on** (GrapheneOS ships it off; commented in `frameworks_base/0006`). UI: lock-screen picker switch + SIM-lock switch; the lenOS app toggles the same `Settings.Secure` key |
 | Duress PIN/password | `frameworks_base/0005` + `0007`, `frameworks_opt_telephony/0001` + app UI | entering either duress credential at any credential prompt (lock screen, Settings confirm, shell) destroys the KeyMint storage keys + Secretkeeper secrets — the user data becomes cryptographically inaccessible — erases every eSIM profile and powers off. The eUICC reset runs on a side thread with a three second budget, requires system uid and skips the carrier eSIM-removal notification. Only failed verifications are checked and only typed PIN/password credentials, so the real lock credential can never trigger it. Setting/checking/deleting requires the owner credential; the stored form is a scrypt-stretched hash, never the credential |
-| Credential limits (GrapheneOS values) | `frameworks_base/0009` | the fingerprint sensor locks out permanently after 5 failed attempts (AOSP 20; the 30 s timed lockout is unchanged) and the maximum supported password length is 128 characters (AOSP 64) |
+| Credential limits | `frameworks_base/0009` | the maximum supported password length is 128 characters (AOSP 64). The fingerprint lockout threshold is **not** changed: `asteroids` uses an AIDL fingerprint HAL, so lockout is owned by the vendor HAL; the framework's `LockoutFrameworkImpl` only applies to HIDL sensors. Check the vendor HAL if you need a specific threshold |
 | Lock-screen notification content hidden | `frameworks_base/0012` | GrapheneOS default: content stays hidden on the lock screen until the user allows private notifications (see first-boot defaults) |
 | FBE filename padding | `system_extras/0001` (GrapheneOS port) | every encryption policy created by this build pads filenames to 32 bytes instead of AOSP's 16 (GrapheneOS commit "pad filenames to 32 bytes instead of 16 or 4 bytes"), hiding filename lengths better. The pre-R 4-byte compatibility branch is dropped (`PRODUCT_SHIPPING_API_LEVEL := 35` makes it unreachable); `vold` picks the flags up through `libfscrypt`. Only applies to policies created after flashing (see limits) |
 | Memory hygiene on lock | `frameworks_base/0024` (GrapheneOS port) | when the keyguard starts showing, both SystemUI and system_server run a full compacting GC (`System.gc(); System.runFinalization(); System.gc();`), releasing memory that is no longer reachable and reducing how long sensitive data (lock credentials, derived keys) sits in the heap — the complement to the auto-reboot timer. SystemUI runs it in `handleShowInner`; system_server runs it on the transition-gated `setLockScreenShown` binder thread right after the lock transition and outside the global lock |
@@ -127,7 +127,7 @@ their content until the user explicitly allows it.
 
 | Item | Status |
 |---|---|
-| Minimal app set | `Gallery2` stripped via `LENOS_STRIP_PACKAGES` (`vendor_lineage/0001`), AudioFX off (`TARGET_EXCLUDES_AUDIOFX`), MP3/Music app (`Twelve`) kept for now |
+| Minimal app set | AudioFX off (`TARGET_EXCLUDES_AUDIOFX`), MP3/Music app (`Twelve`) kept for now. `LENOS_STRIP_PACKAGES` remains wired through `vendor_lineage/0001`, but LineageOS 24.0 no longer ships `Gallery2` (or another app this product drops), so the default list is empty |
 | Jelly browser | **kept** for 1.0; Cromite/WebView replacement is still under investigation (see limits) |
 | `LenosSecurity` app | ships with: auto-BFU timer (init backend), PIN-scramble switch (writes the same `Settings.Secure` key SystemUI reads), duress PIN/password UI (framework service), status card. The old global Wi-Fi hostname toggle was dropped in the GrapheneOS-faithful redo — that control is per network in Wi-Fi settings, and the app no longer needs `NETWORK_SETTINGS` |
 | Call recording | **LineageOS baseline, kept** — the in-call screen records voice calls with no region/carrier gate and no recording tone; `CallRecording` writes through MediaStore to `Recordings/Call recordings`, and the privileged Dialer's privapp allowlist grants `CAPTURE_AUDIO_OUTPUT` for the `VOICE_CALL` audio source. GrapheneOS's extra auto-recording-by-contact subsystem (preferences store, contact modes, stale-contact cleanup) is a larger Dialer fork and stays out of 1.0 |
@@ -193,6 +193,8 @@ kernel workstream: 48-bit VA / 4-level page tables, forced module
 signing/lockdown, LTS point-release cadence) is **not implemented yet**. The
 optional root helper can re-sign an OTA with your AVB key, but that is not the
 same as provisioning the bootloader key or supporting a locked bootloader.
+There is also no lenOS update server or configured updater endpoint: do not
+point the LineageOS Updater app at LineageOS infrastructure for this build.
 
 ## Honest limits
 
@@ -242,9 +244,12 @@ same as provisioning the bootloader key or supporting a locked bootloader.
   Security → Screen lock settings, or the SIM lock screen for SIM PIN/PUK.
   The secondary-credential scramble setting is dormant: LineageOS 24.0's
   base still has a single credential domain.
-* **Five bad fingerprint reads lock the sensor out permanently** (until the
-  device is unlocked with the PIN/password) — GrapheneOS's value; AOSP allows
-  20. Dry or move the finger rather than retrying if reads keep failing.
+* **Fingerprint lockout is vendor-defined on this device** — the AIDL
+  fingerprint HAL owns the failed-attempt threshold and timed/permanent
+  lockout state. lenOS does not patch the framework's HIDL-only
+  `LockoutFrameworkImpl`, so the claim of a five-attempt permanent lockout
+  does not apply to `asteroids`. Confirm the actual threshold in the vendor
+  HAL before relying on it.
 * **Lock-screen notification content stays hidden by default where the
   default applies** — new installs and new users. A device updated over an
   existing install keeps its stored value (`Settings.Secure
@@ -277,7 +282,8 @@ same as provisioning the bootloader key or supporting a locked bootloader.
   AOSP's always-on wiring, same as GrapheneOS on this branch.
 * **Device name "Android" is what Settings > About shows** until the user
   renames it. The stock model string is still visible in adb/property contexts
-  (fingerprint stays stock by design).
+  (the device tree's `BuildFingerprint` override keeps the fingerprint string
+  stock; a custom AVB key and unlocked bootloader still break attestation).
 * **Location is off by default** (mode 0). Emergency calls still take the
   network E911 path; on-device GNSS/aGPS is off until the user enables
   location. Carrier/network location is unaffected by this default.
@@ -286,10 +292,9 @@ same as provisioning the bootloader key or supporting a locked bootloader.
   the user unlocks again (emergency calls work at BFU). As in GrapheneOS the
   timer is not deferred for a call in progress; it only arms after the first
   unlock, so a device still sitting at BFU is never rebooted. The app offers
-  off / 10 minutes … 3 days. Deviation: the property write uses the generic
-  `system_prop` SELinux context instead of GrapheneOS's dedicated
-  `auto_reboot_ctl_prop` type — system_server is allowed either way; a
-  dedicated type needs a `system/sepolicy` project in the series.
+  off / 10 minutes … 3 days. The property uses GrapheneOS's dedicated
+  `auto_reboot_ctl_prop` SELinux type (`system_sepolicy/0001`); system_server
+  has an explicit `set_prop` grant and init keeps its broad property access.
 * **Quick settings gating is not user-configurable in 1.0** and does nothing
   on devices without a secure lock. Allow-listed non-sensitive tiles
   (flashlight, display controls, rotation lock, battery saver, device

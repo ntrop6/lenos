@@ -32,6 +32,7 @@ def git_show(rel: str) -> str:
         check=True, capture_output=True, text=True).stdout
 
 
+@unittest.skipUnless(DIALER.is_dir(), f"workspace project missing: {DIALER}")
 class TestCallRecording(unittest.TestCase):
     def test_enabled_without_a_region_gate(self):
         root = ET.parse(CONFIG).getroot()

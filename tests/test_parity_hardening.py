@@ -13,34 +13,30 @@ Small line-level ports from GrapheneOS that close specific gaps:
   Passing both flags still throws.
 * ``0010`` tightens the system-clock paranoia threshold from 2 s to 250 ms so
   unexpected clock changes are logged sooner.
-* ``0009`` hardens credential limits to GrapheneOS values: fingerprint
-  permanent lockout after 5 failed attempts (was 20) and a maximum password
-  length of 128 (was 64).
+* ``0009`` raises the maximum password length to GrapheneOS's value of 128
+  (was 64). The fingerprint lockout threshold is not changed: the device uses
+  an AIDL fingerprint HAL, where lockout is owned by the vendor HAL, and the
+  framework's ``LockoutFrameworkImpl`` only applies to HIDL sensors.
 """
 from __future__ import annotations
 
 import unittest
 
-from harness import LenosPatchTest
+from harness import LenosPatchTest, VENDOR
 
 
 class TestCredentialHardening(LenosPatchTest):
     PROJECT = "frameworks/base"
     PATCHES = ["0009-lenos-credential-hardening.patch"]
-    LOCKOUT = ("services/core/java/com/android/server/biometrics/sensors/"
-               "fingerprint/hidl/LockoutFrameworkImpl.java")
     DPM = "core/java/android/app/admin/DevicePolicyManager.java"
 
-    def test_fingerprint_permanent_lockout_after_five(self):
-        self.assert_contains(
-            self.LOCKOUT,
-            "MAX_FAILED_ATTEMPTS_LOCKOUT_PERMANENT = 5;",
-        )
-        self.assert_not_contains(
-            self.LOCKOUT,
-            "MAX_FAILED_ATTEMPTS_LOCKOUT_PERMANENT = 20;",
-        )
-        self.assert_java_syntax(self.LOCKOUT)
+    def test_patch_does_not_touch_the_hidl_only_lockout_tracker(self):
+        # asteroids uses an AIDL fingerprint HAL. LockoutFrameworkImpl is only
+        # attached by the HIDL adapter, so changing it would be a no-op here.
+        patch = (VENDOR / "patches/frameworks_base/0009-lenos-credential-hardening.patch")
+        body = patch.read_text(encoding="utf-8")
+        self.assertNotIn("LockoutFrameworkImpl.java", body)
+        self.assertNotIn("MAX_FAILED_ATTEMPTS_LOCKOUT_PERMANENT", body)
 
     def test_maximum_password_length_is_128(self):
         self.assert_contains(

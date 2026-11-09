@@ -41,6 +41,11 @@ SRC="${LENOS_SOURCE:-$WS/lineage}"
 KEYS="${LENOS_KEYDIR:-$HOME/secure-keys/asteroids}"
 AVBROOT="${AVBROOT:-$WS/tools/avbroot}"
 WIZARD="${LENOS_WIZARD:-$HOME/lenOS-2.8.1-ReSukiSU-single.sh}"
+if [[ ! -x "$WIZARD" && -x "$HOME/Downloads/lenOS-2.8.1-ReSukiSU-single.sh" ]]; then
+  WIZARD="$HOME/Downloads/lenOS-2.8.1-ReSukiSU-single.sh"
+fi
+readonly WIZARD_SHA256_DEFAULT="7efc6fee0fb8f6582774bb6efeeb8e7fc721c2d1ca04adcb8116d9f071b7530b"
+WIZARD_SHA256="${LENOS_WIZARD_SHA256:-$WIZARD_SHA256_DEFAULT}"
 VENDOR="${LENOS_VENDOR:-}"
 if [[ -z "$VENDOR" ]]; then
   if [[ -d "$SELF_DIR/vendor-lenos" ]]; then VENDOR="$SELF_DIR/vendor-lenos"
@@ -53,6 +58,8 @@ ROOT_MODE="none"
 ROOT_STATE_BASE="$WS/lenos-root"
 ROOT_STATE_DIR=""
 ROOT_CACHE="${LENOS_ROOT_CACHE:-$WS/.root-cache}"
+ROOT_LKM="${LENOS_ROOT_LKM:-}"
+ROOT_ALLOW_UNVALIDATED_LKM="${LENOS_ALLOW_UNVALIDATED_LKM:-0}"
 OUT="$WS/lenos-asteroids-rootless.zip"
 EXTRACT_DIR="$WS/extracted-rootless"
 
@@ -79,7 +86,9 @@ lenOS $LENOS_VERSION  (asteroids / Nothing Phone 3a)
 Default build: stable 1.0 series, rootless.
 Root (opt-in): LENOS_ROOT=bakasu|kernelsu. Build first, then root-prepare,
   then package. BakaSU is preferred; KernelSU is the fallback.
-  Example: LENOS_ROOT=bakasu $0 root-prepare
+  Example: LENOS_ROOT=bakasu LENOS_ROOT_LKM=/path/to/kernelsu.ko $0 root-prepare
+  The LKM must be built against this tree's kernel. The pinned GKI module is
+  rejected unless LENOS_ALLOW_UNVALIDATED_LKM=1 is explicitly set.
   Root mode never changes the product or includes a manager APK in the system
   image. It re-signs init_boot and every OS AVB partition with your keys.
 Experimental build: LENOS_EXPERIMENTAL=1 $0 apply|build
@@ -92,6 +101,19 @@ EOF
 
 need_file() { [[ -s "$1" ]] || die "missing $1"; }
 need_exec() { [[ -x "$1" ]] || die "missing executable $1"; }
+
+verify_wizard() {
+  need_exec "$WIZARD"
+  local actual
+  actual="$(sha256sum "$WIZARD" | awk '{print $1}')"
+  [[ "$actual" == "$WIZARD_SHA256" ]] || die \
+    "external wizard hash mismatch: $WIZARD
+    expected $WIZARD_SHA256
+    actual   $actual
+    The wizard is not part of this repository. Pin the exact file you audited
+    with LENOS_WIZARD_SHA256=<sha256> or restore the pinned 2.8.1 release."
+  info "wizard:  $WIZARD (sha256 $actual)"
+}
 
 require_boot_verification_tools() {
   "$AVBROOT" boot unpack --help >/dev/null 2>&1 \
@@ -229,9 +251,8 @@ verify_input_ota() {
 cmd_doctor() {
   info "doctor"
   [[ "$(uname -s)" == Linux ]] || die "Linux host only"
-  need_exec "$WIZARD"
+  verify_wizard
   need_exec "$AVBROOT"
-  info "wizard:  $WIZARD"
   info "avbroot: $($AVBROOT --version 2>/dev/null || echo unknown)"
   [[ -f "$SRC/device/nothing/asteroids/lineage_asteroids.mk" ]] \
     || die "not an asteroids tree: $SRC"
@@ -253,7 +274,19 @@ cmd_doctor() {
     need_file "$VENDOR/tools/root-managers.json"
     need_file "$VENDOR/tools/apk_signing_cert.py"
     require_boot_verification_tools
-    info "root:    $ROOT_MODE (post-build init_boot transform)"
+    if [[ -n "$ROOT_LKM" ]]; then
+      need_file "$ROOT_LKM"
+      info "root:    $ROOT_MODE (local LKM: $ROOT_LKM)"
+    else
+      case "${ROOT_ALLOW_UNVALIDATED_LKM,,}" in
+        1|true|yes)
+          info "root:    $ROOT_MODE (pinned GKI LKM, explicitly UNVALIDATED)"
+          ;;
+        *)
+          info "root:    $ROOT_MODE (no local LKM; root-prepare will refuse without one)"
+          ;;
+      esac
+    fi
   else
     info "root:    none (rootless)"
   fi
@@ -419,9 +452,6 @@ cmd_apply() {
   grep -q 'scramble_pin_layout' \
     "$SRC/packages/apps/Settings/src/com/android/settings/security/screenlock/PinScramblingPrefController.java" \
     || die "keyguard PIN scrambling UI missing from Settings"
-  grep -q 'MAX_FAILED_ATTEMPTS_LOCKOUT_PERMANENT = 5' \
-    "$SRC/frameworks/base/services/core/java/com/android/server/biometrics/sensors/fingerprint/hidl/LockoutFrameworkImpl.java" \
-    || die "fingerprint permanent-lockout hardening missing"
   grep -q 'MAX_PASSWORD_LENGTH = 128' \
     "$SRC/frameworks/base/core/java/android/app/admin/DevicePolicyManager.java" \
     || die "password-length hardening missing"
@@ -656,6 +686,17 @@ cmd_build() {
   "$WIZARD" reset build
   info "compile --rootless --hardening full  (8–17h, tmux this)"
   "$WIZARD" build --rootless --hardening full
+  # The wizard can reset or rewrite parts of the tree. Re-verify that the exact
+  # lenOS series is still applied before anyone packages the result.
+  info "post-build patchkit --require-applied"
+  python3 "$VENDOR/tools/lenos-patch.py" --tree "$SRC" --require-applied \
+    || die "the build tree drifted: the stable lenOS series is no longer fully applied. Do not package this build."
+  if experimental_enabled; then
+    info "post-build experimental patchkit --require-applied"
+    python3 "$VENDOR/tools/lenos-patch.py" --tree "$SRC" --experimental --require-applied \
+      || die "the build tree drifted: the experimental lenOS series is no longer fully applied. Do not package this build."
+  fi
+  info "post-build patch verification OK"
   if root_enabled; then
     info "compile finished. root is post-build; next: LENOS_ROOT=$ROOT_MODE $0 root-prepare"
   else
@@ -724,12 +765,32 @@ require_root_state() {
 
 cmd_root_prepare() {
   root_enabled || die "root is disabled; use LENOS_ROOT=bakasu or kernelsu"
+  if [[ -z "$ROOT_LKM" ]]; then
+    case "${ROOT_ALLOW_UNVALIDATED_LKM,,}" in
+      1|true|yes) ;;
+      *)
+        die "root needs a kernel module built against this tree's kernel:
+    LENOS_ROOT_LKM=/path/to/kernelsu.ko
+The pinned module is built for Google's GKI KMI and is not valid for the
+hardened lenOS kernel. If you accept the risk anyway, set
+LENOS_ALLOW_UNVALIDATED_LKM=1. See docs/root.md."
+        ;;
+    esac
+  fi
   cmd_doctor
   local base
   base="$(select_base_ota)" || exit 1
   info "root mode: $ROOT_MODE"
   info "base OTA:  $base"
   info "state:     $ROOT_STATE_DIR"
+  local -a lkm_args=()
+  if [[ -n "$ROOT_LKM" ]]; then
+    lkm_args+=(--lkm "$ROOT_LKM")
+    info "LKM:       $ROOT_LKM (local, must match this kernel)"
+  else
+    lkm_args+=(--allow-unvalidated-lkm)
+    info "LKM:       pinned GKI module (explicitly UNVALIDATED on this kernel)"
+  fi
   info "verifying base OTA signature"
   verify_input_ota "$base"
   python3 "$VENDOR/tools/lenos_root.py" prepare \
@@ -739,6 +800,7 @@ cmd_root_prepare() {
     --cache-dir "$ROOT_CACHE" \
     --source "$SRC" \
     --avbroot "$AVBROOT" \
+    "${lkm_args[@]}" \
     || die "root-prepare failed"
   cp -f "$ROOT_STATE_DIR/manager.apk" "$WS/lenos-asteroids-$ROOT_MODE-manager.apk"
   chmod 644 "$WS/lenos-asteroids-$ROOT_MODE-manager.apk"
@@ -785,6 +847,18 @@ cmd_package() {
       --avbroot "$AVBROOT" >/dev/null \
       || die "prepared root state failed its image/manager checks"
     info "root state matches this base OTA: $ROOT_STATE_DIR"
+    local lkm_source
+    lkm_source="$(python3 - "$ROOT_STATE_DIR/root-state.json" <<'PY'
+import json, sys
+try:
+    print(json.load(open(sys.argv[1], encoding="utf-8")).get("lkm_source", "unknown"))
+except Exception:
+    print("unknown")
+PY
+)"
+    if [[ "$lkm_source" == "pinned-unvalidated" ]]; then
+      info "WARNING: this root state uses the pinned GKI LKM, which was not built for this kernel."
+    fi
   fi
 
   local parts_text

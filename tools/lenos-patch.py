@@ -168,6 +168,49 @@ def series_applied(project_dir: Path, patches: list[Path]) -> bool:
         return True
 
 
+def series_check(
+    project_dir: Path, patches: list[Path], *, reverse: bool = False
+) -> None:
+    """Verify a whole series in order without touching the real checkout.
+
+    ``--check`` must be cumulative: later patches legitimately depend on
+    context created by earlier ones. Checking each patch in isolation against
+    the pristine tree only works when every patch is hand-trimmed to avoid its
+    own series, which is brittle and hides real conflicts. Apply the series in
+    a throwaway copy instead, exactly like ``--apply`` would.
+    """
+    if not patches:
+        return
+    with tempfile.TemporaryDirectory(prefix="lenos-check-") as td:
+        tmp = Path(td)
+        for patch in patches:
+            for rel in patch_paths(patch):
+                src = project_dir / rel
+                if not src.is_file():
+                    continue
+                dst = tmp / rel
+                dst.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copy2(src, dst)
+        ordered = list(reversed(patches)) if reverse else patches
+        for patch in ordered:
+            command = ["git", "apply", "--verbose", "--whitespace=nowarn"]
+            if reverse:
+                command.append("--reverse")
+            command.append(str(patch))
+            proc = subprocess.run(
+                command, cwd=tmp, capture_output=True, text=True)
+            if proc.returncode != 0:
+                direction = "reverse " if reverse else ""
+                raise SystemExit(
+                    f"ERROR: {direction}check failed in {project_dir.name}:\n"
+                    f"  patch: {patch.name}\n  {proc.stderr.strip()}\n"
+                    "The series does not apply cumulatively to this tree. Fix the\n"
+                    "tree or update the patch set; do not ship a half-patched build."
+                )
+            suffix = " (reverse)" if reverse else ""
+            print(f"  ok    {project_dir.name}: {patch.name}{suffix}")
+
+
 def created_paths(patch: Path) -> list[str]:
     """Files the patch creates or renames to, as project-relative paths."""
     out: list[str] = []
@@ -185,6 +228,20 @@ def created_paths(patch: Path) -> list[str]:
             if p not in ("", "/dev/null"):
                 out.append(p[2:] if p.startswith("b/") else p)
     return out
+
+
+def classify_series(
+    project_dir: Path, patches: list[Path]
+) -> tuple[list[bool], bool]:
+    """Return per-patch applied flags and whether the whole series is applied."""
+    flags = [is_applied(project_dir, patch) for patch in patches]
+    if all(flags):
+        return flags, True
+    if series_applied(project_dir, patches):
+        # An earlier patch may no longer reverse on its own after a later
+        # patch in the same file. The whole-series check is authoritative.
+        return [True] * len(patches), True
+    return flags, False
 
 
 def reset_project(project: str, pdir: Path, patches: list[Path]) -> None:
@@ -276,6 +333,30 @@ def main() -> int:
     if not targets:
         raise SystemExit("ERROR: no projects with a series file found in " + str(root))
 
+    if args.apply:
+        # Verify every target project before writing to any of them. Without
+        # this, a patch failure late in the series leaves an earlier project
+        # already modified and the tree in a half-applied state.
+        for project in targets:
+            patches = series(project, root)
+            if not patches:
+                continue
+            pdir = tree / project
+            if not (pdir / ".git").exists() and not (pdir / ".git").is_file():
+                continue
+            flags, fully_applied = classify_series(pdir, patches)
+            if fully_applied:
+                continue
+            if any(flags):
+                raise SystemExit(
+                    f"ERROR: {project}: partially applied series. Reset it first:\n"
+                    f"  python3 tools/lenos-patch.py --tree {tree} --reset "
+                    f"--project {project}"
+                )
+            if args.reverse:
+                continue
+            series_check(pdir, patches)
+
     rc = 0
     for project in targets:
         patches = series(project, root)
@@ -297,30 +378,58 @@ def main() -> int:
                 print(f"  NOT applied  {project}: series is missing or partial")
                 rc = 1
             continue
-        applied_flags = [is_applied(pdir, patch) for patch in patches]
-        if not all(applied_flags) and series_applied(pdir, patches):
-            # An earlier patch may no longer reverse on its own after a later
-            # patch in the same file. The whole-series check is authoritative.
-            applied_flags = [True] * len(patches)
-        for patch, applied in zip(patches, applied_flags):
-            if args.status:
+
+        flags, fully_applied = classify_series(pdir, patches)
+        if args.status:
+            for patch, applied in zip(patches, flags):
                 state = "applied" if applied else "missing"
                 print(f"  {state:7} {project}: {patch.name}")
+            continue
+        if args.check:
+            if fully_applied:
+                for patch in patches:
+                    print(f"  skip  {project}: {patch.name} (already applied)")
                 continue
+            if any(flags):
+                raise SystemExit(
+                    f"ERROR: {project}: partially applied series. Reset it first:\n"
+                    f"  python3 tools/lenos-patch.py --tree {tree} --reset "
+                    f"--project {project}"
+                )
             if args.reverse:
-                if not applied:
+                for patch in patches:
                     print(f"  skip(reverse) {project}: {patch.name} (not applied)")
-                    continue
-                git_apply(pdir, patch, reverse=True, check=args.check)
-                if not args.check:
-                    print(f"  reversed {project}: {patch.name}")
                 continue
-            if applied:
+            series_check(pdir, patches)
+            continue
+        if args.reverse:
+            if not fully_applied:
+                if any(flags):
+                    raise SystemExit(
+                        f"ERROR: {project}: partially applied series. Reset it first:\n"
+                        f"  python3 tools/lenos-patch.py --tree {tree} --reset "
+                        f"--project {project}"
+                    )
+                for patch in patches:
+                    print(f"  skip(reverse) {project}: {patch.name} (not applied)")
+                continue
+            series_check(pdir, patches, reverse=True)
+            for patch in reversed(patches):
+                git_apply(pdir, patch, reverse=True, check=False)
+                print(f"  reversed {project}: {patch.name}")
+            continue
+        if fully_applied:
+            for patch in patches:
                 print(f"  skip  {project}: {patch.name} (already applied)")
-                continue
-            git_apply(pdir, patch, reverse=False, check=args.check)
-            if args.check:
-                continue
+            continue
+        if any(flags):
+            raise SystemExit(
+                f"ERROR: {project}: partially applied series. Reset it first:\n"
+                f"  python3 tools/lenos-patch.py --tree {tree} --reset "
+                f"--project {project}"
+            )
+        for patch in patches:
+            git_apply(pdir, patch, reverse=False, check=False)
             print(f"  applied {project}: {patch.name}")
     return rc
 

@@ -45,8 +45,17 @@ cannot be shipped accidentally. Root has not been boot-tested; see
 
 The helper re-signs the OS AVB chain with your AVB/OTA keys via avbroot.
 Bootloader locking is manual and unsupported by the helper; the scripts never
-flash, wipe, or lock. Root does not make locking supported. The lock checklist
-is in [`docs/flash-and-lock.md`](docs/flash-and-lock.md).
+flash, wipe, or lock.
+
+> **The default rootless build cannot be locked.** It ships no
+> OEMUnlockOnBoot or equivalent boot-failure guard, so the helper refuses to
+> produce a lock sequence for it. In practice the bootloader stays unlocked,
+> verified boot reports the orange state, and anyone with physical access can
+> replace the OS without wiping data. That weakens duress wipe, auto-BFU and the
+> kernel hardening against physical attackers. Do not treat this build as a
+> locked-device security boundary. Root does not make locking supported either.
+> The full lock checklist and its prerequisites are in
+> [`docs/flash-and-lock.md`](docs/flash-and-lock.md).
 
 ## Build
 
@@ -88,7 +97,7 @@ python3 vendor/lenos/tools/lenos-patch.py --tree . --reset
 - `patches/` — the default patch series, grouped by upstream project
 - `patches-experimental/` — optional second series, applied after the default one
 - `app/LenosSecurity/` — small settings app for controls the stock UI lacks
-- `config/`, `rro/`, `release/` — product configuration and build inputs
+- `config/`, `rro/` — product configuration and privacy overlays
 - `docs/` — build notes, feature list, porting notes, flashing safety
 - `experimental/` — opt-in app source, checks, and status notes
 - `tools/` — patch application, read-only verification helpers, and the pinned

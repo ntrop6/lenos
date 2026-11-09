@@ -37,6 +37,41 @@ def strip_bp_comments(body: str) -> str:
     return re.sub(r"(?m)^\s*//.*$", "", body)
 
 
+def make_logical_statements(body: str) -> list[str]:
+    """Join backslash-continued lines the way GNU make does.
+
+    A comment line without a trailing backslash ends the logical statement.
+    That is exactly the failure mode this parser is meant to catch.
+    """
+    statements: list[str] = []
+    current: list[str] = []
+    for line in body.splitlines():
+        current.append(line)
+        if not line.rstrip().endswith("\\"):
+            statements.append("\n".join(current))
+            current = []
+    if current:
+        statements.append("\n".join(current))
+    return statements
+
+
+def product_property_tokens(body: str) -> set[str]:
+    tokens: set[str] = set()
+    for statement in make_logical_statements(body):
+        head = statement.lstrip()
+        if not head.startswith("PRODUCT_PRODUCT_PROPERTIES"):
+            continue
+        joined = re.sub(r"\\\s*\n", " ", statement)
+        joined = re.sub(r"(?m)#.*$", "", joined)
+        joined = re.sub(
+            r"^\s*PRODUCT_PRODUCT_PROPERTIES\s*(\+=|:=|\?=|=)", "", joined
+        )
+        for token in joined.split():
+            if "=" in token:
+                tokens.add(token)
+    return tokens
+
+
 class ProductConfigTestCase(unittest.TestCase):
     def text(self, rel: str) -> str:
         path = VENDOR / rel
@@ -54,14 +89,40 @@ class TestProductMakefile(ProductConfigTestCase):
 
     def test_product_properties_are_privacy_hardening(self):
         body = self.text(self.MK)
+        properties = product_property_tokens(body)
         for needle in (
             "ro.lenos.version=1.0.0",
             "ro.lenos.base=lineage-24.0",
+            "ro.lenos.dns=dns.quad9.net",
+            "ro.lenos.security.auto_bfu=init",
+            "ro.lenos.security.duress=framework",
             "persist.traced.enable=0",
             "persist.logd.size.radio=64K",
+            "persist.vendor.verbose_logging_enabled=0",
             "persist.vendor.radio.adb_log_on=0",
+            "persist.vendor.radio.ims_log_enabled=0",
+            "persist.vendor.sys.modem.logging.enable=0",
+            "persist.vendor.radio.snapshot_enabled=0",
+            "persist.vendor.radio.snapshot_timer=0",
         ):
-            self.assertIn(needle, body)
+            self.assertIn(
+                needle,
+                properties,
+                f"{needle} is not in a continued PRODUCT_PRODUCT_PROPERTIES "
+                "statement; check for a comment line without a trailing "
+                "backslash inside the list",
+            )
+
+    def test_comments_do_not_break_property_continuations(self):
+        body = self.text(self.MK)
+        for statement in make_logical_statements(body):
+            lines = statement.splitlines()
+            for index, line in enumerate(lines[:-1]):
+                if line.lstrip().startswith("#"):
+                    self.fail(
+                        "comment line inside a backslash continuation at "
+                        f"{index + 1}: {line!r}"
+                    )
 
     def test_no_removed_build_variables_or_legacy_props(self):
         body = self.text(self.MK)
@@ -101,8 +162,9 @@ class TestRuntimeOverlays(ProductConfigTestCase):
             body = self.text(f"rro/{overlay}/Android.bp")
             self.assertIn("runtime_resource_overlay", body)
             self.assertIn(f'name: "{overlay}"', body)
-            self.assertIn("device_specific: true", body)
             self.assertIn("product_specific: true", body)
+            # Soong rejects device_specific together with product_specific.
+            self.assertNotIn("device_specific", body)
 
     def test_manifests_are_static_and_target_the_right_package(self):
         for overlay, target in RROS.items():
@@ -212,7 +274,9 @@ class TestSecurityApp(ProductConfigTestCase):
         main = self.text(f"{self.APP}/src/org/lenos/security/MainActivity.java")
         self.assertIn('SCRAMBLE_KEY = "lockscreen_scramble_pin_layout"', main)
         self.assertIn("Settings.Secure.putInt(getContentResolver(), SCRAMBLE_KEY, value)", main)
-        self.assertIn("settingsPutSecure", main)
+        # The app is platform-signed and privileged; no su/app_process fallback.
+        self.assertNotIn("settingsPutSecure", main)
+        self.assertNotIn("RootShell", main)
 
     def test_main_activity_still_parses(self):
         self.assertEqual(

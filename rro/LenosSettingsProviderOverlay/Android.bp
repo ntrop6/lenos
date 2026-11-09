@@ -10,6 +10,5 @@
 
 runtime_resource_overlay {
     name: "LenosSettingsProviderOverlay",
-    device_specific: true,
     product_specific: true,
 }

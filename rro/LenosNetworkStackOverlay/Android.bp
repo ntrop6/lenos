@@ -15,6 +15,5 @@
 
 runtime_resource_overlay {
     name: "LenosNetworkStackOverlay",
-    device_specific: true,
     product_specific: true,
 }

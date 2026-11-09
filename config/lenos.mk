@@ -4,8 +4,9 @@
 # patches/device_nothing_asteroids/0001-add-lenos-product.patch).
 #
 # Branding is ro.lenos.* only. ro.build.*, the build fingerprint and the
-# device identity stay stock on purpose: changing them breaks app
-# compatibility, attestation and Nothing factory tooling.
+# device identity are not changed here: the device tree pins the fingerprint
+# through PRODUCT_BUILD_PROP_OVERRIDES (BuildFingerprint=Nothing/...). A custom
+# AVB key and an unlocked bootloader still break Play Integrity/attestation.
 
 # lenOS companion app ("lenOS security"). Everything else in the UI is stock
 # LineageOS Settings; this app only hosts controls that Settings does not have.
@@ -51,18 +52,24 @@ PRODUCT_COPY_FILES += \
 PRODUCT_PRODUCT_PROPERTIES += \
     ro.lenos.version=1.0.0 \
     ro.lenos.base=lineage-24.0 \
-    ro.lenos.dns=dns.quad9.net \
-    # Auto-reboot-to-BFU backend: init timer (system/core/0001), armed from
-    # the keyguard showing-state in frameworks/base (0003). The timeout lives
-    # in Settings.Global."settings_reboot_after_timeout" (18h default via
-    # android.ext.settings, frameworks/base/0006). Status string for the
-    # lenOS security app.
-    ro.lenos.security.auto_bfu=init \
-    # Duress credential backend: LockSettingsService (frameworks/base/0005)
-    # with the lenOS security app as UI. Destructive by design; entering a
-    # duress credential at any prompt destroys the storage keys. Status string
-    # for the app.
-    ro.lenos.security.duress=framework \
+    ro.lenos.dns=dns.quad9.net
+
+# Auto-reboot-to-BFU backend: init timer (system/core/0001), armed from the
+# keyguard showing-state in frameworks/base (0003). The timeout lives in
+# Settings.Global."settings_reboot_after_timeout" (18h default via
+# android.ext.settings, frameworks/base/0006). Status string for the lenOS
+# security app.
+PRODUCT_PRODUCT_PROPERTIES += \
+    ro.lenos.security.auto_bfu=init
+
+# Duress credential backend: LockSettingsService (frameworks/base/0005) with
+# the lenOS security app as UI. Destructive by design; entering a duress
+# credential at any prompt destroys the storage keys. Status string for the
+# app.
+PRODUCT_PRODUCT_PROPERTIES += \
+    ro.lenos.security.duress=framework
+
+PRODUCT_PRODUCT_PROPERTIES += \
     persist.traced.enable=0 \
     persist.logd.size.radio=64K \
     persist.vendor.verbose_logging_enabled=0 \

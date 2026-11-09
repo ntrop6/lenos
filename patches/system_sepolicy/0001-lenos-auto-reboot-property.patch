@@ -1,0 +1,36 @@
+diff --git a/private/property.te b/private/property.te
+index 762f92d..7fda536 100644
+--- a/private/property.te
++++ b/private/property.te
+@@ -3,6 +3,7 @@ system_internal_prop(adb_timeout_prop)
+ system_internal_prop(adbd_prop)
+ system_internal_prop(adbd_tradeinmode_prop)
+ system_internal_prop(aiseal_prop)
++system_internal_prop(auto_reboot_ctl_prop)
+ system_internal_prop(apexd_payload_metadata_prop)
+ system_internal_prop(apexd_private_prop)
+ system_internal_prop(appsearch_vm_prop)
+diff --git a/private/property_contexts b/private/property_contexts
+index 38f3fea..0ad65fc 100644
+--- a/private/property_contexts
++++ b/private/property_contexts
+@@ -26,6 +26,7 @@ sys.init.perf_lsm_hooks u:object_r:init_perf_lsm_hooks_prop:s0
+ sys.cppreopt            u:object_r:cppreopt_prop:s0
+ sys.lpdumpd             u:object_r:lpdumpd_prop:s0
+ sys.powerctl            u:object_r:powerctl_prop:s0
++sys.auto_reboot_ctl     u:object_r:auto_reboot_ctl_prop:s0
+ service.                u:object_r:system_prop:s0
+ dhcp.                   u:object_r:dhcp_prop:s0
+ dhcp.bt-pan.result      u:object_r:pan_result_prop:s0
+diff --git a/private/system_server.te b/private/system_server.te
+index 355e5b9..8357c82 100644
+--- a/private/system_server.te
++++ b/private/system_server.te
+@@ -819,6 +819,7 @@ allow system_server server_configurable_flags_data_file:dir r_dir_perms;
+ allow system_server server_configurable_flags_data_file:file r_file_perms;
+ 
+ # Property Service write
++set_prop(system_server, auto_reboot_ctl_prop)
+ set_prop(system_server, system_prop)
+ set_prop(system_server, bootanim_system_prop)
+ set_prop(system_server, bluetooth_prop)

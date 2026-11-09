@@ -387,6 +387,9 @@ class TestRootDriver(unittest.TestCase):
                     "LENOS_SOURCE": str(src),
                     "LENOS_KEYDIR": str(keys),
                     "LENOS_WIZARD": str(wizard),
+                    "LENOS_WIZARD_SHA256": hashlib.sha256(
+                        wizard.read_bytes()
+                    ).hexdigest(),
                     "LENOS_BASE_OTA": str(base),
                     "AVBROOT": str(fake),
                     "FAKE_AVBROOT_LOG": str(log),
@@ -409,6 +412,9 @@ class TestRootDriver(unittest.TestCase):
                     "LENOS_SOURCE": str(src),
                     "LENOS_KEYDIR": str(keys),
                     "LENOS_WIZARD": str(wizard),
+                    "LENOS_WIZARD_SHA256": hashlib.sha256(
+                        wizard.read_bytes()
+                    ).hexdigest(),
                     "LENOS_BASE_OTA": str(base),
                     "AVBROOT": str(fake),
                     "FAKE_AVBROOT_LOG": str(log),
@@ -427,6 +433,9 @@ class TestRootDriver(unittest.TestCase):
                     "LENOS_SOURCE": str(src),
                     "LENOS_KEYDIR": str(keys),
                     "LENOS_WIZARD": str(wizard),
+                    "LENOS_WIZARD_SHA256": hashlib.sha256(
+                        wizard.read_bytes()
+                    ).hexdigest(),
                     "LENOS_BASE_OTA": str(base),
                     "AVBROOT": str(fake),
                     "FAKE_AVBROOT_LOG": str(log),
@@ -553,6 +562,9 @@ class TestRootDriver(unittest.TestCase):
                     "LENOS_SOURCE": str(src),
                     "LENOS_KEYDIR": str(keys),
                     "LENOS_WIZARD": str(wizard),
+                    "LENOS_WIZARD_SHA256": hashlib.sha256(
+                        wizard.read_bytes()
+                    ).hexdigest(),
                     "LENOS_VENDOR": str(vendor),
                     "LENOS_BASE_OTA": str(base),
                     "AVBROOT": str(fake),
@@ -571,6 +583,47 @@ class TestRootDriver(unittest.TestCase):
             self.assertIn("verify-image", calls)
             self.assertTrue((ws / "lenos-asteroids-bakasu.zip").is_file())
             self.assertTrue((ws / "lenos-asteroids-bakasu-manager.apk").is_file())
+
+    def test_doctor_hash_pins_the_external_wizard(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            src = root / "src"
+            (src / "device/nothing/asteroids").mkdir(parents=True)
+            (src / "device/nothing/asteroids/lineage_asteroids.mk").write_text(
+                "# fake device tree\n", encoding="utf-8"
+            )
+            keys = root / "keys"
+            keys.mkdir()
+            for name in ("avb.key", "ota.key", "ota.crt", "avb_pkmd.bin"):
+                (keys / name).write_text("test key material\n", encoding="utf-8")
+            avbroot = root / "avbroot"
+            avbroot.write_text("#!/bin/sh\necho 'avbroot 3.33.0'\n", encoding="utf-8")
+            avbroot.chmod(0o755)
+            wizard = root / "fake-wizard.sh"
+            wizard.write_text("#!/bin/sh\nexit 0\n", encoding="utf-8")
+            wizard.chmod(0o755)
+            env = {
+                "LENOS_WORKSPACE": str(root / "ws"),
+                "LENOS_SOURCE": str(src),
+                "LENOS_KEYDIR": str(keys),
+                "LENOS_WIZARD": str(wizard),
+                    "LENOS_WIZARD_SHA256": hashlib.sha256(
+                        wizard.read_bytes()
+                    ).hexdigest(),
+                "LENOS_VENDOR": str(VENDOR),
+                "AVBROOT": str(avbroot),
+            }
+            wrong = self.run_driver(
+                "doctor", env={**env, "LENOS_WIZARD_SHA256": "0" * 64}
+            )
+            self.assertEqual(wrong.returncode, 1)
+            self.assertIn("external wizard hash mismatch", wrong.stderr)
+            digest = hashlib.sha256(wizard.read_bytes()).hexdigest()
+            right = self.run_driver(
+                "doctor", env={**env, "LENOS_WIZARD_SHA256": digest}
+            )
+            self.assertEqual(right.returncode, 0, right.stderr)
+            self.assertIn(digest, right.stderr)
 
     def test_root_prepare_never_talks_to_a_device(self):
         body = ROOT_TOOL.read_text(encoding="utf-8")
@@ -594,6 +647,33 @@ class TestRootDriver(unittest.TestCase):
 
 
 class TestRootHelpers(unittest.TestCase):
+    def test_prepare_refuses_the_pinned_gki_lkm_by_default(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            base = root / "base.zip"
+            base.write_bytes(b"fake base OTA")
+            avbroot = root / "avbroot"
+            avbroot.write_text("#!/bin/sh\necho 'avbroot 3.33.0'\n", encoding="utf-8")
+            avbroot.chmod(0o755)
+            args = argparse.Namespace(
+                mode="bakasu",
+                base_ota=str(base),
+                state_dir=str(root / "state"),
+                cache_dir=str(root / "cache"),
+                source=str(root),
+                avbroot=str(avbroot),
+                profiles=str(PROFILES),
+                lkm="",
+                allow_unvalidated_lkm=False,
+            )
+            with self.assertRaises(lenos_root.RootError) as caught:
+                lenos_root.command_prepare(args)
+            message = str(caught.exception)
+            self.assertIn("pinned kernel module", message)
+            self.assertIn("--lkm", message)
+            self.assertIn("--allow-unvalidated-lkm", message)
+            self.assertFalse((root / "cache").exists(), "must fail before downloads")
+
     def test_cpio_parser_reads_modes_and_duplicate_entries(self):
         with tempfile.TemporaryDirectory() as directory:
             info = Path(directory) / "cpio.toml"

@@ -59,7 +59,9 @@ class TestDeviceConfig(LenosPatchTest):
         inherit_at = body.index("$(call inherit-product, device/nothing/asteroids/")
         self.assertLess(strip_at, inherit_at)
         self.assertLess(audiofx_at, inherit_at)
-        self.assertIn("Gallery2", body[strip_at:inherit_at])
+        # LineageOS 24.0 no longer ships Gallery2, so the default strip list is
+        # empty; the hook must still be declared before the inheritance.
+        self.assertIn("LENOS_STRIP_PACKAGES :=\n", body)
 
     def test_product_is_registered_for_lunch(self):
         self.assert_contains(
@@ -68,13 +70,17 @@ class TestDeviceConfig(LenosPatchTest):
         )
 
     def test_product_does_not_change_the_build_fingerprint(self):
-        # Device identity must stay stock (attestation/app compatibility).
-        self.assert_not_contains(
-            self.PRODUCT,
-            "PRODUCT_BUILD_PROP_OVERRIDES",
-            "BUILD_FINGERPRINT",
+        # The explicit fingerprint override lives in the inherited device
+        # makefile. lenOS must not add another assignment (a mention in a
+        # comment is fine; the fingerprint is not preserved as attestation).
+        body = self.text(self.PRODUCT)
+        for needle in (
+            "PRODUCT_BUILD_PROP_OVERRIDES +=",
+            "PRODUCT_BUILD_PROP_OVERRIDES :=",
+            "BUILD_FINGERPRINT=",
             "ro.product.name",
-        )
+        ):
+            self.assertNotIn(needle, body)
 
     def test_insecure_enterprise_wifi_is_disabled(self):
         self.assert_contains(

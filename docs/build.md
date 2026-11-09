@@ -96,8 +96,8 @@ python3 vendor/lenos/tools/lenos-patch.py --tree . --experimental --reset
 python3 vendor/lenos/tools/lenos-patch.py --tree . --reset
 ```
 
-If the patchkit is not inside the build tree, copy `config/`, `app/`, `rro/`,
-and `release/` into `$SRC/vendor/lenos/` before building. For an experimental
+If the patchkit is not inside the build tree, copy `config/`, `app/`, and
+`rro/` into `$SRC/vendor/lenos/` before building. For an experimental
 build also copy `experimental/app/LenosOpsec` into
 `$SRC/vendor/lenos/app/`.
 

@@ -9,6 +9,15 @@ prints a flash plan and, for a root build, a reference-only lock gate list. It
 refuses to run the final flash or lock steps, and it never prints a lock
 sequence; for a rootless build it refuses even to print the gate list.
 
+> **The default rootless build cannot be locked.** It installs no
+> OEMUnlockOnBoot or equivalent boot-failure recovery guard, so a lock would
+> leave no checked way back into fastboot if the image failed to boot. The
+> helper therefore refuses to lock it. In practice the bootloader stays
+> unlocked, `ro.boot.verifiedbootstate` reports `orange`, and an attacker with
+> physical access can replace the OS without wiping `/data`. Duress wipe,
+> auto-BFU and kernel hardening still protect data at rest, but they are not a
+> locked-bootloader security boundary. Root does not make locking supported.
+
 ## Before flashing
 
 - Build the whole OTA and verify its checksum yourself. Do not use a zip from
@@ -100,9 +109,13 @@ enabled after that. Never sideload an unpatched or differently signed OTA.
 
 ## Updates
 
-Prefer the full OTA from recovery or the normal system updater, signed with the
-same OTA key as the installed build. Do not sideload an old or differently
-signed image. Do not reuse a boot image from a different build.
+lenOS does not ship or configure a signed OTA/updater endpoint. If the
+LineageOS Updater app is present in your tree, it is not wired to a lenOS
+server and must not be used for this build.
+
+Update by installing a complete OTA from recovery, signed with the same OTA key
+as the installed build. Do not sideload an old or differently signed image. Do
+not reuse a boot image from a different build.
 
 If the phone will not boot, stop and use your recovery plan instead of
 experimenting with individual partitions.

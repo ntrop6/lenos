@@ -11,10 +11,10 @@ index f204e05..966e2c4 100644
 +    $(LOCAL_DIR)/lenos_asteroids.mk
 diff --git a/lenos_asteroids.mk b/lenos_asteroids.mk
 new file mode 100644
-index 0000000..dd95d1f
+index 0000000..aa0ecda
 --- /dev/null
 +++ b/lenos_asteroids.mk
-@@ -0,0 +1,38 @@
+@@ -0,0 +1,40 @@
 +#
 +# SPDX-FileCopyrightText: 2026 lenOS
 +# SPDX-License-Identifier: Apache-2.0
@@ -25,10 +25,12 @@ index 0000000..dd95d1f
 +# configuration (vendor/lenos/config/lenos.mk) on top: bundled apps, product
 +# overlays, first-boot defaults and hardening properties.
 +#
-+# The build fingerprint and the device identity are deliberately left at the
-+# stock values: changing them breaks app compatibility, SafetyNet/Play
-+# Integrity style checks and Nothing's factory tooling. Everything lenOS adds
-+# is namespaced under ro.lenos.* and in the lenOS settings UI.
++# The fingerprint is not changed here: the inherited device makefile pins it
++# through PRODUCT_BUILD_PROP_OVERRIDES (BuildFingerprint=Nothing/...), so it
++# stays a stock Nothing string regardless of PRODUCT_NAME. That does not keep
++# Play Integrity/attestation working once the AVB key is custom and the
++# bootloader is unlocked. Everything lenOS adds is namespaced under
++# ro.lenos.* and in the lenOS settings UI.
 +#
 +# LENOS_STRIP_PACKAGES is read by vendor/lineage/config/*.mk (patched) and must
 +# be set here, in the product makefile itself: the inherited app lists are
@@ -36,11 +38,11 @@ index 0000000..dd95d1f
 +# PRODUCT_PACKAGES values. Same for TARGET_EXCLUDES_AUDIOFX, an existing
 +# LineageOS switch.
 +
-+# Apps dropped from the build (sources stay in the tree). Gallery2 is kept out
-+# in favour of Glimpse; the browser (Jelly) is kept for now, see
++# Apps dropped from the build (sources stay in the tree). LineageOS 24.0 no
++# longer ships Gallery2, so the default list is empty; the hook stays
++# available for future policy. The browser (Jelly) is kept for now, see
 +# vendor/lenos/docs/features.md.
-+LENOS_STRIP_PACKAGES := \
-+    Gallery2
++LENOS_STRIP_PACKAGES :=
 +
 +# LineageOS' existing switch for AudioFX (bass boost / equalizer).
 +TARGET_EXCLUDES_AUDIOFX := true
