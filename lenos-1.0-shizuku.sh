@@ -11,7 +11,7 @@
 #   - never re-signs firmware (abl/xbl/bluetooth VBMeta magic)
 #   - builds and packages rootless by default
 #
-# Root is opt-in and post-build: LENOS_ROOT=resukisu|kernelsu. The normal
+# Root is opt-in and post-build: LENOS_ROOT=bakasu|kernelsu. The normal
 # LineageOS build stays rootless. root-prepare patches init_boot from the
 # signed base OTA, package re-signs the whole OTA with the user's AVB/OTA keys,
 # and the root manager remains a separate userspace APK. See docs/root.md.
@@ -77,9 +77,9 @@ lenOS $LENOS_VERSION  (asteroids / Nothing Phone 3a)
   $0 lock-gates     print lock warnings/gates. always exits 1 (this script will not lock)
 
 Default build: stable 1.0 series, rootless.
-Root (opt-in): LENOS_ROOT=resukisu|kernelsu. Build first, then root-prepare,
-  then package. ReSukiSU is preferred; KernelSU is the fallback.
-  Example: LENOS_ROOT=resukisu $0 root-prepare
+Root (opt-in): LENOS_ROOT=bakasu|kernelsu. Build first, then root-prepare,
+  then package. BakaSU is preferred; KernelSU is the fallback.
+  Example: LENOS_ROOT=bakasu $0 root-prepare
   Root mode never changes the product or includes a manager APK in the system
   image. It re-signs init_boot and every OS AVB partition with your keys.
 Experimental build: LENOS_EXPERIMENTAL=1 $0 apply|build
@@ -115,8 +115,8 @@ resolve_root_mode() {
   requested="${requested,,}"
   case "$requested" in
     none|rootless) requested="none";;
-    resukisu|kernelsu) ;;
-    *) die "invalid LENOS_ROOT='$requested' (use none, resukisu, or kernelsu)";;
+    bakasu|kernelsu) ;;
+    *) die "invalid LENOS_ROOT='$requested' (use none, bakasu, or kernelsu)";;
   esac
   ROOT_MODE="$requested"
   if root_enabled; then
@@ -306,7 +306,7 @@ require_pristine() {
   fi
 }
 
-# Build inputs only (config/, app/, rro/, release/). The patchkit, tests and
+# Build inputs only (config/, app/, rro/). The patchkit, tests and
 # docs stay in $VENDOR outside the tree; nothing else is compiled.
 install_vendor_lenos() {
   local part
@@ -316,7 +316,7 @@ install_vendor_lenos() {
   info "install vendor/lenos build inputs -> $SRC/vendor/lenos"
   rm -rf "$SRC/vendor/lenos"
   mkdir -p "$SRC/vendor/lenos"
-  for part in config app rro release; do
+  for part in config app rro; do
     cp -a "$VENDOR/$part" "$SRC/vendor/lenos/"
   done
   if experimental_enabled; then
@@ -328,7 +328,6 @@ install_vendor_lenos() {
   fi
   need_file "$SRC/vendor/lenos/config/lenos.mk"
   need_file "$SRC/vendor/lenos/config/privapp-permissions-org.lenos.security.xml"
-  need_file "$SRC/vendor/lenos/release/release_config_map.textproto"
 }
 
 cmd_apply() {
@@ -589,13 +588,10 @@ cmd_apply() {
   grep -q 'OP_COARSE_LOCATION' \
     "$SRC/frameworks/base/packages/SystemUI/src/com/android/systemui/privacy/AppOpsPrivacyItemMonitor.kt" \
     || die "location indicator coarse-op coverage missing"
-  grep -q 'name: "location_indicators_enabled"' \
-    "$SRC/vendor/lenos/release/aconfig/bp4a/android.location.flags/location_indicators_enabled_flag_values.textproto" \
-    || die "location indicator release config value missing"
   grep -q 'shouldAvoidStateReuse' \
     "$SRC/packages/modules/NetworkStack/src/android/net/dhcp/DhcpClient.java" \
     || die "DHCP lease-reuse fix for per-connection MAC randomization missing"
-  grep -q 'if (false && mUserLogoutInteractor.isLogoutEnabled' \
+  grep -q 'if (false && mUserLogoutInteractor.isPolicyManagerLogoutEnabled' \
     "$SRC/frameworks/base/packages/SystemUI/src/com/android/systemui/statusbar/KeyguardIndicationController.java" \
     || die "lock screen end session button not disabled"
   grep -q 'DISALLOW_INSTALL_UNKNOWN_SOURCES' \
@@ -719,7 +715,7 @@ PY
 }
 
 require_root_state() {
-  root_enabled || die "root mode is none; set LENOS_ROOT=resukisu or kernelsu"
+  root_enabled || die "root mode is none; set LENOS_ROOT=bakasu or kernelsu"
   [[ -n "$ROOT_STATE_DIR" ]] || die "root state directory is not set"
   need_file "$ROOT_STATE_DIR/init_boot.img"
   need_file "$ROOT_STATE_DIR/root-state.json"
@@ -727,7 +723,7 @@ require_root_state() {
 }
 
 cmd_root_prepare() {
-  root_enabled || die "root is disabled; use LENOS_ROOT=resukisu or kernelsu"
+  root_enabled || die "root is disabled; use LENOS_ROOT=bakasu or kernelsu"
   cmd_doctor
   local base
   base="$(select_base_ota)" || exit 1
@@ -1012,7 +1008,7 @@ main() {
   while (($#)); do
     case "$1" in
       --root)
-        (($# >= 2)) || die "--root requires none, resukisu, or kernelsu"
+        (($# >= 2)) || die "--root requires none, bakasu, or kernelsu"
         cli_root="$2"
         cli_root_set=1
         shift 2

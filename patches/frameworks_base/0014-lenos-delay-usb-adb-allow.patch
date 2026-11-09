@@ -1,5 +1,5 @@
 diff --git a/packages/SystemUI/src/com/android/systemui/usb/UsbDebuggingActivity.java b/packages/SystemUI/src/com/android/systemui/usb/UsbDebuggingActivity.java
-index 42563fd4..0ad5eaaa 100644
+index 42563fd479d12d5a29e33e45f62d11c3b89066e7..0ad5eaaaf6bc66eb7802e88d104f8eee02504c93 100644
 --- a/packages/SystemUI/src/com/android/systemui/usb/UsbDebuggingActivity.java
 +++ b/packages/SystemUI/src/com/android/systemui/usb/UsbDebuggingActivity.java
 @@ -35,6 +35,7 @@ import android.view.LayoutInflater;

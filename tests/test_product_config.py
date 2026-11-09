@@ -56,7 +56,7 @@ class TestProductMakefile(ProductConfigTestCase):
         body = self.text(self.MK)
         for needle in (
             "ro.lenos.version=1.0.0",
-            "ro.lenos.base=lineage-23.2",
+            "ro.lenos.base=lineage-24.0",
             "persist.traced.enable=0",
             "persist.logd.size.radio=64K",
             "persist.vendor.radio.adb_log_on=0",
@@ -65,7 +65,7 @@ class TestProductMakefile(ProductConfigTestCase):
 
     def test_no_removed_build_variables_or_legacy_props(self):
         body = self.text(self.MK)
-        # PRODUCT_PACKAGES_REMOVE does not exist in Lineage 23.2 build/make;
+        # PRODUCT_PACKAGES_REMOVE does not exist in Lineage 24.0 build/make;
         # app removal is done where the app lists are declared.
         self.assertNotIn("PRODUCT_PACKAGES_REMOVE", body)
         # net.hostname is dead in the modern network stack and must not come

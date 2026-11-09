@@ -1,6 +1,6 @@
 diff --git a/res/values/strings_lenos_users.xml b/res/values/strings_lenos_users.xml
 new file mode 100644
-index 0000000..e145c25
+index 0000000000000000000000000000000000000000..e145c2534f42719f0ee6f4fe192ed0e7c3540038
 --- /dev/null
 +++ b/res/values/strings_lenos_users.xml
 @@ -0,0 +1,26 @@
@@ -31,7 +31,7 @@ index 0000000..e145c25
 +    <string name="user_app_install_disabled_desc">Disable app installs and updates</string>
 +</resources>
 diff --git a/res/xml/user_details_settings.xml b/res/xml/user_details_settings.xml
-index 8e15d14..2cd01c1 100644
+index 205f9939226de8c6049f10bc6e333158552c6217..53f68cc15b31d4c414c71375d9a593533ba5f150 100644
 --- a/res/xml/user_details_settings.xml
 +++ b/res/xml/user_details_settings.xml
 @@ -33,6 +33,10 @@
@@ -47,10 +47,10 @@ index 8e15d14..2cd01c1 100644
              android:icon="@drawable/ic_apps"
 diff --git a/src/com/android/settings/users/UserAppsInstallSettings.java b/src/com/android/settings/users/UserAppsInstallSettings.java
 new file mode 100644
-index 0000000..12622d9
+index 0000000000000000000000000000000000000000..12622d9d5e69af0d5a93442e0280033784e9f41a
 --- /dev/null
 +++ b/src/com/android/settings/users/UserAppsInstallSettings.java
-@@ -0,0 +1,203 @@
+@@ -0,0 +1,200 @@
 +/*
 + * Copyright (C) 2023 GrapheneOS
 + * Copyright (C) 2026 The lenOS Project
@@ -72,7 +72,6 @@ index 0000000..12622d9
 +
 +import static com.android.settings.users.UserDetailsSettings.EXTRA_USER_ID;
 +
-+import android.app.settings.SettingsEnums;
 +import android.content.Context;
 +import android.content.pm.UserInfo;
 +import android.os.Bundle;
@@ -88,6 +87,7 @@ index 0000000..12622d9
 +import com.android.settings.dashboard.DashboardFragment;
 +import com.android.settings.utils.CandidateInfoExtra;
 +import com.android.settings.widget.RadioButtonPickerFragment;
++import com.android.settingslib.core.instrumentation.Instrumentable;
 +import com.android.settingslib.widget.CandidateInfo;
 +import com.android.settingslib.widget.SelectorWithWidgetPreference;
 +
@@ -117,7 +117,7 @@ index 0000000..12622d9
 +        new SubSettingLauncher(preference.getContext())
 +                .setDestination(UserAppsInstallSettings.class.getName())
 +                .setSourceMetricsCategory(extras.getInt(DashboardFragment.CATEGORY,
-+                        SettingsEnums.PAGE_UNKNOWN))
++                        Instrumentable.METRICS_CATEGORY_UNKNOWN))
 +                .setTitleText(preference.getTitle())
 +                .setArguments(extras)
 +                .launch();
@@ -242,10 +242,7 @@ index 0000000..12622d9
 +
 +    @Override
 +    public int getMetricsCategory() {
-+        // lenOS: GrapheneOS returns METRICS_CATEGORY_UNKNOWN, which A16's
-+        // RadioButtonPickerFragment does not define; PAGE_UNKNOWN is the same
-+        // "no dedicated metric" value.
-+        return SettingsEnums.PAGE_UNKNOWN;
++        return Instrumentable.METRICS_CATEGORY_UNKNOWN;
 +    }
 +
 +    @Override
@@ -255,10 +252,10 @@ index 0000000..12622d9
 +    }
 +}
 diff --git a/src/com/android/settings/users/UserDetailsSettings.java b/src/com/android/settings/users/UserDetailsSettings.java
-index 14fb6f3..2855a3c 100644
+index 94a8f9fd6f33a0f8bba9d2138ac4376a4db460d4..ded4530fd1134cbe21ef770a688dd8ab4b5a8409 100644
 --- a/src/com/android/settings/users/UserDetailsSettings.java
 +++ b/src/com/android/settings/users/UserDetailsSettings.java
-@@ -78,6 +78,7 @@ public class UserDetailsSettings extends SettingsPreferenceFragment
+@@ -80,6 +80,7 @@ public class UserDetailsSettings extends SettingsPreferenceFragment
      private static final String KEY_GRANT_ADMIN = "user_grant_admin";
      private static final String KEY_APP_AND_CONTENT_ACCESS = "app_and_content_access";
      private static final String KEY_APP_COPYING = "app_copying";
@@ -266,7 +263,7 @@ index 14fb6f3..2855a3c 100644
  
      /** Integer extra containing the userId to manage */
      static final String EXTRA_USER_ID = "user_id";
-@@ -115,10 +116,15 @@ public class UserDetailsSettings extends SettingsPreferenceFragment
+@@ -119,10 +120,15 @@ public class UserDetailsSettings extends SettingsPreferenceFragment
      @VisibleForTesting
      TwoStatePreference mGrantAdminPref;
  
@@ -282,7 +279,7 @@ index 14fb6f3..2855a3c 100644
      @Override
      public int getMetricsCategory() {
          return SettingsEnums.USER_DETAILS;
-@@ -149,6 +155,8 @@ public class UserDetailsSettings extends SettingsPreferenceFragment
+@@ -153,6 +159,8 @@ public class UserDetailsSettings extends SettingsPreferenceFragment
          if (mUserInfo.isGuest() && mGuestUserAutoCreated) {
              mRemoveUserPref.setEnabled((mUserInfo.flags & UserInfo.FLAG_INITIALIZED) != 0);
          }
@@ -291,7 +288,7 @@ index 14fb6f3..2855a3c 100644
      }
  
      @Override
-@@ -189,6 +197,9 @@ public class UserDetailsSettings extends SettingsPreferenceFragment
+@@ -195,6 +203,9 @@ public class UserDetailsSettings extends SettingsPreferenceFragment
          } else if (preference == mAppCopyingPref) {
              openAppCopyingScreen();
              return true;
@@ -301,7 +298,7 @@ index 14fb6f3..2855a3c 100644
          }
          return false;
      }
-@@ -365,6 +376,7 @@ public class UserDetailsSettings extends SettingsPreferenceFragment
+@@ -408,6 +419,7 @@ public class UserDetailsSettings extends SettingsPreferenceFragment
          boolean isNewUser =
                  arguments.getBoolean(AppRestrictionsFragment.EXTRA_NEW_USER, false);
          mUserInfo = mUserManager.getUserInfo(userId);
@@ -309,7 +306,7 @@ index 14fb6f3..2855a3c 100644
  
          mSwitchUserPref = findPreference(KEY_SWITCH_USER);
          mPhonePref = findPreference(KEY_ENABLE_TELEPHONY_CALLING);
-@@ -374,6 +386,7 @@ public class UserDetailsSettings extends SettingsPreferenceFragment
+@@ -417,6 +429,7 @@ public class UserDetailsSettings extends SettingsPreferenceFragment
          mGrantAdminPref = findPreference(KEY_GRANT_ADMIN);
  
          mGrantAdminPref.setChecked(mUserInfo.isAdmin());
@@ -317,7 +314,7 @@ index 14fb6f3..2855a3c 100644
  
          mSwitchUserPref.setVisible(mUserCaps.mUserSwitchingUiEnabled
                  && UserHandle.myUserId() != mUserInfo.id);
-@@ -430,6 +443,7 @@ public class UserDetailsSettings extends SettingsPreferenceFragment
+@@ -473,6 +486,7 @@ public class UserDetailsSettings extends SettingsPreferenceFragment
              removePreference(KEY_ENABLE_TELEPHONY_CALLING);
              removePreference(KEY_APP_AND_CONTENT_ACCESS);
              removePreference(KEY_APP_COPYING);
@@ -325,7 +322,7 @@ index 14fb6f3..2855a3c 100644
          } else {
              if (!Utils.isVoiceCapable(context)) { // no telephony
                  removePreference(KEY_ENABLE_TELEPHONY_CALLING);
-@@ -469,6 +483,7 @@ public class UserDetailsSettings extends SettingsPreferenceFragment
+@@ -512,6 +526,7 @@ public class UserDetailsSettings extends SettingsPreferenceFragment
              mGrantAdminPref.setOnPreferenceChangeListener(this);
              mAppAndContentAccessPref.setOnPreferenceClickListener(this);
              mAppCopyingPref.setOnPreferenceClickListener(this);
@@ -335,7 +332,7 @@ index 14fb6f3..2855a3c 100644
  
 diff --git a/src/com/android/settings/users/UserRestrictions.java b/src/com/android/settings/users/UserRestrictions.java
 new file mode 100644
-index 0000000..39344b3
+index 0000000000000000000000000000000000000000..39344b38a9dcf9480911e898d800b536a6a540df
 --- /dev/null
 +++ b/src/com/android/settings/users/UserRestrictions.java
 @@ -0,0 +1,95 @@

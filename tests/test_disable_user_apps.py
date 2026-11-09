@@ -29,14 +29,14 @@ Ported from GrapheneOS's ``AppDisableButton.kt``:
 
 Documented deviations:
 
-* The SPA app info screen is the one shipped and default on LineageOS 23.2
+* The SPA app info screen is the one shipped and default on LineageOS 24.0
   (``settings_enable_spa`` defaults to true), which is where GrapheneOS has
   the feature too. The legacy ``AppButtonsPreferenceController`` screen keeps
   its stock behavior of offering Disable only for system apps — it is
   unmodified in GrapheneOS as well.
 * GrapheneOS's A17 dialog gained an HSU (headless system user) warning
-  title/message; A16 has no HSU app management, and user apps skip the
-  dialog entirely, so the dialog is unchanged here.
+  title/message; LineageOS 24.0 has that dialog, and user apps skip it
+  entirely, so the dialog is unchanged here.
 """
 from __future__ import annotations
 
@@ -83,7 +83,7 @@ class TestDisableUserApps(LenosPatchTest):
         self.assert_contains(
             self.FILE,
             "stringResource(R.string.app_disable_dlg_positive)",
-            "stringResource(R.string.app_disable_dlg_text)")
+            "R.string.app_disable_dlg_text")
 
     def test_enable_stays_available_for_disabled_apps(self):
         self.assert_contains(

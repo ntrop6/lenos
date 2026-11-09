@@ -1,18 +1,18 @@
 # Provenance and deviations
 
 The patches were produced by reading the GrapheneOS trees and re-applying the logic to the pinned
-LineageOS 23.2 checkouts. They are not cherry-picks with hidden context: each patch is a complete
+LineageOS 24.0 checkouts. They are not cherry-picks with hidden context: each patch is a complete
 diff against the commit below. Original lenOS work is marked as such.
 
 ## Pinned targets
 
 | Project | Revision | Used by |
 |---|---|---|
-| `bionic` | `ff9fe01e7e1e81febaf32b15fa561aec480a112c` (`lineage-23.2`) | HTS-1 hardened thread stacks |
-| `frameworks/base` | `958afcc3d647d57571650cee4172afe0da619171` (`lineage-23.2`, 2026-10-15) | #20/#21, #22, #23 partial, #25, OPS-3 |
-| `packages/apps/Settings` | `72494c35b673f1b531e1218160e1e514976f6a1e` | #17, #22, #23 partial, OPS-3, OPS-4 |
-| `packages/apps/SetupWizard` | `715b772f07c52ce0fdb83b9891765f3de992ffb5` | #28 |
-| `packages/apps/Seedvault` | `29301617a99030c3ae0e14de64eadbc73bd2bd63` | #27 |
+| `bionic` | `ff3bb041547924ac1a7504e4b3bd3ea18169ca2f` (`lineage-24.0`) | HTS-1 hardened thread stacks |
+| `frameworks/base` | `7c7188f8585e20c035eb43fed72df5e717614b38` (`lineage-24.0`) | #20/#21, #22, #23 partial, #25, OPS-3 |
+| `packages/apps/Settings` | `2f16bfe2c784623a324350cd19dae7f6066e2cfb` (`lineage-24.0`) | #17, #22, #23 partial, OPS-3, OPS-4 |
+| `packages/apps/SetupWizard` | `9c75b8a75bb3e48d4ec96375fba00b1e409c8763` (`lineage-24.0`) | #28 |
+| `packages/apps/Seedvault` | `cd6ab3fa1631d8c230b16a66239faca1e370b27e` (`lineage-24.0`) | #27 |
 | `vendor/lenos` (main patchkit) | this repository, `lenos-1.0` | OPS-1 / OPS-2 source and opt-in product integration |
 
 ## GrapheneOS references
@@ -40,7 +40,7 @@ are:
 | Patch | Why it is original |
 |---|---|
 | `packages_apps_Settings/0001-crash-log-viewer.patch` | GrapheneOS's crash-reporting stack is a 17-file system-server service with a different UI and upload flow. This is a smaller, local-only DropBox reader with explicit sharing. |
-| `packages_apps_SetupWizard/0001-bootloader-unlocked-warning.patch` | GrapheneOS's SetupWizard fork has no bootloader/unlocked warning; the feature was specified for lenOS and implemented against the LineageOS 23.2 wizard. |
+| `packages_apps_SetupWizard/0001-bootloader-unlocked-warning.patch` | GrapheneOS's SetupWizard fork has no bootloader/unlocked warning; the feature was specified for lenOS and implemented against the LineageOS 24.0 Kotlin wizard. |
 | `experimental/app/LenosOpsec` (source tree, installed only with `LENOS_EXPERIMENTAL=1`) | Original lenOS OPSEC tools: a metadata-scrubbing image share target, an Offline Quick Settings tile, and a tracking-parameter scrubber for shared text. |
 | `frameworks_base/0004-clipboard-clear-on-screen-off.patch` + `packages_apps_Settings/0003-clipboard-privacy.patch` | Original lenOS OPSEC control. AOSP has a DeviceConfig auto-clear timer, not a screen-off wipe and not a user-facing setting. |
 | `packages_apps_Settings/0004-clipboard-app-access.patch` | Original lenOS Settings UI over AOSP's existing `OP_READ_CLIPBOARD` AppOp. It does not port GrapheneOS's `GosPackageState` per-app state or its denial notification/toolbar path. |
@@ -112,7 +112,7 @@ are:
 
 * GrapheneOS enforces the policy through vendor sysprops (`sys.port_security_mode`,
   `security.deny_new_usb2`) and its keyguard hooks. Those props are not portable to `asteroids`
-  without the matching vendor HAL/kernel support, so this port uses the standard Android 16
+  without the matching vendor HAL/kernel support, so this port uses the standard Android 17
   per-port `UsbPortManager.enableUsbData` HAL operation.
 * Consequence: the AOSP operation disables the data lines only. Modes `ALL_PORTS_DISABLED` (0) and
   `CHARGING_ONLY` (1) are therefore equivalent on this build; a true VBUS-off mode needs a vendor
@@ -142,9 +142,9 @@ are:
 
 ### #27 — Seedvault app-id prefix
 
-* GrapheneOS's current Seedvault is Android 17 upstream and cannot be dropped into LineageOS 23.2.
-  This port applies the older internal-prefix commit (`db21e16`) plus the GrapheneOS prebuilt
-  chunker (`sha256 121735802e8e8c5e558379c9f3cfd5230e1baa60f73cd3905e935d40208148bb`).
+* LineageOS 24.0 already ships the Android 17 Seedvault upstream. This port applies the
+  internal-prefix commit (`db21e16`) plus the GrapheneOS prebuilt chunker
+  (`sha256 121735802e8e8c5e558379c9f3cfd5230e1baa60f73cd3905e935d40208148bb`).
 * The public application id remains `com.stevesoltys.seedvault`, and the legacy
   `org.calyxos.seedvault.BASE_SPLIT` constant is retained for allowlist/backup compatibility.
   Only the internal `app.grapheneos` package prefix and permission names are renamed.

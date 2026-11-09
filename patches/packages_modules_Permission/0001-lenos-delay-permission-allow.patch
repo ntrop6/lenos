@@ -1,8 +1,8 @@
 diff --git a/PermissionController/src/com/android/permissioncontroller/permission/ui/GrantPermissionsActivity.java b/PermissionController/src/com/android/permissioncontroller/permission/ui/GrantPermissionsActivity.java
-index af03fb0..0681e8d 100644
+index 2582be28cb6a59572971a92f6c592fcaeb651432..c6b3e603569c988780301adf3f2494a6546e9db9 100644
 --- a/PermissionController/src/com/android/permissioncontroller/permission/ui/GrantPermissionsActivity.java
 +++ b/PermissionController/src/com/android/permissioncontroller/permission/ui/GrantPermissionsActivity.java
-@@ -128,6 +128,20 @@ public class GrantPermissionsActivity extends SettingsActivity
+@@ -128,6 +128,20 @@ public class GrantPermissionsActivity extends FragmentActivity
  
      public static final String ANNOTATION_ID = "link";
  
@@ -24,10 +24,10 @@ index af03fb0..0681e8d 100644
      public static final int ALLOW_BUTTON = 0;
      public static final int ALLOW_ALWAYS_BUTTON = 1; // Used in auto
 diff --git a/PermissionController/src/com/android/permissioncontroller/permission/ui/handheld/GrantPermissionsViewHandlerImpl.kt b/PermissionController/src/com/android/permissioncontroller/permission/ui/handheld/GrantPermissionsViewHandlerImpl.kt
-index 8fd432f..f3b999e 100644
+index f86ab91746138b985d096dae86eafe8a2379a489..8a49b11c1f88d2f4dd9a949b31e57a41951e091c 100644
 --- a/PermissionController/src/com/android/permissioncontroller/permission/ui/handheld/GrantPermissionsViewHandlerImpl.kt
 +++ b/PermissionController/src/com/android/permissioncontroller/permission/ui/handheld/GrantPermissionsViewHandlerImpl.kt
-@@ -26,6 +26,7 @@ import android.os.Bundle
+@@ -28,6 +28,7 @@ import android.provider.Settings
  import android.text.method.LinkMovementMethod
  import android.transition.ChangeBounds
  import android.transition.TransitionManager
@@ -35,9 +35,9 @@ index 8fd432f..f3b999e 100644
  import android.util.SparseIntArray
  import android.view.Gravity
  import android.view.LayoutInflater
-@@ -343,12 +344,27 @@ class GrantPermissionsViewHandlerImpl(
+@@ -386,12 +387,27 @@ class GrantPermissionsViewHandlerImpl(
      private fun updateButtons() {
-         for (i in 0 until BUTTON_RES_ID_TO_NUM.size()) {
+         for (i in 0 until BUTTON_RES_ID_TO_NUM.size) {
              val pos = BUTTON_RES_ID_TO_NUM.valueAt(i)
 -            buttons[pos]?.visibility =
 -                if (buttonVisibilities[pos]) {
@@ -66,5 +66,5 @@ index 8fd432f..f3b999e 100644
 +            }
 +
              if (pos == ALLOW_FOREGROUND_BUTTON && buttonVisibilities[pos]) {
-                 buttons[pos]?.text =
-                     mActivity.resources.getString(R.string.grant_dialog_button_allow_foreground)
+                 if (
+                     locationVisibilities[LOCATION_ACCURACY_LAYOUT] &&

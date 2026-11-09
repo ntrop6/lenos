@@ -1,8 +1,8 @@
 diff --git a/core/api/module-lib-current.txt b/core/api/module-lib-current.txt
-index 23e18b9f..2f906e70 100644
+index 4b3e7f8354b8119ed5759b146cc3c1ccb38f2566..09153cb46ca7427c38904e5e1da2677f15aa5e2a 100644
 --- a/core/api/module-lib-current.txt
 +++ b/core/api/module-lib-current.txt
-@@ -145,6 +145,15 @@ package android.content.pm {
+@@ -141,6 +141,15 @@ package android.content.pm {
  
  }
  
@@ -20,7 +20,7 @@ index 23e18b9f..2f906e70 100644
    @RestrictedForEnvironment(environments=android.annotation.RestrictedForEnvironment.ENVIRONMENT_SDK_RUNTIME, from=android.os.Build.VERSION_CODES.UPSIDE_DOWN_CAKE) public class UsbManager {
 diff --git a/core/java/android/ext/ConnectivityUtil.java b/core/java/android/ext/ConnectivityUtil.java
 new file mode 100644
-index 00000000..a9f24f47
+index 0000000000000000000000000000000000000000..a9f24f47029dc426d59ddbfb269c10da16a3ffcf
 --- /dev/null
 +++ b/core/java/android/ext/ConnectivityUtil.java
 @@ -0,0 +1,68 @@

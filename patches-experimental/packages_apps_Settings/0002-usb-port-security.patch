@@ -1,9 +1,12 @@
 diff --git a/res/values/strings.xml b/res/values/strings.xml
-index ccc591f..0283b30 100644
+index 945dc8be40d2bee6bda897547aa35a9b08723f45..c967273e7db18879dae8ffc51a588b7b71a19671 100644
 --- a/res/values/strings.xml
 +++ b/res/values/strings.xml
-@@ -14947,2 +14947,21 @@
+@@ -15382,6 +15382,26 @@
      <string name="safety_center_account_security_search_terms"></string>
+     <!-- Safety Center device finder subpage summary [CHAR LIMIT=NONE] -->
+     <string name="safety_center_device_finders_summary"></string>
++
 +    <!-- lenOS USB port security -->
 +    <string name="usb_port_security_title">USB data when locked</string>
 +    <string name="usb_port_security_summary">Block USB data lines while the device is locked. Charging continues.</string>
@@ -24,11 +27,15 @@ index ccc591f..0283b30 100644
 +    <string name="usb_port_security_error">Could not change the USB port policy. Unlock the device and try again.</string>
 +
      <!-- Safety Center device finder source search terms [CHAR LIMIT=NONE] -->
+     <string name="safety_center_device_finder_search_terms"></string>
+     <!-- Safety Center system and updates subpage summary [CHAR LIMIT=NONE] -->
 diff --git a/res/xml/more_security_privacy_settings.xml b/res/xml/more_security_privacy_settings.xml
-index 0068872..66f1977 100644
+index 9c9f888c14828fd46c732d7cf624a1cd0894fb3f..06f9ca3e6f40eab1724c452dd3bdc93360231b19 100644
 --- a/res/xml/more_security_privacy_settings.xml
 +++ b/res/xml/more_security_privacy_settings.xml
-@@ -166,2 +166,9 @@
+@@ -198,6 +198,13 @@
+         android:summary="@string/summary_placeholder"
+         android:fragment="com.android.settings.enterprise.EnterprisePrivacySettings"
          settings:controller="com.android.settings.enterprise.EnterprisePrivacyPreferenceController"/>
 +    <Preference
 +        android:order="240"
@@ -38,9 +45,11 @@ index 0068872..66f1977 100644
 +        android:fragment="com.android.settings.security.UsbPortSecuritySettings" />
 +
  
+     <Preference
+         android:order="243"
 diff --git a/src/com/android/settings/security/UsbPortSecuritySettings.java b/src/com/android/settings/security/UsbPortSecuritySettings.java
 new file mode 100644
-index 0000000..404868a
+index 0000000000000000000000000000000000000000..404868a6676bde5dd82eee8f73355d5ef7f7c0a5
 --- /dev/null
 +++ b/src/com/android/settings/security/UsbPortSecuritySettings.java
 @@ -0,0 +1,155 @@

@@ -1,8 +1,8 @@
 diff --git a/services/core/java/com/android/server/pm/permission/DefaultPermissionGrantPolicy.java b/services/core/java/com/android/server/pm/permission/DefaultPermissionGrantPolicy.java
-index b4f79f6f..5250135d 100644
+index 00bd46f500c4388b54cf912056d0207666440c8a..4be8478f81e1f5872fd045976cf10a3f59484fde 100644
 --- a/services/core/java/com/android/server/pm/permission/DefaultPermissionGrantPolicy.java
 +++ b/services/core/java/com/android/server/pm/permission/DefaultPermissionGrantPolicy.java
-@@ -795,18 +795,8 @@ final class DefaultPermissionGrantPolicy {
+@@ -809,18 +809,8 @@ final class DefaultPermissionGrantPolicy {
                          Intent.CATEGORY_APP_EMAIL, userId),
                  userId, CONTACTS_PERMISSIONS, CALENDAR_PERMISSIONS);
  

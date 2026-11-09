@@ -1,8 +1,8 @@
 diff --git a/services/core/java/com/android/server/connectivity/Vpn.java b/services/core/java/com/android/server/connectivity/Vpn.java
-index 7a2ca702..8450d205 100644
+index e01960a71598c0bca56c15c382e7e81e10a0105d..7cdb9690b5a9068dc9d1388334f45628ee584e80 100644
 --- a/services/core/java/com/android/server/connectivity/Vpn.java
 +++ b/services/core/java/com/android/server/connectivity/Vpn.java
-@@ -1159,13 +1159,13 @@ public class Vpn {
+@@ -1153,13 +1153,13 @@ public class Vpn {
              if (alwaysOnPackage == null) {
                  return true;
              }

@@ -1,55 +1,6 @@
-diff --git a/services/core/java/com/android/server/clipboard/ClipboardService.java b/services/core/java/com/android/server/clipboard/ClipboardService.java
-index fe037070..5aca854a 100644
---- a/services/core/java/com/android/server/clipboard/ClipboardService.java
-+++ b/services/core/java/com/android/server/clipboard/ClipboardService.java
-@@ -993,6 +1031,14 @@ public class ClipboardService extends SystemService {
-         }
-         setPrimaryClipInternalLocked(clipboard, clip, uid, sourcePackage);
- 
-+        // lenOS: GrapheneOS-compatible cross-profile clipboard policy. When exports are
-+        // not allowed, related profiles are left untouched (they keep or lose the clip
-+        // according to the block below and their own import policy).
-+        if (!android.ext.settings.CrossProfileClipboardAccessSettings
-+                .isExportAccessAllowed(getContext(), userId)) {
-+            return;
-+        }
-+
-         // Update related users
-         List<UserInfo> related = getRelatedProfiles(userId);
-         if (related != null) {
-@@ -1022,6 +1068,11 @@ public class ClipboardService extends SystemService {
-                 for (int i = 0; i < size; i++) {
-                     int id = related.get(i).id;
-                     if (id != userId) {
-+                        // lenOS: skip related profiles whose import policy forbids it.
-+                        if (!android.ext.settings.CrossProfileClipboardAccessSettings
-+                                .isImportAccessAllowed(getContext(), id)) {
-+                            continue;
-+                        }
-                         final boolean canCopyIntoProfile = !hasRestriction(
-                                 UserManager.DISALLOW_SHARE_INTO_MANAGED_PROFILE, id);
-                         if (canCopyIntoProfile) {
-diff --git a/services/core/java/com/android/server/wm/DragState.java b/services/core/java/com/android/server/wm/DragState.java
-index fa621b03..997548db 100644
---- a/services/core/java/com/android/server/wm/DragState.java
-+++ b/services/core/java/com/android/server/wm/DragState.java
-@@ -514,6 +514,13 @@ class DragState {
-         final UserManagerInternal userManager = LocalServices.getService(UserManagerInternal.class);
-         mCrossProfileCopyAllowed = !userManager.getUserRestriction(
-                 mSourceUserId, UserManager.DISALLOW_CROSS_PROFILE_COPY_PASTE);
-+        // lenOS: GrapheneOS-compatible cross-profile clipboard policy also applies to
-+        // drag-and-drop, which can carry the same data cross-profile.
-+        if (!android.ext.settings.CrossProfileClipboardAccessSettings
-+                .isExportAccessAllowed(mCurrentDisplayContent.mAtmService.mContext,
-+                        mSourceUserId)) {
-+            mCrossProfileCopyAllowed = false;
-+        }
- 
-         if (DEBUG_DRAG) {
-             Slog.d(TAG_WM, "Broadcasting DRAG_STARTED at (" + touchX + ", " + touchY + ")");
 diff --git a/core/java/android/ext/settings/CrossProfileClipboardAccessSettings.java b/core/java/android/ext/settings/CrossProfileClipboardAccessSettings.java
 new file mode 100644
-index 00000000..dc342039
+index 0000000000000000000000000000000000000000..dc342039bb30e3fec4489fbda39d6f435a2485a2
 --- /dev/null
 +++ b/core/java/android/ext/settings/CrossProfileClipboardAccessSettings.java
 @@ -0,0 +1,49 @@
@@ -102,3 +53,52 @@ index 00000000..dc342039
 +        return curSetting == FOLLOW_DEFAULT || curSetting == ALLOW_IMPORT_DEFAULTS_ONLY;
 +    }
 +}
+diff --git a/services/core/java/com/android/server/clipboard/ClipboardService.java b/services/core/java/com/android/server/clipboard/ClipboardService.java
+index 2036533069eb16bffe5e39453dc20c9867aa203d..b003ed500ea336f442201bcc9596c53ba60430d1 100644
+--- a/services/core/java/com/android/server/clipboard/ClipboardService.java
++++ b/services/core/java/com/android/server/clipboard/ClipboardService.java
+@@ -1039,6 +1039,14 @@ public class ClipboardService extends SystemService {
+         }
+         setPrimaryClipInternalLocked(clipboard, clip, uid, sourcePackage);
+ 
++        // lenOS: GrapheneOS-compatible cross-profile clipboard policy. When exports are
++        // not allowed, related profiles are left untouched (they keep or lose the clip
++        // according to the block below and their own import policy).
++        if (!android.ext.settings.CrossProfileClipboardAccessSettings
++                .isExportAccessAllowed(getContext(), userId)) {
++            return;
++        }
++
+         // Update related users
+         List<UserInfo> related = getRelatedProfiles(userId);
+         if (related != null) {
+@@ -1068,6 +1076,11 @@ public class ClipboardService extends SystemService {
+                 for (int i = 0; i < size; i++) {
+                     int id = related.get(i).id;
+                     if (id != userId) {
++                        // lenOS: skip related profiles whose import policy forbids it.
++                        if (!android.ext.settings.CrossProfileClipboardAccessSettings
++                                .isImportAccessAllowed(getContext(), id)) {
++                            continue;
++                        }
+                         final boolean canCopyIntoProfile = !hasRestriction(
+                                 UserManager.DISALLOW_SHARE_INTO_MANAGED_PROFILE, id);
+                         if (canCopyIntoProfile) {
+diff --git a/services/core/java/com/android/server/wm/DragState.java b/services/core/java/com/android/server/wm/DragState.java
+index 1c30e5b4b8fde6ca884c1bf707b9879d211c9b4d..3a48c2c258f2c10baf877766daa6154ddb98204b 100644
+--- a/services/core/java/com/android/server/wm/DragState.java
++++ b/services/core/java/com/android/server/wm/DragState.java
+@@ -514,6 +514,13 @@ class DragState {
+         final UserManagerInternal userManager = LocalServices.getService(UserManagerInternal.class);
+         mCrossProfileCopyAllowed = !userManager.getUserRestriction(
+                 mSourceUserId, UserManager.DISALLOW_CROSS_PROFILE_COPY_PASTE);
++        // lenOS: GrapheneOS-compatible cross-profile clipboard policy also applies to
++        // drag-and-drop, which can carry the same data cross-profile.
++        if (!android.ext.settings.CrossProfileClipboardAccessSettings
++                .isExportAccessAllowed(mCurrentDisplayContent.mAtmService.mContext,
++                        mSourceUserId)) {
++            mCrossProfileCopyAllowed = false;
++        }
+ 
+         if (DEBUG_DRAG) {
+             Slog.d(TAG_WM, "Broadcasting DRAG_STARTED at (" + touchX + ", " + touchY + ")");

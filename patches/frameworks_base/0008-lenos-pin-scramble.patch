@@ -1,8 +1,8 @@
 diff --git a/packages/SystemUI/src/com/android/keyguard/KeyguardPINView.java b/packages/SystemUI/src/com/android/keyguard/KeyguardPINView.java
-index ca387a94..622b67f2 100644
+index 4bfb3b30fe7660d31c392459d9d38d138760c21d..294e7d7bcdc726468233ba0bc657773ca0d6d1d3 100644
 --- a/packages/SystemUI/src/com/android/keyguard/KeyguardPINView.java
 +++ b/packages/SystemUI/src/com/android/keyguard/KeyguardPINView.java
-@@ -44,11 +44,6 @@ import com.android.settingslib.animation.DisappearAnimationUtils;
+@@ -45,11 +45,6 @@ import com.android.settingslib.animation.DisappearAnimationUtils;
  import com.android.systemui.res.R;
  import com.android.systemui.statusbar.policy.DevicePostureController.DevicePostureInt;
  
@@ -14,7 +14,7 @@ index ca387a94..622b67f2 100644
  /**
   * Displays a PIN pad for unlocking.
   */
-@@ -70,10 +65,6 @@ public class KeyguardPINView extends KeyguardPinBasedInputView {
+@@ -71,10 +66,6 @@ public class KeyguardPINView extends KeyguardPinBasedInputView {
      private boolean mIsSmallLockScreenLandscapeEnabled = false;
      @DevicePostureInt private int mLastDevicePosture = DEVICE_POSTURE_UNKNOWN;
      public static final long ANIMATION_DURATION = 650;
@@ -25,7 +25,7 @@ index ca387a94..622b67f2 100644
  
      public KeyguardPINView(Context context) {
          this(context, null);
-@@ -278,36 +269,6 @@ public class KeyguardPINView extends KeyguardPinBasedInputView {
+@@ -279,36 +270,6 @@ public class KeyguardPINView extends KeyguardPinBasedInputView {
                  }};
      }
  
@@ -60,9 +60,9 @@ index ca387a94..622b67f2 100644
 -    }
 -
      @Override
-     public int getWrongPasswordStringId() {
-         return R.string.kg_wrong_pin;
-@@ -347,14 +308,6 @@ public class KeyguardPINView extends KeyguardPinBasedInputView {
+     public int getWrongPasswordStringId(boolean isDuplicate) {
+         return isDuplicate
+@@ -350,14 +311,6 @@ public class KeyguardPINView extends KeyguardPinBasedInputView {
          return true;
      }
  
@@ -78,10 +78,10 @@ index ca387a94..622b67f2 100644
      public boolean hasOverlappingRendering() {
          return false;
 diff --git a/packages/SystemUI/src/com/android/keyguard/KeyguardPinBasedInputView.java b/packages/SystemUI/src/com/android/keyguard/KeyguardPinBasedInputView.java
-index fb5494b1..1d06fd78 100644
+index 2bd16eaa98da33e5531e7d6e1bf5943ab16c4fdd..c2a75eedd0477f4b9a8b23e24d4aed0b212962c8 100644
 --- a/packages/SystemUI/src/com/android/keyguard/KeyguardPinBasedInputView.java
 +++ b/packages/SystemUI/src/com/android/keyguard/KeyguardPinBasedInputView.java
-@@ -44,7 +44,9 @@ import com.android.internal.widget.LockscreenCredential;
+@@ -49,7 +49,9 @@ import com.android.internal.widget.LockscreenCredential;
  import com.android.systemui.Flags;
  import com.android.systemui.res.R;
  
@@ -91,7 +91,7 @@ index fb5494b1..1d06fd78 100644
  import java.util.List;
  
  /**
-@@ -149,13 +151,9 @@ public abstract class KeyguardPinBasedInputView extends KeyguardAbsKeyInputView
+@@ -177,13 +179,9 @@ public abstract class KeyguardPinBasedInputView extends KeyguardAbsKeyInputView
          }
      }
  
@@ -106,7 +106,7 @@ index fb5494b1..1d06fd78 100644
          }
      }
  
-@@ -275,4 +273,32 @@ public abstract class KeyguardPinBasedInputView extends KeyguardAbsKeyInputView
+@@ -316,4 +314,32 @@ public abstract class KeyguardPinBasedInputView extends KeyguardAbsKeyInputView
          animatorSet.playTogether(animators);
          animatorSet.start();
      }
@@ -140,7 +140,7 @@ index fb5494b1..1d06fd78 100644
 +    }
  }
 diff --git a/packages/SystemUI/src/com/android/keyguard/KeyguardPinBasedInputViewController.java b/packages/SystemUI/src/com/android/keyguard/KeyguardPinBasedInputViewController.java
-index 9608cd2b..24f4d843 100644
+index da1eb30029c54e3820ec6e98272f26b156778c72..2862ed5b32911f361e0d73feebd92c2bc9634bb8 100644
 --- a/packages/SystemUI/src/com/android/keyguard/KeyguardPinBasedInputViewController.java
 +++ b/packages/SystemUI/src/com/android/keyguard/KeyguardPinBasedInputViewController.java
 @@ -22,6 +22,9 @@ import static com.android.internal.widget.flags.Flags.hideLastCharWithPhysicalIn
@@ -153,7 +153,7 @@ index 9608cd2b..24f4d843 100644
  import android.graphics.drawable.Drawable;
  import android.graphics.drawable.GradientDrawable;
  import android.graphics.drawable.StateListDrawable;
-@@ -100,6 +103,17 @@ public abstract class KeyguardPinBasedInputViewController<T extends KeyguardPinB
+@@ -104,6 +107,17 @@ public abstract class KeyguardPinBasedInputViewController<T extends KeyguardPinB
          mPasswordEntry = mView.findViewById(mView.getPasswordTextViewId());
          mInputManager = inputManager;
          mShowAnimations = null;
@@ -172,19 +172,19 @@ index 9608cd2b..24f4d843 100644
  
      private void updateAnimations(Boolean showAnimations) {
 diff --git a/packages/SystemUI/src/com/android/keyguard/KeyguardPinViewController.java b/packages/SystemUI/src/com/android/keyguard/KeyguardPinViewController.java
-index e6c1e535..7d446380 100644
+index 22d119a2cb285eb828cd46792fb5f065164b0629..6c05d29e7cc73453924ed43305085974aba103b1 100644
 --- a/packages/SystemUI/src/com/android/keyguard/KeyguardPinViewController.java
 +++ b/packages/SystemUI/src/com/android/keyguard/KeyguardPinViewController.java
-@@ -35,8 +35,6 @@ import com.android.systemui.statusbar.policy.DevicePostureController;
+@@ -36,8 +36,6 @@ import com.android.systemui.statusbar.policy.DevicePostureController;
  import com.android.systemui.user.domain.interactor.SelectedUserInteractor;
  import com.android.systemui.util.wrapper.LockPatternCheckerWrapper;
  
 -import lineageos.providers.LineageSettings;
 -
- public class KeyguardPinViewController
-         extends KeyguardPinBasedInputViewController<KeyguardPINView> {
-     private final KeyguardUpdateMonitor mKeyguardUpdateMonitor;
-@@ -103,10 +101,6 @@ public class KeyguardPinViewController
+ import java.time.Duration;
+ import java.util.Optional;
+ 
+@@ -108,10 +106,6 @@ public class KeyguardPinViewController
          mPostureController.addCallback(mPostureCallback);
          mPasswordEntry.setUsePinShapes(true);
          updateAutoConfirmationState();
@@ -195,7 +195,7 @@ index e6c1e535..7d446380 100644
      }
  
      protected void onUserInput() {
-@@ -130,10 +124,6 @@ public class KeyguardPinViewController
+@@ -135,10 +129,6 @@ public class KeyguardPinViewController
      @Override
      public void startAppearAnimation() {
          super.startAppearAnimation();

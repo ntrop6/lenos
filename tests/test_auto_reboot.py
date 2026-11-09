@@ -102,7 +102,7 @@ class TestAutoRebootFramework(LenosPatchTest):
         "0006-lenos-ext-settings.patch",
     ]
     AUTO_REBOOT = "services/core/java/com/android/server/policy/keyguard/AutoReboot.java"
-    MONITOR = "services/core/java/com/android/server/policy/keyguard/KeyguardStateMonitor.java"
+    MONITOR = "services/core/java/com/android/server/policy/keyguard/KeyguardServiceDelegate.java"
     EXTSETTINGS = "core/java/android/ext/settings/ExtSettings.java"
     SETTINGS = "core/java/android/provider/Settings.java"
 
@@ -124,12 +124,14 @@ class TestAutoRebootFramework(LenosPatchTest):
             self.MONITOR,
             "private final Context mContext;",
             "mContext = context;",
-            "AutoReboot.onKeyguardShowingStateChanged(mContext, showing, userId);",
+            "AutoReboot.onKeyguardShowingStateChanged(mContext, showing, mKeyguardState.userId);",
         )
-        # stale per-user callbacks must not touch the global timer
+        # A17 delivers the keyguard callback per user; the userId check in
+        # IKeyguardStateCallback must drop stale callbacks before they reach
+        # the forwarding method (and therefore the global timer).
         body = self.text(self.MONITOR)
-        self.assertLess(body.index("if (userId != mCurrentUserId) return;"),
-                        body.index("AutoReboot.onKeyguardShowingStateChanged"))
+        self.assertLess(body.index("if (userId != mKeyguardState.userId) return;"),
+                        body.index("KeyguardServiceDelegate.this.onShowingStateChanged(showing);"))
 
     def test_timeout_key_and_default_match_grapheneos(self):
         self.assert_contains(

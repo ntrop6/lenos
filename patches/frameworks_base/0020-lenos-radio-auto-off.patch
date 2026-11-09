@@ -1,6 +1,6 @@
 diff --git a/services/core/java/com/android/server/ext/BluetoothAutoOff.java b/services/core/java/com/android/server/ext/BluetoothAutoOff.java
 new file mode 100644
-index 00000000..e86e4f48
+index 0000000000000000000000000000000000000000..e86e4f48d0b48dfeffdfb6722281406a0cac3d7c
 --- /dev/null
 +++ b/services/core/java/com/android/server/ext/BluetoothAutoOff.java
 @@ -0,0 +1,142 @@
@@ -148,7 +148,7 @@ index 00000000..e86e4f48
 +}
 diff --git a/services/core/java/com/android/server/ext/DelayedConditionalAction.java b/services/core/java/com/android/server/ext/DelayedConditionalAction.java
 new file mode 100644
-index 00000000..76acea50
+index 0000000000000000000000000000000000000000..76acea50ae41296e4dfb1f9d4ce8a689ed6d7570
 --- /dev/null
 +++ b/services/core/java/com/android/server/ext/DelayedConditionalAction.java
 @@ -0,0 +1,139 @@
@@ -293,7 +293,7 @@ index 00000000..76acea50
 +}
 diff --git a/services/core/java/com/android/server/ext/SystemServerExt.java b/services/core/java/com/android/server/ext/SystemServerExt.java
 new file mode 100644
-index 00000000..f2178eb3
+index 0000000000000000000000000000000000000000..f2178eb323976b7074d99003841d8f86f40f20d4
 --- /dev/null
 +++ b/services/core/java/com/android/server/ext/SystemServerExt.java
 @@ -0,0 +1,60 @@
@@ -359,7 +359,7 @@ index 00000000..f2178eb3
 +}
 diff --git a/services/core/java/com/android/server/ext/WifiAutoOff.java b/services/core/java/com/android/server/ext/WifiAutoOff.java
 new file mode 100644
-index 00000000..010d79b0
+index 0000000000000000000000000000000000000000..010d79b0b42e0dffee7058317c37fa478e1295f2
 --- /dev/null
 +++ b/services/core/java/com/android/server/ext/WifiAutoOff.java
 @@ -0,0 +1,160 @@
@@ -524,10 +524,10 @@ index 00000000..010d79b0
 +    }
 +}
 diff --git a/services/java/com/android/server/SystemServer.java b/services/java/com/android/server/SystemServer.java
-index a184d6a7..1729fb41 100644
+index 4bb406fc598d41dee71cc551812a0897af2c3044..b4e9e01c2c7ea68da2f3c6a656cbc083b68c4fa7 100644
 --- a/services/java/com/android/server/SystemServer.java
 +++ b/services/java/com/android/server/SystemServer.java
-@@ -3604,6 +3604,8 @@ public final class SystemServer implements Dumpable {
+@@ -3665,6 +3665,8 @@ public final class SystemServer implements Dumpable {
                  reportWtf("Triggering OdsignStatsLogger", e);
              }
              t.traceEnd();

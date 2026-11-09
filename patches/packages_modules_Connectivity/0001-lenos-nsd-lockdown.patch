@@ -1,8 +1,8 @@
 diff --git a/service-t/src/com/android/server/NsdService.java b/service-t/src/com/android/server/NsdService.java
-index 9cb4a08..4b3d8b4 100644
+index d94acb810de5b5ff5cf54f285556038c6c15f5f8..25b36ff134373e2aacfabcb283943a72c6ed78c6 100644
 --- a/service-t/src/com/android/server/NsdService.java
 +++ b/service-t/src/com/android/server/NsdService.java
-@@ -2471,6 +2471,13 @@ public class NsdService extends INsdManager.Stub {
+@@ -3448,6 +3448,13 @@ public class NsdService extends INsdManager.Stub {
          if (cb == null) {
              throw new IllegalArgumentException("Unknown client callback from uid=" + uid);
          }
@@ -15,4 +15,4 @@ index 9cb4a08..4b3d8b4 100644
 +        }
          if (DBG) Log.d(TAG, "New client connect. useJavaBackend=" + useJavaBackend);
          final INsdServiceConnector connector = new NsdServiceConnector();
-         mNsdStateMachine.sendMessage(mNsdStateMachine.obtainMessage(NsdManager.REGISTER_CLIENT,
+         mHandler.sendMessage(mHandler.obtainMessage(NsdManager.REGISTER_CLIENT,

@@ -1,8 +1,8 @@
 diff --git a/packages/SystemUI/src/com/android/systemui/keyguard/KeyguardViewMediator.java b/packages/SystemUI/src/com/android/systemui/keyguard/KeyguardViewMediator.java
-index 62c41395..f165926c 100644
+index cf7475590e9f6c4110033ad28b5cd40716254f82..cf05914012ff30877edb403375bb538d1e967e64 100644
 --- a/packages/SystemUI/src/com/android/systemui/keyguard/KeyguardViewMediator.java
 +++ b/packages/SystemUI/src/com/android/systemui/keyguard/KeyguardViewMediator.java
-@@ -3167,6 +3167,12 @@ public class KeyguardViewMediator implements CoreStartable,
+@@ -3293,6 +3293,12 @@ public class KeyguardViewMediator implements CoreStartable,
              userActivity();
              mUpdateMonitor.setKeyguardGoingAway(false);
              mKeyguardViewControllerLazy.get().setKeyguardGoingAwayState(false);
@@ -16,10 +16,10 @@ index 62c41395..f165926c 100644
          }
          mKeyguardDisplayManager.show();
 diff --git a/services/core/java/com/android/server/wm/ActivityTaskManagerService.java b/services/core/java/com/android/server/wm/ActivityTaskManagerService.java
-index c695279f..586b0226 100644
+index e3ea3454e3a10c1d97112eaa1ed3344bd53a743d..78603534228fe89ec57533a158abdb9b82bbd769 100644
 --- a/services/core/java/com/android/server/wm/ActivityTaskManagerService.java
 +++ b/services/core/java/com/android/server/wm/ActivityTaskManagerService.java
-@@ -3212,14 +3212,27 @@ public class ActivityTaskManagerService extends IActivityTaskManager.Stub {
+@@ -3347,14 +3347,27 @@ public class ActivityTaskManagerService extends IActivityTaskManager.Stub {
              throw new SecurityException("Requires permission "
                      + android.Manifest.permission.DEVICE_POWER);
          }

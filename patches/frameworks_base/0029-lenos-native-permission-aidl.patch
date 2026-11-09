@@ -1,0 +1,15 @@
+diff --git a/native/android/aidl/android/content/pm/IPackageManagerNative.aidl b/native/android/aidl/android/content/pm/IPackageManagerNative.aidl
+index 191871c..d323373 100644
+--- a/native/android/aidl/android/content/pm/IPackageManagerNative.aidl
++++ b/native/android/aidl/android/content/pm/IPackageManagerNative.aidl
+@@ -173,4 +173,10 @@ interface IPackageManagerNative {
+      * Get information of staged APEXes.
+      */
+     StagedApexInfo[] getStagedApexInfos();
++
++    /**
++     * App attempted to perform an operation that is protected with a special runtime permission
++     * and failed due to that permission being denied.
++     */
++    oneway void onDeniedSpecialRuntimePermissionOp(in String permissionName, int uid, in String packageName);
+ }

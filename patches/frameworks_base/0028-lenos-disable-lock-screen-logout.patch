@@ -1,16 +1,16 @@
 diff --git a/packages/SystemUI/src/com/android/systemui/statusbar/KeyguardIndicationController.java b/packages/SystemUI/src/com/android/systemui/statusbar/KeyguardIndicationController.java
-index 7f0926a4..e8529264 100644
+index 78b0da52dfba14a81c8f83fae4104c27908f0b58..cd2bba8e883a96886a2d63408838711b4eb848bf 100644
 --- a/packages/SystemUI/src/com/android/systemui/statusbar/KeyguardIndicationController.java
 +++ b/packages/SystemUI/src/com/android/systemui/statusbar/KeyguardIndicationController.java
-@@ -793,7 +793,10 @@ public class KeyguardIndicationController {
+@@ -859,7 +859,10 @@ public class KeyguardIndicationController {
      }
  
      private void updateLockScreenLogoutView() {
--        if (mUserLogoutInteractor.isLogoutEnabled().getValue()) {
+-        if (mUserLogoutInteractor.isPolicyManagerLogoutEnabled().getValue()) {
 +        // lenOS: GrapheneOS disables the lock screen end session button, so
 +        // someone holding the locked device cannot terminate the session
 +        // (closing all apps) without the user's credentials.
-+        if (false && mUserLogoutInteractor.isLogoutEnabled().getValue()) {
++        if (false && mUserLogoutInteractor.isPolicyManagerLogoutEnabled().getValue()) {
              mRotateTextViewController.updateIndication(
                      INDICATION_TYPE_LOGOUT,
                      new KeyguardIndication.Builder()

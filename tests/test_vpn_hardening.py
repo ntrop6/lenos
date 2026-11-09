@@ -19,7 +19,7 @@ docs/graphene-porting.md section 12):
 
 GrapheneOS's SockDiag IP-address logging fix (``40c47da2``) and the DnsResolver
 ``.local`` transport filter (AOSP ``a17ba5aee1``, 2022) are already present in
-LineageOS 23.2, so no patch is needed for them.
+LineageOS 24.0, so no patch is needed for them.
 """
 from __future__ import annotations
 

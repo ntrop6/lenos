@@ -32,7 +32,7 @@ class TestAppSet(LenosPatchTest):
         self.assert_contains(
             self.MOBILE,
             "PRODUCT_PACKAGES += $(filter-out $(LENOS_STRIP_PACKAGES), \\",
-            "Gallery2 \\",
+            "AvatarPicker \\",
             "LatinIME)",
         )
         self.assert_contains(

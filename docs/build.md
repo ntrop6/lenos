@@ -1,9 +1,9 @@
 # Building lenOS
 
-lenOS is a patch set, not a full source tree. You supply a LineageOS 23.2 tree,
+lenOS is a patch set, not a full source tree. You supply a LineageOS 24.0 tree,
 the normal Android build environment, and your own signing keys.
 
-The series was developed against the `6.6/lineage-23.2` device trees in the
+The series was developed against the `6.6/lineage-24.0` device trees in the
 [NullDebris manifest](https://github.com/NullDebris/manifest). It is not a
 general-purpose patch set for every LineageOS revision: `--check` will stop if
 the surrounding source has drifted.
@@ -11,15 +11,21 @@ the surrounding source has drifted.
 ## 1. Get a compatible tree
 
 Follow the normal LineageOS build setup for your host, using the
-`lineage-23.2` branch. Add the device manifest before the first sync:
+`lineage-24.0` branch. Add the device manifest before the first sync:
 
 ```bash
-repo init -u https://github.com/LineageOS/android.git -b lineage-23.2
+repo init -u https://github.com/LineageOS/android.git -b lineage-24.0
 mkdir -p .repo/local_manifests
 curl -fsSL -o .repo/local_manifests/asteroids.xml \
-  https://raw.githubusercontent.com/NullDebris/manifest/main/asteroids-6.6-lineage-23.2.xml
+  https://raw.githubusercontent.com/NullDebris/manifest/main/asteroids-6.6-lineage-24.0.xml
 repo sync -c -j"$(nproc --all)"
 ```
+
+The manifest tracks `kernel/nothing/sm7635-devicetrees` at `6.6/lineage-23.2`
+and `ParanoidGlyph`/`GlyphAdapter` at `lineage-23.1`/`15`. Those are the newest
+upstream branches available for those projects; they are kernel/device sources
+and standalone apps, not Android framework code, so they do not need a 24.0
+branch. Leave the manifest pins as-is unless NullDebris publishes newer ones.
 
 This initial sync is expected. Do **not** run `repo sync` again after applying
 the patches; reset the tree first if you need to move it.
@@ -121,9 +127,9 @@ The default output is rootless. An opt-in root OTA is produced after the normal
 rootless build, from the exact signed base OTA:
 
 ```bash
-LENOS_SOURCE=$HOME/lineage LENOS_ROOT=resukisu \
+LENOS_SOURCE=$HOME/lineage LENOS_ROOT=bakasu \
   ~/lenos-patches/lenos-1.0-shizuku.sh root-prepare
-LENOS_SOURCE=$HOME/lineage LENOS_ROOT=resukisu \
+LENOS_SOURCE=$HOME/lineage LENOS_ROOT=bakasu \
   ~/lenos-patches/lenos-1.0-shizuku.sh package
 ```
 

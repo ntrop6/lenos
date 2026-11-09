@@ -3,12 +3,12 @@
 The default lenOS build is rootless. Root is an explicit, post-build choice:
 
 ```bash
-LENOS_ROOT=resukisu ./lenos-1.0-shizuku.sh root-prepare
-LENOS_ROOT=resukisu ./lenos-1.0-shizuku.sh package
+LENOS_ROOT=bakasu ./lenos-1.0-shizuku.sh root-prepare
+LENOS_ROOT=bakasu ./lenos-1.0-shizuku.sh package
 ```
 
-`LENOS_ROOT` accepts `none` (default), `resukisu`, and `kernelsu`. The CLI form
-`--root resukisu` does the same thing.
+`LENOS_ROOT` accepts `none` (default), `bakasu`, and `kernelsu`. The CLI form
+`--root bakasu` does the same thing.
 
 This is not an official or supported root method. It changes the attack surface
 and it has not been boot-tested on hardware. Do not treat a successful
@@ -31,7 +31,7 @@ It does:
 
 It does not:
 
-- add a manager APK, `su`, ReSukiSU, KernelSU, or Magisk to the system image;
+- add a manager APK, `su`, BakaSU, KernelSU, or Magisk to the system image;
 - change the kernel, SELinux, encryption, or product configuration. It patches
   only the `init_boot` ramdisk; packaging re-signs the OS AVB tree (including
   `boot` and `vendor_boot`) and may update OTA certs as avbroot does for any OTA;
@@ -49,9 +49,10 @@ It does not:
   override the path with `LENOS_BASE_OTA=/path/to/ota.zip`. The OTA must verify
   against your configured `ota.crt` and `avb_pkmd.bin`; a stock OTA, an unsigned
   zip, or one signed by different keys is refused before it is patched.
-- Network access for the pinned manager and payload assets. The cache lives at
-  `$LENOS_WORKSPACE/.root-cache` by default. Override it with
-  `LENOS_ROOT_CACHE`.
+- Network access for the pinned manager APK and host patcher. The BakaSU LKM
+  and `ksuinit` are extracted from the manager APK; no separate payload
+  download is used. The cache lives at `$LENOS_WORKSPACE/.root-cache` by
+  default. Override it with `LENOS_ROOT_CACHE`.
 
 The source tree must still contain the `asteroids` device tree so the helper can
 read `BOARD_INIT_BOOT_IMAGE_PARTITION_SIZE`. It does not edit the tree.
@@ -60,26 +61,26 @@ read `BOARD_INIT_BOOT_IMAGE_PARTITION_SIZE`. It does not edit the tree.
 
 ```bash
 # 1. Normal rootless build
-LENOS_ROOT=resukisu ./lenos-1.0-shizuku.sh build
+LENOS_ROOT=bakasu ./lenos-1.0-shizuku.sh build
 
 # 2. Patch init_boot from base-signed-ota.zip
-LENOS_ROOT=resukisu ./lenos-1.0-shizuku.sh root-prepare
+LENOS_ROOT=bakasu ./lenos-1.0-shizuku.sh root-prepare
 
 # 3. Inspect the recorded hashes at any time
-LENOS_ROOT=resukisu ./lenos-1.0-shizuku.sh root-status
+LENOS_ROOT=bakasu ./lenos-1.0-shizuku.sh root-status
 
 # 4. Re-sign the complete OTA; this does not touch the phone
-LENOS_ROOT=resukisu ./lenos-1.0-shizuku.sh package
+LENOS_ROOT=bakasu ./lenos-1.0-shizuku.sh package
 
 # 5. Extract the fastboot plan
-LENOS_ROOT=resukisu ./lenos-1.0-shizuku.sh extract
+LENOS_ROOT=bakasu ./lenos-1.0-shizuku.sh extract
 ```
 
 The outputs are:
 
-- `lenos-asteroids-resukisu.zip` (or `...-kernelsu.zip`);
-- `lenos-asteroids-resukisu-manager.apk` and its `.sha256`;
-- `extracted-resukisu/` (or `extracted-kernelsu/`);
+- `lenos-asteroids-bakasu.zip` (or `...-kernelsu.zip`);
+- `lenos-asteroids-bakasu-manager.apk` and its `.sha256`;
+- `extracted-bakasu/` (or `extracted-kernelsu/`);
 - root state under `$LENOS_WORKSPACE/lenos-root/<mode>/`.
 
 `root-prepare` records the base OTA hash, the stock `init_boot` hash, and the
@@ -96,21 +97,28 @@ base OTA.
 
 ## The two profiles
 
-### ReSukiSU (preferred)
+### BakaSU (preferred)
 
-The profile pins ReSukiSU 4.1.0 build 35055, source commit
-`beaaea0eb895dc41e7b9bf5e3f39e57aa9635bab`, and KMI `android15-6.6`.
+BakaSU is the renamed successor to ReSukiSU. The profile pins BakaSU 4.2.0-rc3,
+source commit `239e1e8871b8fcd51a6e5b3002e0ba522fdd99fb`, and KMI
+`android15-6.6`.
 
-The old nightly.link URL is not used. The archived release assets below are
-pinned by SHA-256:
+BakaSU publishes manager APKs, not separate LKM or `ksuinit` release assets.
+The signed arm64 manager APK contains the matching
+`android15-6.6_kernelsu.ko` and `ksuinit` inside its
+`lib/arm64-v8a/libksud.so` payload, compressed as raw DEFLATE. The profile pins
+the manager APK, that inner `libksud.so`, the two stream offsets, and the final
+payload hashes. This avoids nightly.link and expiring CI artifacts while using
+exactly the payload BakaSU's own manager ships.
 
 | Asset | SHA-256 |
 |---|---|
-| manager APK | `78862d9adcca1c1281e0df26680e9cb7d7cb6ebee7cb5994b2ffbde9e0ab377a` |
-| `lkm-all.zip` | `9cf2129821b17d3f56103e16f05f4de39d29bb380ace19d37433a7a160182a2b` |
-| `android15-6.6_kernelsu.ko` | `8937c94461a3da8d39bb86f968d491fb46a08602bff4132d6ab4ff8acef026cc` |
-| `ksuinit.zip` | `df3d37e6c7c04763ae353162e5f0c670c3860e4df6162a331586328f82ac5e90` |
-| `aarch64.../ksuinit` | `4d028821a04c42a9f23f7823d18c1e5b43b258db834d7a3e72208d8031f65509` |
+| manager APK | `25657bc449439687608fffa04b4b586de90fc405e3dc6217bd997fc71ba0a0a1` |
+| `lib/arm64-v8a/libksud.so` | `c80b0cb7a5b240ea442a3963f2f0cfabde0b1cd197056772793064766ae9263a` |
+| `android15-6.6_kernelsu.ko` | `4241d4334d22b5824023c848086f803973b8af44f28032572bd1146cd938501d` |
+| `ksuinit` | `761afc0cac6ad839685493246cb352fa70a51ac2898daad70d1e88bf394b6dde` |
+| LKM stream offset | `920170` (`0xE0A6A`) |
+| `ksuinit` stream offset | `2405158` (`0x24B326`) |
 
 The manager APK's full-file SHA-256 is the authentication pin. The helper also
 extracts the first v2 signer certificate and compares its byte pin: 887 bytes,
@@ -118,9 +126,11 @@ SHA-256 `d3469712b6214462764a1d8d3e5cbe1d6819a0b629791b9f4101867821f1df64`.
 This is not a full APK signature verification; keep the full-file hash and the
 certificate pin together when updating the profile.
 
-Upstream ReSukiSU now redirects to BakaSU. This profile deliberately stays on the
-last release the old flow was pinned to. Do not silently swap in a newer manager
-or LKM; update the JSON and hashes together.
+The upstream release asset is still named
+`ReSukiSU_v4.2.0-rc3_35171-arm64-v8a-release.apk`. That is the upstream filename
+for the renamed BakaSU project; it is not the obsolete 4.1.0 profile. Do not
+silently swap in a newer manager or payload; update the JSON and all hashes and
+offsets together.
 
 ### KernelSU (fallback)
 
@@ -140,7 +150,7 @@ certificate check does not verify the whole APK signature.
 
 ### Why both use the KernelSU host `ksud`
 
-KernelSU publishes a static x86_64 boot-image patcher. ReSukiSU publishes an
+KernelSU publishes a static x86_64 boot-image patcher. BakaSU publishes only an
 arm64 Android `ksud` inside its manager, which cannot run directly on the build
 host. The host patcher is only a file-level boot-image rewriter: it unpacks the
 ramdisk, adds `init.real`, installs the selected `ksuinit` as `init`, and copies
@@ -152,9 +162,16 @@ The host patcher is pinned separately:
 |---|---|
 | `ksud-x86_64-unknown-linux-musl` | `29b50f946a3cc40b04aef3dd587adad227fe0f70edf9c56b02c84479f0b0e954` |
 
-In `resukisu` mode the injected LKM and `ksuinit` are ReSukiSU's pinned files;
-no KernelSU kernel module or init payload is used. In `kernelsu` mode both are
-KernelSU's pinned files.
+In `bakasu` mode the injected LKM and `ksuinit` are extracted from BakaSU's
+signed manager APK; no KernelSU kernel module or init payload is used. In
+`kernelsu` mode both are KernelSU's pinned files.
+
+The extraction and the pinned host patcher were exercised on a synthetic
+Android 16 boot image: the patched ramdisk contains the pinned `ksuinit` as
+executable `init`, the original init as `init.real`, and the pinned
+`kernelsu.ko`, and the helper's ramdisk verifier accepts the result. That
+proves the payloads are accepted by the patcher and verifier; it does not
+prove the LKM loads on `asteroids`. Device boot validation is still required.
 
 ## AVB and verified boot
 
@@ -188,7 +205,7 @@ build and marks the root checklist as unsupported.
 The manager is deliberately not part of the OS image. After the root OTA boots:
 
 ```bash
-adb install -r lenos-asteroids-resukisu-manager.apk
+adb install -r lenos-asteroids-bakasu-manager.apk
 ```
 
 Open the manager, let it detect the installed LKM, and grant root. If it does not

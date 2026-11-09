@@ -1,8 +1,8 @@
 diff --git a/services/core/java/com/android/server/pm/InstallPackageHelper.java b/services/core/java/com/android/server/pm/InstallPackageHelper.java
-index f3c62ebc..d7c14f0c 100644
+index 98ce8f896810725435461132c762c74f47e98c45..3c92319c2799d99b45e5739ed93b7fd40f90f018 100644
 --- a/services/core/java/com/android/server/pm/InstallPackageHelper.java
 +++ b/services/core/java/com/android/server/pm/InstallPackageHelper.java
-@@ -139,6 +139,7 @@ import android.os.Process;
+@@ -143,6 +143,7 @@ import android.os.Process;
  import android.os.RemoteException;
  import android.os.SELinux;
  import android.os.SystemClock;
@@ -10,7 +10,7 @@ index f3c62ebc..d7c14f0c 100644
  import android.os.Trace;
  import android.os.UserHandle;
  import android.os.UserManager;
-@@ -2007,6 +2008,49 @@ final class InstallPackageHelper {
+@@ -2141,6 +2142,49 @@ final class InstallPackageHelper {
              parsedPackage.setBaseApkPath(request.getApexInfo().modulePath);
          }
  
@@ -60,10 +60,10 @@ index f3c62ebc..d7c14f0c 100644
          final PackageSetting oldPackageState;
          final AndroidPackage oldPackage;
          String renamedPackage;
-@@ -4343,6 +4387,13 @@ final class InstallPackageHelper {
-         try {
+@@ -4526,6 +4570,13 @@ final class InstallPackageHelper {
              final boolean scanSystemPartition =
                  (parseFlags & ParsingPackageUtils.PARSE_IS_SYSTEM_DIR) != 0;
+             final boolean isApkInApex = (parseFlags & ParsingPackageUtils.PARSE_APK_IN_APEX) != 0;
 +            if ((scanFlags & SCAN_BOOTING) != 0) {
 +                if (scanSystemPartition) {
 +                    PackageVerityExt.addSystemPackage(parsedPackage);
@@ -76,7 +76,7 @@ index f3c62ebc..d7c14f0c 100644
              final PackageSetting installedPkgSetting = initialScanRequest.mPkgSetting;
 diff --git a/services/core/java/com/android/server/pm/PackageVerityExt.java b/services/core/java/com/android/server/pm/PackageVerityExt.java
 new file mode 100644
-index 00000000..697493cf
+index 0000000000000000000000000000000000000000..697493cf3883bd73b98d3f98112b7ff27b99fc0a
 --- /dev/null
 +++ b/services/core/java/com/android/server/pm/PackageVerityExt.java
 @@ -0,0 +1,227 @@

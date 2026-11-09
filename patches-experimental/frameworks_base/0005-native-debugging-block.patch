@@ -1,8 +1,8 @@
 diff --git a/core/java/android/app/ActivityThread.java b/core/java/android/app/ActivityThread.java
-index 6777dbaa..097932f7 100644
+index 268b6b91ed4909d935b91c70ba146f1d68209974..a8767f4e4eb88f0ab07703d83ec117eb8c2aa984 100644
 --- a/core/java/android/app/ActivityThread.java
 +++ b/core/java/android/app/ActivityThread.java
-@@ -7870,6 +7870,9 @@ public final class ActivityThread extends ClientTransactionHandler
+@@ -8052,6 +8052,9 @@ public final class ActivityThread extends ClientTransactionHandler
                                                  data.appInfo.packageName,
                                                  UserHandle.myUserId());
          VMRuntime.setProcessPackageName(data.appInfo.packageName);
@@ -14,7 +14,7 @@ index 6777dbaa..097932f7 100644
          // Pass data directory path to ART. This is used for caching information and
 diff --git a/core/java/android/app/NativeDebuggingBlock.java b/core/java/android/app/NativeDebuggingBlock.java
 new file mode 100644
-index 00000000..ac497314
+index 0000000000000000000000000000000000000000..ac4973143b3faa9e5387a48d9607e2e258d7cd32
 --- /dev/null
 +++ b/core/java/android/app/NativeDebuggingBlock.java
 @@ -0,0 +1,76 @@
@@ -95,10 +95,10 @@ index 00000000..ac497314
 +    }
 +}
 diff --git a/core/java/android/os/Process.java b/core/java/android/os/Process.java
-index 793b0556..86c7f575 100644
+index 00dd71b722675356b923decfeb2db3085fab03b3..9a68074317fe0333ac760515196563d7e7f234b4 100644
 --- a/core/java/android/os/Process.java
 +++ b/core/java/android/os/Process.java
-@@ -1412,6 +1412,17 @@ public class Process {
+@@ -1513,6 +1513,17 @@ public class Process {
  
      private static native void setArgV0Native(String text);
  
@@ -117,10 +117,10 @@ index 793b0556..86c7f575 100644
       * Return the name of this process. By default, the process name is the same as the app's
       * package name, but this can be changed using {@code android:process}.
 diff --git a/core/java/android/provider/Settings.java b/core/java/android/provider/Settings.java
-index 36e2193c..acc2e4de 100644
+index 2974f4199e5c15dc0e67b016a4f057e2e881f637..f3ed0d47718adc87f7ed8aa6964112484fe2a082 100644
 --- a/core/java/android/provider/Settings.java
 +++ b/core/java/android/provider/Settings.java
-@@ -18900,6 +18900,17 @@ public final class Settings {
+@@ -19472,6 +19472,17 @@ public final class Settings {
          @Readable
          public static final String HIDDEN_API_POLICY = "hidden_api_policy";
  
@@ -139,10 +139,10 @@ index 36e2193c..acc2e4de 100644
           * Flag for forcing {@link com.android.server.compat.OverrideValidatorImpl}
           * to consider this a non-debuggable build.
 diff --git a/core/jni/android_util_Process.cpp b/core/jni/android_util_Process.cpp
-index fe69dd9a..24bd941c 100644
+index 0cfb648b2b2a835f61b70a4db3db5314429429bb..2540807b3e965f707e25629d7d99f81be8a728ca 100644
 --- a/core/jni/android_util_Process.cpp
 +++ b/core/jni/android_util_Process.cpp
-@@ -54,6 +54,7 @@
+@@ -55,6 +55,7 @@
  #include <pwd.h>
  #include <signal.h>
  #include <sys/epoll.h>
@@ -150,7 +150,7 @@ index fe69dd9a..24bd941c 100644
  #include <sys/errno.h>
  #include <sys/pidfd.h>
  #include <sys/resource.h>
-@@ -606,6 +607,13 @@ void android_os_Process_setArgV0(JNIEnv* env, jobject clazz, jstring name)
+@@ -608,6 +609,13 @@ void android_os_Process_setArgV0(JNIEnv* env, jobject clazz, jstring name)
      }
  }
  
@@ -164,7 +164,7 @@ index fe69dd9a..24bd941c 100644
  jint android_os_Process_setUid(JNIEnv* env, jobject clazz, jint uid)
  {
      if (uid < 0) {
-@@ -1373,6 +1381,7 @@ static const JNINativeMethod methods[] = {
+@@ -1375,6 +1383,7 @@ static const JNINativeMethod methods[] = {
          {"getExclusiveCores", "()[I", (void*)android_os_Process_getExclusiveCores},
          {"getSchedAffinity", "(I)[J", (void*)android_os_Process_getSchedAffinity},
          {"setArgV0Native", "(Ljava/lang/String;)V", (void*)android_os_Process_setArgV0},

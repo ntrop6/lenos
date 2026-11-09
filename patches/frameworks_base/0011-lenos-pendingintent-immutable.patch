@@ -1,5 +1,5 @@
 diff --git a/core/java/android/app/PendingIntent.java b/core/java/android/app/PendingIntent.java
-index c947732a..32286098 100644
+index ab5284cc3c81bc51922178a210cb85f454ae5808..adab4b34654bf7bc69ca38e6c174e064228fb112 100644
 --- a/core/java/android/app/PendingIntent.java
 +++ b/core/java/android/app/PendingIntent.java
 @@ -439,8 +439,8 @@ public final class PendingIntent implements Parcelable {

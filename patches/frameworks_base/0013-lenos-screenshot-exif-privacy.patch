@@ -1,5 +1,5 @@
 diff --git a/packages/SystemUI/src/com/android/systemui/screenshot/ImageExporter.java b/packages/SystemUI/src/com/android/systemui/screenshot/ImageExporter.java
-index 3fb02cc3..28dbfd3e 100644
+index 2d6381288bf7e2ab5106036eb2de36e5f80f764b..8f16e85b16425182ca47fc25f37e576a91592f83 100644
 --- a/packages/SystemUI/src/com/android/systemui/screenshot/ImageExporter.java
 +++ b/packages/SystemUI/src/com/android/systemui/screenshot/ImageExporter.java
 @@ -24,10 +24,10 @@ import android.content.ContentResolver;
@@ -14,15 +14,7 @@ index 3fb02cc3..28dbfd3e 100644
  import android.os.Environment;
  import android.os.ParcelFileDescriptor;
  import android.os.SystemClock;
-@@ -37,6 +37,7 @@ import android.provider.MediaStore;
- import android.util.Log;
- import android.view.Display;
- 
-+import androidx.annotation.Nullable;
- import androidx.concurrent.futures.CallbackToFutureAdapter;
- import androidx.exifinterface.media.ExifInterface;
- 
-@@ -450,6 +451,10 @@ public class ImageExporter {
+@@ -517,6 +517,10 @@ public class ImageExporter {
                  throw new ImageExportException(EXIF_READ_EXCEPTION, e);
              }
  
@@ -33,7 +25,7 @@ index 3fb02cc3..28dbfd3e 100644
              updateExifAttributes(exif, requestId, width, height, captureTime);
              try {
                  exif.saveAttributes();
-@@ -514,13 +519,18 @@ public class ImageExporter {
+@@ -581,13 +585,18 @@ public class ImageExporter {
      }
  
      static void updateExifAttributes(ExifInterface exif, UUID uniqueId, int width, int height,

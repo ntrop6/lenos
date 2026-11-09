@@ -1,5 +1,5 @@
 diff --git a/services/core/java/com/android/server/location/gnss/GnssConfiguration.java b/services/core/java/com/android/server/location/gnss/GnssConfiguration.java
-index 04b11c0e..c77b2378 100644
+index 04b11c0ed82bbeecef16817ab5d9634b8a7789f9..c77b2378c209dc2613cd05321d199bdf00a698c3 100644
 --- a/services/core/java/com/android/server/location/gnss/GnssConfiguration.java
 +++ b/services/core/java/com/android/server/location/gnss/GnssConfiguration.java
 @@ -17,6 +17,7 @@
@@ -91,7 +91,7 @@ index 04b11c0e..c77b2378 100644
  
      private static native boolean native_set_supl_version(int version);
 diff --git a/services/core/java/com/android/server/location/gnss/GnssLocationProvider.java b/services/core/java/com/android/server/location/gnss/GnssLocationProvider.java
-index 602f3823..7b9ba86a 100644
+index 1a211c9990210afdd834a34ce6713c8f31dd7846..9f770b4f061ca5abe40e8a5479c81a14f08ee96b 100644
 --- a/services/core/java/com/android/server/location/gnss/GnssLocationProvider.java
 +++ b/services/core/java/com/android/server/location/gnss/GnssLocationProvider.java
 @@ -60,6 +60,7 @@ import android.content.Intent;
@@ -145,7 +145,7 @@ index 602f3823..7b9ba86a 100644
              return;
          }
          if (!mNetworkConnectivityHandler.isDataNetworkConnected()) {
-@@ -1180,7 +1195,7 @@ public class GnssLocationProvider extends AbstractLocationProvider implements
+@@ -1193,7 +1208,7 @@ public class GnssLocationProvider extends AbstractLocationProvider implements
          } else if ("force_time_injection".equals(command)) {
              demandUtcTimeInjection();
          } else if ("force_psds_injection".equals(command)) {
@@ -154,7 +154,7 @@ index 602f3823..7b9ba86a 100644
                  postWithWakeLockHeld(() -> handleDownloadPsdsData(
                          GnssPsdsDownloader.LONG_TERM_PSDS_SERVER_INDEX));
              }
-@@ -1888,6 +1903,11 @@ public class GnssLocationProvider extends AbstractLocationProvider implements
+@@ -1901,6 +1916,11 @@ public class GnssLocationProvider extends AbstractLocationProvider implements
                  isCachedLocation);
      }
  

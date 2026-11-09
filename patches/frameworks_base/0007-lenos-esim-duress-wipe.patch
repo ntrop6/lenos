@@ -1,5 +1,5 @@
 diff --git a/telephony/java/android/telephony/euicc/EuiccCardManager.java b/telephony/java/android/telephony/euicc/EuiccCardManager.java
-index 69594f27..651123f3 100644
+index 69594f27e65c9b83077c1173ffccac76e39a5a64..651123f3055d30a6f5929ce4292cab1ddb91a583 100644
 --- a/telephony/java/android/telephony/euicc/EuiccCardManager.java
 +++ b/telephony/java/android/telephony/euicc/EuiccCardManager.java
 @@ -464,6 +464,18 @@ public class EuiccCardManager {
@@ -32,7 +32,7 @@ index 69594f27..651123f3 100644
              throw e.rethrowFromSystemServer();
 diff --git a/telephony/java/com/android/internal/telephony/euicc/EuiccWipe.java b/telephony/java/com/android/internal/telephony/euicc/EuiccWipe.java
 new file mode 100644
-index 00000000..3d119ad8
+index 0000000000000000000000000000000000000000..3d119ad882e5e16b0e84559bb0e762f78af3c740
 --- /dev/null
 +++ b/telephony/java/com/android/internal/telephony/euicc/EuiccWipe.java
 @@ -0,0 +1,113 @@
@@ -150,7 +150,7 @@ index 00000000..3d119ad8
 +    }
 +}
 diff --git a/telephony/java/com/android/internal/telephony/euicc/IEuiccCardController.aidl b/telephony/java/com/android/internal/telephony/euicc/IEuiccCardController.aidl
-index 928223a3..3152205f 100644
+index 928223a309330959ae96ec88412dfe2b27f31daf..3152205f5ee1eb3d2a9ba48b2c329174714e5224 100644
 --- a/telephony/java/com/android/internal/telephony/euicc/IEuiccCardController.aidl
 +++ b/telephony/java/com/android/internal/telephony/euicc/IEuiccCardController.aidl
 @@ -55,7 +55,7 @@ interface IEuiccCardController {

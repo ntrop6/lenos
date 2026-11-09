@@ -1,5 +1,5 @@
 diff --git a/packages/SettingsProvider/res/values/defaults.xml b/packages/SettingsProvider/res/values/defaults.xml
-index ce8de5e8..675d0a01 100644
+index 7adcac9212e305cad02ae6744bb216fc2fc2cae7..8a347b7e51663612cea82594af1ee86d1cdc421d 100644
 --- a/packages/SettingsProvider/res/values/defaults.xml
 +++ b/packages/SettingsProvider/res/values/defaults.xml
 @@ -166,8 +166,10 @@

@@ -1,5 +1,5 @@
 diff --git a/server/Android.bp b/server/Android.bp
-index 78d1f1d..8f7bd9a 100644
+index 44dc816be1ca43f2da7295238eb1e9591a7ea72c..d8f268a1f5ad5f625d1b7c7e7a613c675aa46e19 100644
 --- a/server/Android.bp
 +++ b/server/Android.bp
 @@ -51,6 +51,7 @@ cc_library_static {
@@ -10,7 +10,7 @@ index 78d1f1d..8f7bd9a 100644
          "IdletimerController.cpp",
          "InterfaceController.cpp",
          "IptablesRestoreController.cpp",
-@@ -225,6 +226,7 @@ cc_test {
+@@ -226,6 +227,7 @@ cc_test {
          "BandwidthControllerTest.cpp",
          "ControllersTest.cpp",
          "FirewallControllerTest.cpp",
@@ -19,7 +19,7 @@ index 78d1f1d..8f7bd9a 100644
          "InterfaceControllerTest.cpp",
          "IptablesBaseTest.cpp",
 diff --git a/server/Controllers.cpp b/server/Controllers.cpp
-index 48d0c50..a93e318 100644
+index 8a2c3be3e198d24130c8bc1c46342f1ebe591a71..25f2f123a4fa9a4064816c4838024ced7d240a8f 100644
 --- a/server/Controllers.cpp
 +++ b/server/Controllers.cpp
 @@ -63,11 +63,13 @@ static const std::vector<const char*> FILTER_INPUT = {
@@ -44,30 +44,30 @@ index 48d0c50..a93e318 100644
          StrictController::LOCAL_OUTPUT,
          BandwidthController::LOCAL_OUTPUT,
  };
-@@ -284,6 +287,11 @@ void Controllers::initIptablesRules() {
-     firewallCtrl.setupIptablesHooks();
+@@ -288,6 +291,11 @@ int Controllers::initIptablesRules() {
+     res |= firewallCtrl.setupIptablesHooks();
      gLog.info("Setting up FirewallController hooks: %" PRId64 "us", s.getTimeAndResetUs());
  
 +    /* DROPs multicast, IGMP and MLD in/out VPN (tun) interfaces: a cross-profile side channel. */
-+    multicastFirewallCtrl.setupIptablesHooks();
++    res |= multicastFirewallCtrl.setupIptablesHooks();
 +    gLog.info("Setting up MulticastFirewallController hooks: %" PRId64 "us",
 +              s.getTimeAndResetUs());
 +
      /* Does DROPs in FORWARD by default */
-     tetherCtrl.setupIptablesHooks();
+     res |= tetherCtrl.setupIptablesHooks();
      gLog.info("Setting up TetherController hooks: %" PRId64 "us", s.getTimeAndResetUs());
 diff --git a/server/Controllers.h b/server/Controllers.h
-index 83a1a5c..944a604 100644
+index 301ef18ef373ef6d9982d3261f06db94e53b34be..9948ed8ee11656bc334eef963a48e0b2d8b236f6 100644
 --- a/server/Controllers.h
 +++ b/server/Controllers.h
-@@ -20,6 +20,7 @@
- #include "BandwidthController.h"
- #include "EventReporter.h"
- #include "FirewallController.h"
-+#include "MulticastFirewallController.h"
+@@ -23,6 +23,7 @@
  #include "IdletimerController.h"
  #include "InterfaceController.h"
  #include "IptablesRestoreController.h"
++#include "MulticastFirewallController.h"
+ #include "NetworkController.h"
+ #include "StrictController.h"
+ #include "TcpSocketMonitor.h"
 @@ -43,6 +44,7 @@ class Controllers {
      BandwidthController bandwidthCtrl;
      IdletimerController idletimerCtrl;
@@ -77,7 +77,7 @@ index 83a1a5c..944a604 100644
      EventReporter eventReporter;
      IptablesRestoreController iptablesRestoreCtrl;
 diff --git a/server/ControllersTest.cpp b/server/ControllersTest.cpp
-index b6a28d3..5da9a4f 100644
+index b6a28d3a81cf1287ba4dc9178652fae7ac35a6da..5da9a4fe592c9505053d50b4a70ed50f6049b37d 100644
 --- a/server/ControllersTest.cpp
 +++ b/server/ControllersTest.cpp
 @@ -80,6 +80,8 @@ TEST_F(ControllersTest, TestInitIptablesRules) {
@@ -118,7 +118,7 @@ index b6a28d3..5da9a4f 100644
               ":bw_OUTPUT -\n"
 diff --git a/server/MulticastFirewallController.cpp b/server/MulticastFirewallController.cpp
 new file mode 100644
-index 0000000..9664f95
+index 0000000000000000000000000000000000000000..9664f9573cb1fae777b663ac4b87e00aaad24f86
 --- /dev/null
 +++ b/server/MulticastFirewallController.cpp
 @@ -0,0 +1,146 @@
@@ -270,7 +270,7 @@ index 0000000..9664f95
 +}  // namespace android
 diff --git a/server/MulticastFirewallController.h b/server/MulticastFirewallController.h
 new file mode 100644
-index 0000000..94c4821
+index 0000000000000000000000000000000000000000..94c4821cf79988fd1520f41702978d4753817705
 --- /dev/null
 +++ b/server/MulticastFirewallController.h
 @@ -0,0 +1,62 @@
@@ -338,7 +338,7 @@ index 0000000..94c4821
 +#endif
 diff --git a/server/MulticastFirewallControllerTest.cpp b/server/MulticastFirewallControllerTest.cpp
 new file mode 100644
-index 0000000..156960c
+index 0000000000000000000000000000000000000000..156960c1d6b8992d593af04926f15c044a766acc
 --- /dev/null
 +++ b/server/MulticastFirewallControllerTest.cpp
 @@ -0,0 +1,63 @@
@@ -406,10 +406,10 @@ index 0000000..156960c
 +}  // namespace net
 +}  // namespace android
 diff --git a/server/NetworkController.cpp b/server/NetworkController.cpp
-index 90109ed..bfa7851 100644
+index 5105f9fbf0b975e80cbe1fb20fde8a2b510431b1..77a39c786ed6c02e6513c6476514361ea25227b3 100644
 --- a/server/NetworkController.cpp
 +++ b/server/NetworkController.cpp
-@@ -214,8 +214,12 @@ int NetworkController::setDefaultNetwork(unsigned netId) {
+@@ -216,8 +216,12 @@ int NetworkController::setDefaultNetwork(unsigned netId) {
  
  uint32_t NetworkController::getNetworkForDnsLocked(unsigned* netId, uid_t uid) const {
      Fwmark fwmark;

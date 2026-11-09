@@ -1,5 +1,5 @@
 diff --git a/packages/SystemUI/src/com/android/systemui/qs/QSHost.java b/packages/SystemUI/src/com/android/systemui/qs/QSHost.java
-index c6dc0921..36083224 100644
+index 631a3cb730200640e5b840fe2db144bee0d1fc42..18ce307e4015511795dc072bf0036186288594dc 100644
 --- a/packages/SystemUI/src/com/android/systemui/qs/QSHost.java
 +++ b/packages/SystemUI/src/com/android/systemui/qs/QSHost.java
 @@ -55,6 +55,7 @@ public interface QSHost {
@@ -11,10 +11,10 @@ index c6dc0921..36083224 100644
      void removeCallback(Callback callback);
      void removeTile(String tileSpec);
 diff --git a/packages/SystemUI/src/com/android/systemui/qs/QSHostAdapter.kt b/packages/SystemUI/src/com/android/systemui/qs/QSHostAdapter.kt
-index dc3b5824..08f3fc9d 100644
+index 0367449b9e702f80353e1ba9df04586516a32e1d..0e7c7e2aa0479d6aab1f4a92540452ee5007e18d 100644
 --- a/packages/SystemUI/src/com/android/systemui/qs/QSHostAdapter.kt
 +++ b/packages/SystemUI/src/com/android/systemui/qs/QSHostAdapter.kt
-@@ -31,6 +31,7 @@ import com.android.systemui.qs.pipeline.domain.interactor.CurrentTilesInteractor
+@@ -30,6 +30,7 @@ import com.android.systemui.qs.pipeline.domain.interactor.CurrentTilesInteractor
  import com.android.systemui.qs.pipeline.shared.QSPipelineFlagsRepository
  import com.android.systemui.qs.pipeline.shared.TileSpec
  import com.android.systemui.shade.ShadeDisplayAware
@@ -22,7 +22,7 @@ index dc3b5824..08f3fc9d 100644
  import javax.inject.Inject
  import kotlinx.coroutines.CoroutineScope
  import kotlinx.coroutines.Job
-@@ -53,6 +54,7 @@ constructor(
+@@ -52,6 +53,7 @@ constructor(
      @ShadeDisplayAware private val context: Context,
      private val tileServiceRequestControllerBuilder: TileServiceRequestController.Builder,
      @Application private val scope: CoroutineScope,
@@ -30,7 +30,7 @@ index dc3b5824..08f3fc9d 100644
      dumpManager: DumpManager,
  ) : QSHost {
  
-@@ -72,6 +74,8 @@ constructor(
+@@ -71,6 +73,8 @@ constructor(
          return interactor.currentQSTiles
      }
  
@@ -40,12 +40,12 @@ index dc3b5824..08f3fc9d 100644
          return interactor.currentTilesSpecs.map { it.spec }
      }
 diff --git a/packages/SystemUI/src/com/android/systemui/qs/tileimpl/QSTileImpl.java b/packages/SystemUI/src/com/android/systemui/qs/tileimpl/QSTileImpl.java
-index 68d1f8c1..8366b03e 100644
+index 67d901ec836c1c296eeeaf0af6b8589b58d5abf0..757d29154980ece92e2f0d0799991faf81b14156 100644
 --- a/packages/SystemUI/src/com/android/systemui/qs/tileimpl/QSTileImpl.java
 +++ b/packages/SystemUI/src/com/android/systemui/qs/tileimpl/QSTileImpl.java
-@@ -70,6 +70,7 @@ import com.android.systemui.qs.QSHost;
+@@ -69,6 +69,7 @@ import com.android.systemui.qs.QSEvent;
+ import com.android.systemui.qs.QSHost;
  import com.android.systemui.qs.QsEventLogger;
- import com.android.systemui.qs.SideLabelTileLayout;
  import com.android.systemui.qs.logging.QSLogger;
 +import com.android.systemui.statusbar.policy.KeyguardStateController;
  
@@ -92,7 +92,7 @@ index 68d1f8c1..8366b03e 100644
      // safe to call from any thread
  
      public void addCallback(Callback callback) {
-@@ -631,16 +666,19 @@ public abstract class QSTileImpl<TState extends State> implements QSTile, Lifecy
+@@ -636,16 +671,19 @@ public abstract class QSTileImpl<TState extends State> implements QSTile, Lifecy
                          mActivityStarter.postStartActivityDismissingKeyguard(intent, 0);
                      } else {
                          mQSLogger.logHandleClick(mTileSpec, msg.arg1);
@@ -116,7 +116,7 @@ index 68d1f8c1..8366b03e 100644
                      name = "handleRefreshState";
                      handleRefreshState(msg.obj);
 diff --git a/packages/SystemUI/src/com/android/systemui/qs/tiles/BatterySaverTile.java b/packages/SystemUI/src/com/android/systemui/qs/tiles/BatterySaverTile.java
-index 9df4e42d..b055e6ce 100644
+index 9df4e42d18980a3584acf54fdd3d7de94ab9cbad..b055e6cee3d6014a343add6db2cc711daa1c34ba 100644
 --- a/packages/SystemUI/src/com/android/systemui/qs/tiles/BatterySaverTile.java
 +++ b/packages/SystemUI/src/com/android/systemui/qs/tiles/BatterySaverTile.java
 @@ -130,6 +130,11 @@ public class BatterySaverTile extends QSTileImpl<BooleanState> implements
@@ -132,7 +132,7 @@ index 9df4e42d..b055e6ce 100644
      protected void handleClick(@Nullable Expandable expandable) {
          if (getState().state == Tile.STATE_UNAVAILABLE) {
 diff --git a/packages/SystemUI/src/com/android/systemui/qs/tiles/ColorCorrectionTile.java b/packages/SystemUI/src/com/android/systemui/qs/tiles/ColorCorrectionTile.java
-index 1f936810..3494b1a8 100644
+index 1f936810da28c033a6e0ca7b43318433bcf9d8e7..3494b1a8fef3071388311b1d116e3e3e24b685da 100644
 --- a/packages/SystemUI/src/com/android/systemui/qs/tiles/ColorCorrectionTile.java
 +++ b/packages/SystemUI/src/com/android/systemui/qs/tiles/ColorCorrectionTile.java
 @@ -114,6 +114,11 @@ public class ColorCorrectionTile extends QSTileImpl<BooleanState> {
@@ -148,7 +148,7 @@ index 1f936810..3494b1a8 100644
      protected void handleClick(@Nullable Expandable expandable) {
          mSetting.setValue(mState.value ? 0 : 1);
 diff --git a/packages/SystemUI/src/com/android/systemui/qs/tiles/ColorInversionTile.java b/packages/SystemUI/src/com/android/systemui/qs/tiles/ColorInversionTile.java
-index 38e9a205..96cc2889 100644
+index 841e4211635ca582b60375d2d4c644cbfa4cd3b1..28f0b23157b83bd6d7f32b9f4ed03dba883bc5fb 100644
 --- a/packages/SystemUI/src/com/android/systemui/qs/tiles/ColorInversionTile.java
 +++ b/packages/SystemUI/src/com/android/systemui/qs/tiles/ColorInversionTile.java
 @@ -112,6 +112,11 @@ public class ColorInversionTile extends QSTileImpl<BooleanState> {
@@ -164,7 +164,7 @@ index 38e9a205..96cc2889 100644
      protected void handleClick(@Nullable Expandable expandable) {
          mSetting.setValue(mState.value ? 0 : 1);
 diff --git a/packages/SystemUI/src/com/android/systemui/qs/tiles/DeviceControlsTile.kt b/packages/SystemUI/src/com/android/systemui/qs/tiles/DeviceControlsTile.kt
-index 1a573336..b1a92113 100644
+index 1a573336d26c17554b1047b0fdcabb4cad912162..b1a92113ccbaa86f7feb14b888e857312a0e55ea 100644
 --- a/packages/SystemUI/src/com/android/systemui/qs/tiles/DeviceControlsTile.kt
 +++ b/packages/SystemUI/src/com/android/systemui/qs/tiles/DeviceControlsTile.kt
 @@ -105,6 +105,8 @@ constructor(
@@ -177,7 +177,7 @@ index 1a573336..b1a92113 100644
          if (state.state == Tile.STATE_UNAVAILABLE) {
              return
 diff --git a/packages/SystemUI/src/com/android/systemui/qs/tiles/FlashlightTile.java b/packages/SystemUI/src/com/android/systemui/qs/tiles/FlashlightTile.java
-index 2b127d60..84d6c8fa 100644
+index 2b127d60b2be4c2b3c2a50bf84c84c039dbe2e1e..84d6c8faa265d5376d9549a1ac0ca3795767fbcd 100644
 --- a/packages/SystemUI/src/com/android/systemui/qs/tiles/FlashlightTile.java
 +++ b/packages/SystemUI/src/com/android/systemui/qs/tiles/FlashlightTile.java
 @@ -98,6 +98,11 @@ public class FlashlightTile extends QSTileImpl<BooleanState> implements
@@ -193,7 +193,7 @@ index 2b127d60..84d6c8fa 100644
      protected void handleClick(@Nullable Expandable expandable) {
          if (ActivityManager.isUserAMonkey()) {
 diff --git a/packages/SystemUI/src/com/android/systemui/qs/tiles/FlashlightTileWithLevel.kt b/packages/SystemUI/src/com/android/systemui/qs/tiles/FlashlightTileWithLevel.kt
-index d95090ff..4b82d3ca 100644
+index d95090ffae94697dfbe82414b8dc88159559d025..4b82d3ca74c16f4cdaf945ec7faa886ef6041f5f 100644
 --- a/packages/SystemUI/src/com/android/systemui/qs/tiles/FlashlightTileWithLevel.kt
 +++ b/packages/SystemUI/src/com/android/systemui/qs/tiles/FlashlightTileWithLevel.kt
 @@ -107,6 +107,8 @@ constructor(
@@ -206,7 +206,7 @@ index d95090ff..4b82d3ca 100644
          handleAction(QSTileUserAction.Click(expandable))
      }
 diff --git a/packages/SystemUI/src/com/android/systemui/qs/tiles/NightDisplayTile.java b/packages/SystemUI/src/com/android/systemui/qs/tiles/NightDisplayTile.java
-index 2f590875..162dafeb 100644
+index 2f59087521117af005a3869422a30fd680afa93d..162dafeb25ad2fa7816dbbf83d295858f97d20b5 100644
 --- a/packages/SystemUI/src/com/android/systemui/qs/tiles/NightDisplayTile.java
 +++ b/packages/SystemUI/src/com/android/systemui/qs/tiles/NightDisplayTile.java
 @@ -111,6 +111,11 @@ public class NightDisplayTile extends QSTileImpl<BooleanState> implements
@@ -222,7 +222,7 @@ index 2f590875..162dafeb 100644
      protected void handleClick(@Nullable Expandable expandable) {
          // Enroll in forced auto mode if eligible.
 diff --git a/packages/SystemUI/src/com/android/systemui/qs/tiles/QRCodeScannerTile.java b/packages/SystemUI/src/com/android/systemui/qs/tiles/QRCodeScannerTile.java
-index 467233d5..982320e6 100644
+index 467233d5f71fb44a959cf5afab8efc5b726b8292..982320e65818b0168b13f132a89695639424b3a0 100644
 --- a/packages/SystemUI/src/com/android/systemui/qs/tiles/QRCodeScannerTile.java
 +++ b/packages/SystemUI/src/com/android/systemui/qs/tiles/QRCodeScannerTile.java
 @@ -99,6 +99,11 @@ public class QRCodeScannerTile extends QSTileImpl<QSTile.State> {
@@ -238,7 +238,7 @@ index 467233d5..982320e6 100644
      protected void handleClick(@Nullable Expandable expandable) {
          Intent intent = mQRCodeScannerController.getIntent();
 diff --git a/packages/SystemUI/src/com/android/systemui/qs/tiles/ReduceBrightColorsTile.java b/packages/SystemUI/src/com/android/systemui/qs/tiles/ReduceBrightColorsTile.java
-index 3485ae2c..6d3830de 100644
+index 3485ae2c305be1dc526cb8b8f5e00b1854bebf5d..6d3830de0229bfdf5869fe73d1917c7fbe2af972 100644
 --- a/packages/SystemUI/src/com/android/systemui/qs/tiles/ReduceBrightColorsTile.java
 +++ b/packages/SystemUI/src/com/android/systemui/qs/tiles/ReduceBrightColorsTile.java
 @@ -123,6 +123,11 @@ public class ReduceBrightColorsTile extends QSTileImpl<QSTile.BooleanState>
@@ -254,7 +254,7 @@ index 3485ae2c..6d3830de 100644
      protected void handleClick(@Nullable Expandable expandable) {
          if (goToEvenDimmer()) {
 diff --git a/packages/SystemUI/src/com/android/systemui/qs/tiles/RotationLockTile.java b/packages/SystemUI/src/com/android/systemui/qs/tiles/RotationLockTile.java
-index d77591b6..b061d78b 100644
+index d77591b65274c513d81b048ca52fae8c7e37cfab..b061d78b13f0bc31858521b2b78fc07dcc6f2e97 100644
 --- a/packages/SystemUI/src/com/android/systemui/qs/tiles/RotationLockTile.java
 +++ b/packages/SystemUI/src/com/android/systemui/qs/tiles/RotationLockTile.java
 @@ -141,6 +141,11 @@ public class RotationLockTile extends QSTileImpl<BooleanState> implements
@@ -270,7 +270,7 @@ index d77591b6..b061d78b 100644
      protected void handleClick(@Nullable Expandable expandable) {
          final boolean newState = !mState.value;
 diff --git a/packages/SystemUI/src/com/android/systemui/qs/tiles/UiModeNightTile.java b/packages/SystemUI/src/com/android/systemui/qs/tiles/UiModeNightTile.java
-index 61beb6ca..43137a58 100644
+index 61beb6ca1a7130807755c870eaa3de61c2141e2d..43137a58911c1230896763cb49594b0afe2bda6d 100644
 --- a/packages/SystemUI/src/com/android/systemui/qs/tiles/UiModeNightTile.java
 +++ b/packages/SystemUI/src/com/android/systemui/qs/tiles/UiModeNightTile.java
 @@ -107,6 +107,11 @@ public class UiModeNightTile extends QSTileImpl<QSTile.BooleanState> implements

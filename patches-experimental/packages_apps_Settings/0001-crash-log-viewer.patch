@@ -1,5 +1,5 @@
 diff --git a/AndroidManifest.xml b/AndroidManifest.xml
-index f4691b4..ae5fb56 100644
+index e45bc1b23bf66abe198c3c9aac4d468cc21cc028..fe97715b56192d45a592087640ee716663cf4693 100644
 --- a/AndroidManifest.xml
 +++ b/AndroidManifest.xml
 @@ -16,6 +16,7 @@
@@ -11,11 +11,14 @@ index f4691b4..ae5fb56 100644
      <uses-permission android:name="android.permission.WRITE_MEDIA_STORAGE" />
      <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE" />
 diff --git a/res/values/strings.xml b/res/values/strings.xml
-index ccc591f..39c89ba 100644
+index a84186b96bc4ca1e74cebec9aa1ed86e4cd819e0..945dc8be40d2bee6bda897547aa35a9b08723f45 100644
 --- a/res/values/strings.xml
 +++ b/res/values/strings.xml
-@@ -14949,2 +14949,10 @@
-     <string name="safety_center_device_finder_search_terms"></string>
+@@ -15388,6 +15388,15 @@
+     <string name="safety_center_system_and_updates_summary">Updates</string>
+     <!-- Safety Center security update search terms [CHAR LIMIT=NONE] -->
+     <string name="safety_center_security_update_search_terms">Updates, Update, Security update, Security updates</string>
++
 +    <!-- lenOS crash log viewer -->
 +    <string name="lenos_crash_logs_title">Crash logs</string>
 +    <string name="lenos_crash_logs_summary">View local crash and ANR reports. Nothing is uploaded automatically.</string>
@@ -25,8 +28,10 @@ index ccc591f..39c89ba 100644
 +    <string name="lenos_crash_logs_share_title">Share crash log</string>
 +
      <!-- Safety Center system component update search terms [CHAR LIMIT=NONE] -->
+     <string name="safety_center_system_component_update_search_terms"></string>
+ 
 diff --git a/res/xml/my_device_info.xml b/res/xml/my_device_info.xml
-index 9148a9d..c34ef5d 100644
+index 9148a9d23f13a53ef0f5cbabd0a5ffa366eff4d5..c34ef5d0add946689034d98f0c8afc399c9dac4d 100644
 --- a/res/xml/my_device_info.xml
 +++ b/res/xml/my_device_info.xml
 @@ -145,6 +145,14 @@
@@ -46,7 +51,7 @@ index 9148a9d..c34ef5d 100644
              android:key="lineage_os_version"
 diff --git a/src/com/android/settings/lenos/CrashLogSettings.java b/src/com/android/settings/lenos/CrashLogSettings.java
 new file mode 100644
-index 0000000..14d410f
+index 0000000000000000000000000000000000000000..14d410fd6ee6fa29028cf8d1f15116c89f544797
 --- /dev/null
 +++ b/src/com/android/settings/lenos/CrashLogSettings.java
 @@ -0,0 +1,225 @@

@@ -26,3 +26,4 @@
 0026-lenos-sensors-permission.patch
 0027-lenos-location-indicator.patch
 0028-lenos-disable-lock-screen-logout.patch
+0029-lenos-native-permission-aidl.patch

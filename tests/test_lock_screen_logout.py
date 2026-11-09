@@ -7,11 +7,10 @@ GrapheneOS disables the button with a short-circuited guard in
 ``KeyguardIndicationController.updateLockScreenLogoutView()`` and keeps the
 builder below it (it still compiles, it is just never shown).
 
-LineageOS 23.2 ships the AOSP behavior. GrapheneOS's branch-17 file differs
+LineageOS 24.0 ships the AOSP behavior. GrapheneOS's branch-17 file differs
 from AOSP only in that guard (the surrounding logout wiring — the
-``isLogoutEnabled`` callback and the rotate-text controller — is untouched), so
-the port is the GrapheneOS short-circuit verbatim with an A16-appropriate
-comment.
+``isPolicyManagerLogoutEnabled`` callback and the rotate-text controller — is
+untouched), so the port is the GrapheneOS short-circuit verbatim.
 """
 from __future__ import annotations
 
@@ -31,12 +30,12 @@ class TestLockScreenLogout(LenosPatchTest):
     def test_logout_guard_is_short_circuited(self):
         self.assert_contains(
             self.CONTROLLER,
-            "if (false && mUserLogoutInteractor.isLogoutEnabled().getValue()) {")
+            "if (false && mUserLogoutInteractor.isPolicyManagerLogoutEnabled().getValue()) {")
 
     def test_no_live_logout_guard_left(self):
         self.assert_not_contains(
             self.CONTROLLER,
-            "\n        if (mUserLogoutInteractor.isLogoutEnabled().getValue()) {")
+            "\n        if (mUserLogoutInteractor.isPolicyManagerLogoutEnabled().getValue()) {")
 
     def test_logout_flow_is_kept_but_unreachable(self):
         # The disabled branch still carries the button: the port disables the

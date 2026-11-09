@@ -1,8 +1,8 @@
 diff --git a/services/core/java/com/android/server/timedetector/TimeDetectorStrategyImpl.java b/services/core/java/com/android/server/timedetector/TimeDetectorStrategyImpl.java
-index e3a4d2b5..b5f5ddeb 100644
+index 2520246ff0ea0062b70d1ef86fffedb1d4c96e7e..11fbfb2b19db3eaa4986ec573bc20de2692bf87c 100644
 --- a/services/core/java/com/android/server/timedetector/TimeDetectorStrategyImpl.java
 +++ b/services/core/java/com/android/server/timedetector/TimeDetectorStrategyImpl.java
-@@ -86,7 +86,7 @@ public final class TimeDetectorStrategyImpl implements TimeDetectorStrategy {
+@@ -87,7 +87,7 @@ public final class TimeDetectorStrategyImpl implements TimeDetectorStrategy {
       * actual system clock time before a warning is logged. Used to help identify situations where
       * there is something other than this class setting the system clock.
       */

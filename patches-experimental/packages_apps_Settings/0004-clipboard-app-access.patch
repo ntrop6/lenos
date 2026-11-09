@@ -1,9 +1,11 @@
 diff --git a/res/values/strings.xml b/res/values/strings.xml
-index ccc591f..cbb45de 100644
+index 189e557252ad80cafa37c76baaa1130fb2b2e4b8..b57c340f7e909b2dab9887ea539c9894120963ee 100644
 --- a/res/values/strings.xml
 +++ b/res/values/strings.xml
-@@ -14951,2 +14951,10 @@
-     <string name="safety_center_system_component_update_search_terms"></string>
+@@ -15625,4 +15625,12 @@
+     <!-- Search keywords for Human interface device access setting -->
+     <string name="keywords_access_hid">hid, human, access, device</string>
+     <!-- Access HID end -->
 +    <!-- lenOS per-app clipboard access (Secure Paste stage 2) -->
 +    <string name="clipboard_app_access_title">Clipboard access by app</string>
 +    <string name="clipboard_app_access_summary">Choose which installed apps can read content copied by other apps.</string>
@@ -14,10 +16,12 @@ index ccc591f..cbb45de 100644
 +    <string name="clipboard_app_access_failed">Could not change clipboard access for this app.</string>
  </resources>
 diff --git a/res/xml/more_security_privacy_settings.xml b/res/xml/more_security_privacy_settings.xml
-index 0068872..033e371 100644
+index b3ed1282f8631a4c113e09b05226e4e144bed0f8..76dcef403667b75dd1a9aed42aec96af5ada9608 100644
 --- a/res/xml/more_security_privacy_settings.xml
 +++ b/res/xml/more_security_privacy_settings.xml
-@@ -206,2 +206,9 @@
+@@ -259,6 +259,13 @@
+         android:summary="@string/encryption_and_credential_settings_summary"
+         android:fragment="com.android.settings.security.EncryptionAndCredential"
          settings:controller="com.android.settings.security.EncryptionStatusPreferenceController" />
 +    <Preference
 +        android:order="246"
@@ -27,9 +31,11 @@ index 0068872..033e371 100644
 +        android:fragment="com.android.settings.security.ClipboardAppAccessSettings" />
 +
  
+     <Preference
+         android:order="270"
 diff --git a/src/com/android/settings/security/ClipboardAppAccessSettings.java b/src/com/android/settings/security/ClipboardAppAccessSettings.java
 new file mode 100644
-index 0000000..4e35c22
+index 0000000000000000000000000000000000000000..4e35c2295a041f3c3b4f49caa2b3e400929c7f81
 --- /dev/null
 +++ b/src/com/android/settings/security/ClipboardAppAccessSettings.java
 @@ -0,0 +1,200 @@

@@ -1,8 +1,8 @@
 diff --git a/packages/SystemUI/src/com/android/systemui/privacy/AppOpsPrivacyItemMonitor.kt b/packages/SystemUI/src/com/android/systemui/privacy/AppOpsPrivacyItemMonitor.kt
-index 967a16b1..723ded9b 100644
+index 06e1862daa10653411416e245a2b926a567c974d..3c5a80f80df8eb001f57176e88b61e7af3a95d36 100644
 --- a/packages/SystemUI/src/com/android/systemui/privacy/AppOpsPrivacyItemMonitor.kt
 +++ b/packages/SystemUI/src/com/android/systemui/privacy/AppOpsPrivacyItemMonitor.kt
-@@ -75,7 +75,11 @@ constructor(
+@@ -79,7 +79,11 @@ constructor(
                  AppOpsManager.OP_RECEIVE_EXPLICIT_USER_INTERACTION_AUDIO,
                  AppOpsManager.OP_RECEIVE_SANDBOX_TRIGGER_AUDIO,
              )
@@ -15,7 +15,7 @@ index 967a16b1..723ded9b 100644
          val OPS = OPS_MIC_CAMERA + OPS_LOCATION
          val USER_INDEPENDENT_OPS =
              intArrayOf(AppOpsManager.OP_PHONE_CALL_CAMERA, AppOpsManager.OP_PHONE_CALL_MICROPHONE)
-@@ -269,7 +273,7 @@ constructor(
+@@ -268,7 +272,7 @@ constructor(
                      .filter {
                          currentUserProfiles.any { user -> user.id == UserHandle.getUserId(it.uid) }
                      }
@@ -24,7 +24,7 @@ index 967a16b1..723ded9b 100644
                      .distinct()
              val locationOpBySystem = locationOp.any { item -> isSystemApp(item) }
              val locationOpByBackground = locationOp.any { item -> isBackgroundApp(item.uid) }
-@@ -376,7 +380,8 @@ constructor(
+@@ -383,7 +387,8 @@ constructor(
              when (appOpItem.code) {
                  AppOpsManager.OP_PHONE_CALL_CAMERA,
                  AppOpsManager.OP_CAMERA -> PrivacyType.TYPE_CAMERA
@@ -34,7 +34,7 @@ index 967a16b1..723ded9b 100644
                  AppOpsManager.OP_PHONE_CALL_MICROPHONE,
                  AppOpsManager.OP_RECEIVE_AMBIENT_TRIGGER_AUDIO,
                  AppOpsManager.OP_RECEIVE_EXPLICIT_USER_INTERACTION_AUDIO,
-@@ -417,7 +422,7 @@ constructor(
+@@ -424,7 +429,7 @@ constructor(
              return true
          }
  

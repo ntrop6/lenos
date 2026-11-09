@@ -1,8 +1,8 @@
 diff --git a/core/res/res/values/strings.xml b/core/res/res/values/strings.xml
-index f9abbcd1..5b39b1d3 100644
+index 4d98c8b87e073f9085cfa015644e60d1e80b9d28..6363a988231cf050a85565b55d628b35c281d223 100644
 --- a/core/res/res/values/strings.xml
 +++ b/core/res/res/values/strings.xml
-@@ -4043,6 +4043,11 @@
+@@ -4151,6 +4151,11 @@
      <!-- Message of notification shown when MTE status override is enabled. [CHAR LIMIT=NONE] -->
      <string name="mte_override_notification_message">Performance and stability might be impacted. Reboot to disable. If enabled using arm64.memtag.bootctl, set it to "none" beforehand.</string>
  
@@ -15,7 +15,7 @@ index f9abbcd1..5b39b1d3 100644
      <string name="usb_contaminant_detected_title">Liquid or debris in USB port</string>
      <!-- Message of notification shown when contaminant is detected on the USB port. [CHAR LIMIT=NONE] -->
 diff --git a/proto/src/system_messages.proto b/proto/src/system_messages.proto
-index 968325f2..8f31a196 100644
+index 1a8ae674b897910e099b376b19041ad60eea4295..618b0966afeef2c5d9fad761b626a1f7c2aa8f50 100644
 --- a/proto/src/system_messages.proto
 +++ b/proto/src/system_messages.proto
 @@ -318,6 +318,10 @@ message SystemMessage {
@@ -30,10 +30,10 @@ index 968325f2..8f31a196 100644
      // Legacy IDs with arbitrary values appear below
      // Legacy IDs existed as stable non-conflicting constants prior to the O release
 diff --git a/services/core/java/com/android/server/am/ActivityManagerService.java b/services/core/java/com/android/server/am/ActivityManagerService.java
-index 49b2efa1..97ee8d7a 100644
+index e63c7c7b97b53207414bfcb9726de2aedd530d53..b17a31eda418a4d25b5806b442c5a7d2b63a924a 100644
 --- a/services/core/java/com/android/server/am/ActivityManagerService.java
 +++ b/services/core/java/com/android/server/am/ActivityManagerService.java
-@@ -5379,6 +5379,8 @@ public class ActivityManagerService extends IActivityManager.Stub
+@@ -6015,6 +6015,8 @@ public class ActivityManagerService extends IActivityManager.Stub
          // UART is on if init's console service is running, send a warning notification.
          showConsoleNotificationIfActive();
          showMteOverrideNotificationIfActive();
@@ -42,7 +42,7 @@ index 49b2efa1..97ee8d7a 100644
  
          t.traceEnd();
      }
-@@ -5413,6 +5415,81 @@ public class ActivityManagerService extends IActivityManager.Stub
+@@ -6049,6 +6051,81 @@ public class ActivityManagerService extends IActivityManager.Stub
  
      }
  

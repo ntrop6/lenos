@@ -1,11 +1,11 @@
 diff --git a/packages/SettingsProvider/res/values/defaults.xml b/packages/SettingsProvider/res/values/defaults.xml
-index ce8de5e8..85ab0279 100644
+index 580dce2c63b756f8fc8aec5fc08f70a2d61894a5..7adcac9212e305cad02ae6744bb216fc2fc2cae7 100644
 --- a/packages/SettingsProvider/res/values/defaults.xml
 +++ b/packages/SettingsProvider/res/values/defaults.xml
-@@ -352,4 +352,16 @@
-         devices without forcing it on other form factors.
-     -->
-     <bool name="def_text_show_password"></bool>
+@@ -355,4 +355,16 @@
+ 
+     <!-- Default for Settings.Global.AIRPLANE_MODE_SYNC -->
+     <bool name="def_airplane_mode_sync_enabled">true</bool>
 +
 +    <!-- lenOS first-boot privacy defaults (see DatabaseHelper#loadGlobalSettings).
 +         The stock values below preserve the AOSP behaviour; the lenOS product
@@ -20,10 +20,10 @@ index ce8de5e8..85ab0279 100644
 +    <integer name="def_lenos_captive_portal_mode">1</integer>
  </resources>
 diff --git a/packages/SettingsProvider/src/com/android/providers/settings/DatabaseHelper.java b/packages/SettingsProvider/src/com/android/providers/settings/DatabaseHelper.java
-index a3eab5da..4a140446 100644
+index dc2285f3eaee3351354f9d78e028aaa7dbc1285f..a95dfca8b23272e50ee44ee60ec1fa23e5028838 100644
 --- a/packages/SettingsProvider/src/com/android/providers/settings/DatabaseHelper.java
 +++ b/packages/SettingsProvider/src/com/android/providers/settings/DatabaseHelper.java
-@@ -2468,6 +2468,22 @@ class DatabaseHelper extends SQLiteOpenHelper {
+@@ -2472,6 +2472,22 @@ class DatabaseHelper extends SQLiteOpenHelper {
              }
              loadSetting(stmt, Settings.Global.LID_BEHAVIOR, defaultLidBehavior);
  

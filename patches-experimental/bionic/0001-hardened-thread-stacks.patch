@@ -1,5 +1,5 @@
 diff --git a/libc/bionic/pthread_create.cpp b/libc/bionic/pthread_create.cpp
-index f6d7fa8..7f24b71 100644
+index 60b5b0772342d34f0946b946a3505567f04847ea..512791340b131e1cd41bc3964cefc8b3234a7eba 100644
 --- a/libc/bionic/pthread_create.cpp
 +++ b/libc/bionic/pthread_create.cpp
 @@ -29,11 +29,13 @@
@@ -16,7 +16,7 @@ index f6d7fa8..7f24b71 100644
  #include <unistd.h>
  
  #include "pthread_internal.h"
-@@ -52,6 +54,16 @@
+@@ -53,6 +55,16 @@
  #include "private/bionic_systrace.h"
  #include "private/bionic_tls.h"
  
@@ -33,7 +33,7 @@ index f6d7fa8..7f24b71 100644
  // x86 uses segment descriptors rather than a direct pointer to TLS.
  #if defined(__i386__)
  #include <asm/ldt.h>
-@@ -286,10 +298,136 @@ ThreadMapping __allocate_thread_mapping(size_t stack_size, size_t stack_guard_si
+@@ -288,10 +300,136 @@ ThreadMapping __allocate_thread_mapping(size_t stack_size, size_t stack_guard_si
    return result;
  }
  
@@ -170,7 +170,7 @@ index f6d7fa8..7f24b71 100644
  
    if (attr->stack_base == nullptr) {
      // The caller didn't provide a stack, so allocate one.
-@@ -299,30 +437,47 @@ static int __allocate_thread(pthread_attr_t* attr, bionic_tcb** tcbp, void** chi
+@@ -301,30 +439,47 @@ static int __allocate_thread(pthread_attr_t* attr, bionic_tcb** tcbp, void** chi
      attr->guard_size = __builtin_align_up(attr->guard_size, page_size());
      if (attr->guard_size < unaligned_guard_size) return EAGAIN;
  
@@ -219,7 +219,7 @@ index f6d7fa8..7f24b71 100644
 -  if (!stack_clean) {
 -    // If thread was not allocated by mmap(), it may not have been cleared to zero.
 -    // So assume the worst and zero it.
--    memset(thread, 0, sizeof(pthread_internal_t));
+-    *thread = {};
 +    thread = reinterpret_cast<pthread_internal_t*>(stack_top);
 +    if (!stack_clean) {
 +      // If thread was not allocated by mmap(), it may not have been cleared to zero.

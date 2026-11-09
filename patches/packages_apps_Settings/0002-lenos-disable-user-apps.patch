@@ -1,8 +1,8 @@
 diff --git a/src/com/android/settings/spa/app/appinfo/AppDisableButton.kt b/src/com/android/settings/spa/app/appinfo/AppDisableButton.kt
-index 555e9f1..05013fa 100644
+index a87a3c0e0ad43d0d4ae9fb62263efd54758e5e85..a3639dc088ffdcd90d2c0e9676b0e003467e75a9 100644
 --- a/src/com/android/settings/spa/app/appinfo/AppDisableButton.kt
 +++ b/src/com/android/settings/spa/app/appinfo/AppDisableButton.kt
-@@ -31,6 +31,7 @@ import com.android.settingslib.spa.widget.dialog.AlertDialogButton
+@@ -32,6 +32,7 @@ import com.android.settingslib.spa.widget.dialog.AlertDialogButton
  import com.android.settingslib.spa.widget.dialog.rememberAlertDialogPresenter
  import com.android.settingslib.spaprivileged.framework.common.devicePolicyManager
  import com.android.settingslib.spaprivileged.framework.common.userManager
@@ -10,7 +10,7 @@ index 555e9f1..05013fa 100644
  import com.android.settingslib.spaprivileged.model.app.isDisabledUntilUsed
  import com.android.settingslib.Utils as SettingsLibUtils
  
-@@ -47,7 +48,10 @@ class AppDisableButton(
+@@ -48,7 +49,10 @@ class AppDisableButton(
  
      @Composable
      fun getActionButton(app: ApplicationInfo): ActionButton? {
@@ -22,7 +22,7 @@ index 555e9f1..05013fa 100644
  
          return when {
              app.enabled && !app.isDisabledUntilUsed -> {
-@@ -62,6 +66,11 @@ class AppDisableButton(
+@@ -63,6 +67,11 @@ class AppDisableButton(
       * Gets whether a package can be disabled.
       */
      private fun ApplicationInfo.canBeDisabled(): Boolean = when {
@@ -34,7 +34,7 @@ index 555e9f1..05013fa 100644
          // Try to prevent the user from bricking their phone by not allowing disabling of apps
          // signed with the system certificate.
          isSignedWithPlatformKey -> false
-@@ -98,7 +107,16 @@ class AppDisableButton(
+@@ -99,7 +108,16 @@ class AppDisableButton(
              // Currently we apply the same device policy for both the uninstallation and disable
              // button.
              if (!appButtonRepository.isUninstallBlockedByAdmin(app)) {

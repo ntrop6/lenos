@@ -1,5 +1,5 @@
 diff --git a/app/src/androidTest/java/com/stevesoltys/seedvault/PluginTest.kt b/app/src/androidTest/java/com/stevesoltys/seedvault/PluginTest.kt
-index 82461c4..e21e834 100644
+index 82461c43fa3379e9f22ae181b881d884bd46f5ec..e21e8347715df367cb5ca5728bdeb7f0f7887cab 100644
 --- a/app/src/androidTest/java/com/stevesoltys/seedvault/PluginTest.kt
 +++ b/app/src/androidTest/java/com/stevesoltys/seedvault/PluginTest.kt
 @@ -15,9 +15,9 @@ import com.stevesoltys.seedvault.backend.saf.DocumentsStorage
@@ -16,7 +16,7 @@ index 82461c4..e21e834 100644
  import org.junit.Assert.assertEquals
  import org.junit.Assert.assertNotNull
 diff --git a/app/src/androidTest/java/com/stevesoltys/seedvault/backend/saf/SafBackendTest.kt b/app/src/androidTest/java/com/stevesoltys/seedvault/backend/saf/SafBackendTest.kt
-index 530eaac..7ccff9f 100644
+index 530eaac142f929c9140e697d2059c0e9dec8d2c0..7ccff9faae397ea685390d5a6b702d776906230c 100644
 --- a/app/src/androidTest/java/com/stevesoltys/seedvault/backend/saf/SafBackendTest.kt
 +++ b/app/src/androidTest/java/com/stevesoltys/seedvault/backend/saf/SafBackendTest.kt
 @@ -10,9 +10,9 @@ import androidx.test.filters.MediumTest
@@ -33,7 +33,7 @@ index 530eaac..7ccff9f 100644
  import org.junit.runner.RunWith
  import org.koin.core.component.KoinComponent
 diff --git a/app/src/androidTest/java/com/stevesoltys/seedvault/e2e/LargeBackupTestBase.kt b/app/src/androidTest/java/com/stevesoltys/seedvault/e2e/LargeBackupTestBase.kt
-index 2aec7fb..fab2262 100644
+index 2aec7fbaca74af93b98a81f2c3a437377edf19ce..fab226204ba2635ebdff0e39ef015f674dd59c24 100644
 --- a/app/src/androidTest/java/com/stevesoltys/seedvault/e2e/LargeBackupTestBase.kt
 +++ b/app/src/androidTest/java/com/stevesoltys/seedvault/e2e/LargeBackupTestBase.kt
 @@ -20,7 +20,7 @@ import io.mockk.every
@@ -46,7 +46,7 @@ index 2aec7fb..fab2262 100644
  import java.security.DigestInputStream
  import java.security.MessageDigest
 diff --git a/app/src/androidTest/java/com/stevesoltys/seedvault/e2e/LargeRestoreTestBase.kt b/app/src/androidTest/java/com/stevesoltys/seedvault/e2e/LargeRestoreTestBase.kt
-index 8c09c98..91485fa 100644
+index e77f4df7e214b920f2ec5d97b3178551801703e8..982a95bb687ef2a4e4bff7511bcbc25c0299d032 100644
 --- a/app/src/androidTest/java/com/stevesoltys/seedvault/e2e/LargeRestoreTestBase.kt
 +++ b/app/src/androidTest/java/com/stevesoltys/seedvault/e2e/LargeRestoreTestBase.kt
 @@ -23,7 +23,7 @@ import kotlinx.coroutines.delay
@@ -59,7 +59,7 @@ index 8c09c98..91485fa 100644
  import java.security.DigestOutputStream
  import java.security.MessageDigest
 diff --git a/app/src/androidTest/java/com/stevesoltys/seedvault/transport/backup/PackageServiceTest.kt b/app/src/androidTest/java/com/stevesoltys/seedvault/transport/backup/PackageServiceTest.kt
-index 2231ef0..a33b772 100644
+index 2231ef0c90c711a79753eb4e0a81616ff50fb0a2..a33b7725575559cbf8aed67784fda8b7d77b17f8 100644
 --- a/app/src/androidTest/java/com/stevesoltys/seedvault/transport/backup/PackageServiceTest.kt
 +++ b/app/src/androidTest/java/com/stevesoltys/seedvault/transport/backup/PackageServiceTest.kt
 @@ -14,7 +14,7 @@ import com.stevesoltys.seedvault.settings.AppStatus
@@ -72,7 +72,7 @@ index 2231ef0..a33b772 100644
  import org.junit.Assert.assertTrue
  import org.junit.Test
 diff --git a/app/src/androidTest/java/com/stevesoltys/seedvault/worker/IconManagerTest.kt b/app/src/androidTest/java/com/stevesoltys/seedvault/worker/IconManagerTest.kt
-index 4a83542..01e95bc 100644
+index 4a83542d824a7af89d09550d50e34307f1167912..01e95bc87fefdcaaeec22184c91484d98ea3c5ec 100644
 --- a/app/src/androidTest/java/com/stevesoltys/seedvault/worker/IconManagerTest.kt
 +++ b/app/src/androidTest/java/com/stevesoltys/seedvault/worker/IconManagerTest.kt
 @@ -28,8 +28,8 @@ import io.mockk.mockk
@@ -87,7 +87,7 @@ index 4a83542..01e95bc 100644
  import org.junit.Test
  import org.junit.runner.RunWith
 diff --git a/app/src/main/java/com/stevesoltys/seedvault/App.kt b/app/src/main/java/com/stevesoltys/seedvault/App.kt
-index 119e148..d6c9f10 100644
+index 119e1480c5130cae11c8f40470a276894e5ec48f..d6c9f102fbea94d3b0aca58d224ef3f16ea45a60 100644
 --- a/app/src/main/java/com/stevesoltys/seedvault/App.kt
 +++ b/app/src/main/java/com/stevesoltys/seedvault/App.kt
 @@ -47,8 +47,8 @@ import com.stevesoltys.seedvault.ui.storage.RestoreStorageViewModel
@@ -102,7 +102,7 @@ index 119e148..d6c9f10 100644
  import org.koin.android.ext.koin.androidContext
  import org.koin.android.ext.koin.androidLogger
 diff --git a/app/src/main/java/com/stevesoltys/seedvault/backend/BackendManager.kt b/app/src/main/java/com/stevesoltys/seedvault/backend/BackendManager.kt
-index 64d3291..63c66bb 100644
+index 64d3291022ef31374041dfd24fb2579e1ec97642..63c66bbc1c6643b7bd0cb89fa568901215caa411 100644
 --- a/app/src/main/java/com/stevesoltys/seedvault/backend/BackendManager.kt
 +++ b/app/src/main/java/com/stevesoltys/seedvault/backend/BackendManager.kt
 @@ -13,11 +13,11 @@ import com.stevesoltys.seedvault.permitDiskReads
@@ -123,7 +123,7 @@ index 64d3291..63c66bb 100644
  class BackendManager(
      private val context: Context,
 diff --git a/app/src/main/java/com/stevesoltys/seedvault/backend/saf/DocumentsStorage.kt b/app/src/main/java/com/stevesoltys/seedvault/backend/saf/DocumentsStorage.kt
-index d8331d5..c1c3c06 100644
+index d8331d51818769d7a0087d81a87813e2337cc4e1..c1c3c06a632227d4bac7e6745f0fbcc38ec25a89 100644
 --- a/app/src/main/java/com/stevesoltys/seedvault/backend/saf/DocumentsStorage.kt
 +++ b/app/src/main/java/com/stevesoltys/seedvault/backend/saf/DocumentsStorage.kt
 @@ -24,9 +24,9 @@ import kotlinx.coroutines.TimeoutCancellationException
@@ -140,7 +140,7 @@ index d8331d5..c1c3c06 100644
  import java.io.InputStream
  import kotlin.coroutines.resume
 diff --git a/app/src/main/java/com/stevesoltys/seedvault/backend/saf/SafHandler.kt b/app/src/main/java/com/stevesoltys/seedvault/backend/saf/SafHandler.kt
-index 6702211..60e57b7 100644
+index 6702211e3911962a2cd64eceeb32fd898582858f..60e57b725c46f266343269c7b80edb5d457b30c5 100644
 --- a/app/src/main/java/com/stevesoltys/seedvault/backend/saf/SafHandler.kt
 +++ b/app/src/main/java/com/stevesoltys/seedvault/backend/saf/SafHandler.kt
 @@ -20,8 +20,8 @@ import com.stevesoltys.seedvault.isMassStorage
@@ -155,7 +155,7 @@ index 6702211..60e57b7 100644
  
  private const val TAG = "SafHandler"
 diff --git a/app/src/main/java/com/stevesoltys/seedvault/backend/webdav/WebDavHandler.kt b/app/src/main/java/com/stevesoltys/seedvault/backend/webdav/WebDavHandler.kt
-index ef0fce3..de39b0f 100644
+index ef0fce33b65358d597727efca7f68c8b3e9fcac4..de39b0f9acdd6e882b706900c6c718c28b55f38a 100644
 --- a/app/src/main/java/com/stevesoltys/seedvault/backend/webdav/WebDavHandler.kt
 +++ b/app/src/main/java/com/stevesoltys/seedvault/backend/webdav/WebDavHandler.kt
 @@ -13,10 +13,10 @@ import com.stevesoltys.seedvault.backend.BackendManager
@@ -174,7 +174,7 @@ index ef0fce3..de39b0f 100644
  
  internal sealed interface WebDavConfigState {
 diff --git a/app/src/main/java/com/stevesoltys/seedvault/crypto/Crypto.kt b/app/src/main/java/com/stevesoltys/seedvault/crypto/Crypto.kt
-index d28d558..abdc8de 100644
+index d28d55876fdcab4747f80c764b9e03f392df1b99..abdc8de4e440443a7f0f9f870d660fee14929c0c 100644
 --- a/app/src/main/java/com/stevesoltys/seedvault/crypto/Crypto.kt
 +++ b/app/src/main/java/com/stevesoltys/seedvault/crypto/Crypto.kt
 @@ -17,11 +17,11 @@ import com.stevesoltys.seedvault.header.MAX_VERSION_HEADER_SIZE
@@ -195,7 +195,7 @@ index d28d558..abdc8de 100644
  import java.io.IOException
  import java.io.InputStream
 diff --git a/app/src/main/java/com/stevesoltys/seedvault/crypto/KeyManager.kt b/app/src/main/java/com/stevesoltys/seedvault/crypto/KeyManager.kt
-index 2e11333..b88ae6e 100644
+index 2e113338d6c0f83250373bbd954e220d6c2ef5cc..b88ae6e3de5d1681aa17f4edbec3cf838ecdae19 100644
 --- a/app/src/main/java/com/stevesoltys/seedvault/crypto/KeyManager.kt
 +++ b/app/src/main/java/com/stevesoltys/seedvault/crypto/KeyManager.kt
 @@ -24,7 +24,7 @@ internal const val KEY_ALIAS_MAIN = "com.stevesoltys.seedvault.main"
@@ -208,7 +208,7 @@ index 2e11333..b88ae6e 100644
       * Store a new backup key derived from the given [seed].
       *
 diff --git a/app/src/main/java/com/stevesoltys/seedvault/metadata/Metadata.kt b/app/src/main/java/com/stevesoltys/seedvault/metadata/Metadata.kt
-index 2ba69e4..e793326 100644
+index 2ba69e4753f6cd97dd607718d5ee1d24637ab450..e7933262189222b32aba3f67e8fa0fe831157001 100644
 --- a/app/src/main/java/com/stevesoltys/seedvault/metadata/Metadata.kt
 +++ b/app/src/main/java/com/stevesoltys/seedvault/metadata/Metadata.kt
 @@ -15,7 +15,7 @@ import com.stevesoltys.seedvault.proto.Snapshot
@@ -221,7 +221,7 @@ index 2ba69e4..e793326 100644
  
  typealias PackageMetadataMap = HashMap<String, PackageMetadata>
 diff --git a/app/src/main/java/com/stevesoltys/seedvault/repo/AppBackupManager.kt b/app/src/main/java/com/stevesoltys/seedvault/repo/AppBackupManager.kt
-index 7c08d07..3047dd9 100644
+index 7c08d07e4cea9b9813bc63104e9828ec83bfd3d1..3047dd9d986029f8c9310127a1ce248c3589fd36 100644
 --- a/app/src/main/java/com/stevesoltys/seedvault/repo/AppBackupManager.kt
 +++ b/app/src/main/java/com/stevesoltys/seedvault/repo/AppBackupManager.kt
 @@ -11,11 +11,11 @@ import com.stevesoltys.seedvault.crypto.Crypto
@@ -242,7 +242,7 @@ index 7c08d07..3047dd9 100644
  
  /**
 diff --git a/app/src/main/java/com/stevesoltys/seedvault/repo/BackupReceiver.kt b/app/src/main/java/com/stevesoltys/seedvault/repo/BackupReceiver.kt
-index ad02473..11931fd 100644
+index ad024734b0e9b191c560748cc88d0152c092fa6a..11931fd1bd9eecf6d79a6ab2a845b40286c653bf 100644
 --- a/app/src/main/java/com/stevesoltys/seedvault/repo/BackupReceiver.kt
 +++ b/app/src/main/java/com/stevesoltys/seedvault/repo/BackupReceiver.kt
 @@ -8,10 +8,10 @@ package com.stevesoltys.seedvault.repo
@@ -261,7 +261,7 @@ index ad02473..11931fd 100644
  import java.io.InputStream
  
 diff --git a/app/src/main/java/com/stevesoltys/seedvault/repo/BlobCache.kt b/app/src/main/java/com/stevesoltys/seedvault/repo/BlobCache.kt
-index 87400eb..e4d8086 100644
+index 87400eb3e4c6d27718c48b4fcef48cb69daa9ded..e4d80864f21a7f588a15c9bd9a102eb4351ba0fe 100644
 --- a/app/src/main/java/com/stevesoltys/seedvault/repo/BlobCache.kt
 +++ b/app/src/main/java/com/stevesoltys/seedvault/repo/BlobCache.kt
 @@ -11,13 +11,13 @@ import android.content.Context.MODE_PRIVATE
@@ -283,7 +283,7 @@ index 87400eb..e4d8086 100644
  import java.io.IOException
  
 diff --git a/app/src/main/java/com/stevesoltys/seedvault/repo/BlobCreator.kt b/app/src/main/java/com/stevesoltys/seedvault/repo/BlobCreator.kt
-index 6c7400f..c1e2190 100644
+index 6c7400fe58843a9cdadf75552774f5bbda75442d..c1e21902680f9fb03a07c881a07db126fe67fd61 100644
 --- a/app/src/main/java/com/stevesoltys/seedvault/repo/BlobCreator.kt
 +++ b/app/src/main/java/com/stevesoltys/seedvault/repo/BlobCreator.kt
 @@ -15,10 +15,10 @@ import com.stevesoltys.seedvault.proto.Snapshot.Blob
@@ -302,7 +302,7 @@ index 6c7400f..c1e2190 100644
  import java.io.OutputStream
  import java.nio.ByteBuffer
 diff --git a/app/src/main/java/com/stevesoltys/seedvault/repo/Checker.kt b/app/src/main/java/com/stevesoltys/seedvault/repo/Checker.kt
-index fd37c64..f01925e 100644
+index fd37c6431705bb4b4bcbebc8ff3ae34eea5a0694..f01925e7570c2f836f641827b7b97fdd22e22b49 100644
 --- a/app/src/main/java/com/stevesoltys/seedvault/repo/Checker.kt
 +++ b/app/src/main/java/com/stevesoltys/seedvault/repo/Checker.kt
 @@ -7,7 +7,7 @@ package com.stevesoltys.seedvault.repo
@@ -328,7 +328,7 @@ index fd37c64..f01925e 100644
  import java.security.GeneralSecurityException
  import java.security.MessageDigest
 diff --git a/app/src/main/java/com/stevesoltys/seedvault/repo/Loader.kt b/app/src/main/java/com/stevesoltys/seedvault/repo/Loader.kt
-index f93dd96..b23d45c 100644
+index f93dd96772645cfaa6f920f51ceffb9146ecf531..b23d45cadd71fa474f0af69666f530fe1fbb3d97 100644
 --- a/app/src/main/java/com/stevesoltys/seedvault/repo/Loader.kt
 +++ b/app/src/main/java/com/stevesoltys/seedvault/repo/Loader.kt
 @@ -12,8 +12,8 @@ import com.stevesoltys.seedvault.header.UnsupportedVersionException
@@ -343,7 +343,7 @@ index f93dd96..b23d45c 100644
  import java.io.File
  import java.io.IOException
 diff --git a/app/src/main/java/com/stevesoltys/seedvault/repo/PaddedInputStream.kt b/app/src/main/java/com/stevesoltys/seedvault/repo/PaddedInputStream.kt
-index 50e6312..3c521cf 100644
+index 50e6312e1cfe467b817542ad4b34547140093c7c..3c521cf75f0771ae98fa91e29a2d97430acea95b 100644
 --- a/app/src/main/java/com/stevesoltys/seedvault/repo/PaddedInputStream.kt
 +++ b/app/src/main/java/com/stevesoltys/seedvault/repo/PaddedInputStream.kt
 @@ -5,7 +5,7 @@
@@ -356,7 +356,7 @@ index 50e6312..3c521cf 100644
  import java.io.IOException
  import java.io.InputStream
 diff --git a/app/src/main/java/com/stevesoltys/seedvault/repo/Pruner.kt b/app/src/main/java/com/stevesoltys/seedvault/repo/Pruner.kt
-index 67718a4..6a680b4 100644
+index 67718a44476a28176643a01d38328cccf292a552..6a680b40516afe4334cfa5cca8c038961165d88f 100644
 --- a/app/src/main/java/com/stevesoltys/seedvault/repo/Pruner.kt
 +++ b/app/src/main/java/com/stevesoltys/seedvault/repo/Pruner.kt
 @@ -9,8 +9,8 @@ import com.stevesoltys.seedvault.backend.BackendManager
@@ -371,7 +371,7 @@ index 67718a4..6a680b4 100644
  import java.time.LocalDate
  import java.time.temporal.ChronoField
 diff --git a/app/src/main/java/com/stevesoltys/seedvault/repo/SnapshotCreator.kt b/app/src/main/java/com/stevesoltys/seedvault/repo/SnapshotCreator.kt
-index 7e3d32f..ea5b8b9 100644
+index 7e3d32f11ad85511a8c6f53d94d33c53d70b452b..ea5b8b98e523ba99cc5b1f18f44d581aea96c5fa 100644
 --- a/app/src/main/java/com/stevesoltys/seedvault/repo/SnapshotCreator.kt
 +++ b/app/src/main/java/com/stevesoltys/seedvault/repo/SnapshotCreator.kt
 @@ -29,8 +29,8 @@ import com.stevesoltys.seedvault.transport.backup.BackupInitializer
@@ -386,7 +386,7 @@ index 7e3d32f..ea5b8b9 100644
  
  /**
 diff --git a/app/src/main/java/com/stevesoltys/seedvault/repo/SnapshotManager.kt b/app/src/main/java/com/stevesoltys/seedvault/repo/SnapshotManager.kt
-index f5d5ade..eee98e9 100644
+index f5d5ade003ecab66b563c7eb367ba9543cd24e18..eee98e97d34444410a3edcfa444133581b144ef0 100644
 --- a/app/src/main/java/com/stevesoltys/seedvault/repo/SnapshotManager.kt
 +++ b/app/src/main/java/com/stevesoltys/seedvault/repo/SnapshotManager.kt
 @@ -12,10 +12,10 @@ import com.stevesoltys.seedvault.header.UnsupportedVersionException
@@ -405,7 +405,7 @@ index f5d5ade..eee98e9 100644
  import java.io.File
  import java.io.IOException
 diff --git a/app/src/main/java/com/stevesoltys/seedvault/restore/AppSelectionManager.kt b/app/src/main/java/com/stevesoltys/seedvault/restore/AppSelectionManager.kt
-index c015ace..2914476 100644
+index c015ace748aeb6f9afa368e467a1f30f3207e15e..2914476d64c03cf36ad0b3452e3b5231c7ef658c 100644
 --- a/app/src/main/java/com/stevesoltys/seedvault/restore/AppSelectionManager.kt
 +++ b/app/src/main/java/com/stevesoltys/seedvault/restore/AppSelectionManager.kt
 @@ -25,7 +25,7 @@ import kotlinx.coroutines.Dispatchers
@@ -418,7 +418,7 @@ index c015ace..2914476 100644
  
  internal class SelectedAppsState(
 diff --git a/app/src/main/java/com/stevesoltys/seedvault/restore/FilesSelectionFragment.kt b/app/src/main/java/com/stevesoltys/seedvault/restore/FilesSelectionFragment.kt
-index 2863ad5..e8a81ce 100644
+index 2863ad5aca15572d6e6f59675e2f2d9b4d2ffe14..e8a81cecf38968d1bbb5db45b74707756c2e91aa 100644
 --- a/app/src/main/java/com/stevesoltys/seedvault/restore/FilesSelectionFragment.kt
 +++ b/app/src/main/java/com/stevesoltys/seedvault/restore/FilesSelectionFragment.kt
 @@ -12,8 +12,8 @@ import android.view.ViewGroup
@@ -446,7 +446,7 @@ index 2863ad5..e8a81ce 100644
          button = bottomStub.inflate() as Button
          button.setOnClickListener {
 diff --git a/app/src/main/java/com/stevesoltys/seedvault/restore/RestoreFilesFragment.kt b/app/src/main/java/com/stevesoltys/seedvault/restore/RestoreFilesFragment.kt
-index 9640305..6ccbff5 100644
+index 964030598bc918558f01f4fefb06f403d94e3f8c..6ccbff5ce7c904e3e5627b01a542778267d70680 100644
 --- a/app/src/main/java/com/stevesoltys/seedvault/restore/RestoreFilesFragment.kt
 +++ b/app/src/main/java/com/stevesoltys/seedvault/restore/RestoreFilesFragment.kt
 @@ -15,8 +15,8 @@ import android.widget.Button
@@ -475,7 +475,7 @@ index 9640305..6ccbff5 100644
          val footer = bottomStub.inflate()
          val skipView: TextView = footer.requireViewById(R.id.skipView)
 diff --git a/app/src/main/java/com/stevesoltys/seedvault/restore/RestoreUiModule.kt b/app/src/main/java/com/stevesoltys/seedvault/restore/RestoreUiModule.kt
-index 6ab6f93..a168f9a 100644
+index 6ab6f9310edea53b2541ef146bfa73921d08dc44..a168f9a4eabcefdefe62419953c665ca2d8ca2fb 100644
 --- a/app/src/main/java/com/stevesoltys/seedvault/restore/RestoreUiModule.kt
 +++ b/app/src/main/java/com/stevesoltys/seedvault/restore/RestoreUiModule.kt
 @@ -6,7 +6,7 @@
@@ -488,7 +488,7 @@ index 6ab6f93..a168f9a 100644
  import org.koin.androidx.viewmodel.dsl.viewModel
  import org.koin.dsl.module
 diff --git a/app/src/main/java/com/stevesoltys/seedvault/restore/RestoreViewModel.kt b/app/src/main/java/com/stevesoltys/seedvault/restore/RestoreViewModel.kt
-index 5b1e08a..4745b47 100644
+index 5b1e08aa9174a9ab32b1048d4df2b8d09449f3b7..4745b470f9fa57e116e4e60fe81dfc62e75b84e9 100644
 --- a/app/src/main/java/com/stevesoltys/seedvault/restore/RestoreViewModel.kt
 +++ b/app/src/main/java/com/stevesoltys/seedvault/restore/RestoreViewModel.kt
 @@ -49,13 +49,13 @@ import kotlinx.coroutines.Dispatchers
@@ -513,7 +513,7 @@ index 5b1e08a..4745b47 100644
  
  private val TAG = RestoreViewModel::class.java.simpleName
 diff --git a/app/src/main/java/com/stevesoltys/seedvault/restore/install/ApkRestore.kt b/app/src/main/java/com/stevesoltys/seedvault/restore/install/ApkRestore.kt
-index bc94894..4ce5162 100644
+index bc94894ebd3fc4e0e76dca51197f907a22360e52..4ce5162ce3ce6ac1d35844f4da1d947ca7954c25 100644
 --- a/app/src/main/java/com/stevesoltys/seedvault/restore/install/ApkRestore.kt
 +++ b/app/src/main/java/com/stevesoltys/seedvault/restore/install/ApkRestore.kt
 @@ -37,8 +37,8 @@ import kotlinx.coroutines.TimeoutCancellationException
@@ -528,20 +528,23 @@ index bc94894..4ce5162 100644
  import java.io.IOException
  import java.io.InputStream
 diff --git a/app/src/main/java/com/stevesoltys/seedvault/settings/SettingsFragment.kt b/app/src/main/java/com/stevesoltys/seedvault/settings/SettingsFragment.kt
-index 2e05960..51ec964 100644
+index fab734b40e429c9d3aad385004ecb80db0ac785a..a59a1c35015c6b502857249bbc10d40db4aadf05 100644
 --- a/app/src/main/java/com/stevesoltys/seedvault/settings/SettingsFragment.kt
 +++ b/app/src/main/java/com/stevesoltys/seedvault/settings/SettingsFragment.kt
-@@ -30,7 +30,7 @@ import com.stevesoltys.seedvault.restore.RestoreActivity
+@@ -32,10 +32,10 @@ import com.stevesoltys.seedvault.restore.RestoreActivity
  import com.stevesoltys.seedvault.settings.BackupPermission.BackupAllowed
  import com.stevesoltys.seedvault.ui.notification.BackupNotificationManager
  import com.stevesoltys.seedvault.ui.toRelativeTime
--import org.calyxos.seedvault.core.backends.BackendProperties
 +import app.grapheneos.seedvault.core.backends.BackendProperties
+ import kotlinx.coroutines.Dispatchers
+ import kotlinx.coroutines.launch
+ import kotlinx.coroutines.withContext
+-import org.calyxos.seedvault.core.backends.BackendProperties
  import org.koin.android.ext.android.inject
  import org.koin.androidx.viewmodel.ext.android.activityViewModel
  import java.util.concurrent.TimeUnit
 diff --git a/app/src/main/java/com/stevesoltys/seedvault/settings/SettingsManager.kt b/app/src/main/java/com/stevesoltys/seedvault/settings/SettingsManager.kt
-index dcc12af..6efdf3e 100644
+index dcc12afa80994c9e08442f92daec0cacacd01856..6efdf3ef2ae4f4af819db2b03e45b0ba517ce477 100644
 --- a/app/src/main/java/com/stevesoltys/seedvault/settings/SettingsManager.kt
 +++ b/app/src/main/java/com/stevesoltys/seedvault/settings/SettingsManager.kt
 @@ -16,11 +16,11 @@ import androidx.lifecycle.MutableLiveData
@@ -562,7 +565,7 @@ index dcc12af..6efdf3e 100644
  
  internal const val PREF_KEY_TOKEN = "token"
 diff --git a/app/src/main/java/com/stevesoltys/seedvault/settings/SettingsViewModel.kt b/app/src/main/java/com/stevesoltys/seedvault/settings/SettingsViewModel.kt
-index 1570dc7..bb0f89c 100644
+index 1570dc7faf4a1d6f99942e68a494de011c38596a..bb0f89c173d93c7e1cebf8275dbb8ec0c74c42ea 100644
 --- a/app/src/main/java/com/stevesoltys/seedvault/settings/SettingsViewModel.kt
 +++ b/app/src/main/java/com/stevesoltys/seedvault/settings/SettingsViewModel.kt
 @@ -56,9 +56,9 @@ import kotlinx.coroutines.flow.first
@@ -579,7 +582,7 @@ index 1570dc7..bb0f89c 100644
  import java.lang.Runtime.getRuntime
  
 diff --git a/app/src/main/java/com/stevesoltys/seedvault/storage/StorageModule.kt b/app/src/main/java/com/stevesoltys/seedvault/storage/StorageModule.kt
-index d3387ec..d0320d4 100644
+index d3387ec6e30e85a5d441d2263aea66c86c91c9ab..d0320d4a88b56c50658a2187c8c79f9324d26b8e 100644
 --- a/app/src/main/java/com/stevesoltys/seedvault/storage/StorageModule.kt
 +++ b/app/src/main/java/com/stevesoltys/seedvault/storage/StorageModule.kt
 @@ -7,7 +7,7 @@ package com.stevesoltys.seedvault.storage
@@ -592,7 +595,7 @@ index d3387ec..d0320d4 100644
  import org.koin.dsl.module
  
 diff --git a/app/src/main/java/com/stevesoltys/seedvault/storage/StorageRestoreService.kt b/app/src/main/java/com/stevesoltys/seedvault/storage/StorageRestoreService.kt
-index a5ab4d2..7baa6bc 100644
+index a5ab4d2b240099f687ccc789b7eeb78753711267..7baa6bcde2b31ca9fc681b10b7d0ea50f90433d5 100644
 --- a/app/src/main/java/com/stevesoltys/seedvault/storage/StorageRestoreService.kt
 +++ b/app/src/main/java/com/stevesoltys/seedvault/storage/StorageRestoreService.kt
 @@ -5,11 +5,11 @@
@@ -613,7 +616,7 @@ index a5ab4d2..7baa6bc 100644
  
  internal class StorageRestoreService : RestoreService() {
 diff --git a/app/src/main/java/com/stevesoltys/seedvault/transport/backup/BackupCoordinator.kt b/app/src/main/java/com/stevesoltys/seedvault/transport/backup/BackupCoordinator.kt
-index a345933..72b70e0 100644
+index a34593373d15bb055f36a800bf5a7409bbc10034..72b70e057b2043dbf4930284061a7fcd3863c8fb 100644
 --- a/app/src/main/java/com/stevesoltys/seedvault/transport/backup/BackupCoordinator.kt
 +++ b/app/src/main/java/com/stevesoltys/seedvault/transport/backup/BackupCoordinator.kt
 @@ -31,7 +31,7 @@ import com.stevesoltys.seedvault.repo.AppBackupManager
@@ -626,7 +629,7 @@ index a345933..72b70e0 100644
  import java.util.concurrent.TimeUnit.DAYS
  import java.util.concurrent.TimeUnit.HOURS
 diff --git a/app/src/main/java/com/stevesoltys/seedvault/transport/backup/FullBackup.kt b/app/src/main/java/com/stevesoltys/seedvault/transport/backup/FullBackup.kt
-index d1547c4..8f9cdd6 100644
+index d1547c46f90c1a976c73b125d7e6f3d2d18999cb..8f9cdd66aa8ba9d7d201bc1bee33df23b37bca5c 100644
 --- a/app/src/main/java/com/stevesoltys/seedvault/transport/backup/FullBackup.kt
 +++ b/app/src/main/java/com/stevesoltys/seedvault/transport/backup/FullBackup.kt
 @@ -17,7 +17,7 @@ import com.stevesoltys.seedvault.repo.BackupData
@@ -639,20 +642,21 @@ index d1547c4..8f9cdd6 100644
  import java.io.EOFException
  import java.io.IOException
 diff --git a/app/src/main/java/com/stevesoltys/seedvault/transport/backup/PackageService.kt b/app/src/main/java/com/stevesoltys/seedvault/transport/backup/PackageService.kt
-index 1a0f051..83cfaf0 100644
+index 42249a61ba33607422dee600ac2d9862ebc2cff2..60fa9b3995178b2b3e9568e82d6c40fb94dcfd16 100644
 --- a/app/src/main/java/com/stevesoltys/seedvault/transport/backup/PackageService.kt
 +++ b/app/src/main/java/com/stevesoltys/seedvault/transport/backup/PackageService.kt
-@@ -26,7 +26,7 @@ import androidx.annotation.WorkerThread
+@@ -27,8 +27,8 @@ import androidx.annotation.WorkerThread
  import com.stevesoltys.seedvault.MAGIC_PACKAGE_MANAGER
  import com.stevesoltys.seedvault.backend.BackendManager
  import com.stevesoltys.seedvault.settings.SettingsManager
--import org.calyxos.seedvault.core.backends.Backend
 +import app.grapheneos.seedvault.core.backends.Backend
+ import com.stevesoltys.seedvault.ui.PACKAGE_NAME_SMS
+-import org.calyxos.seedvault.core.backends.Backend
  
  private val TAG = PackageService::class.java.simpleName
  
 diff --git a/app/src/main/java/com/stevesoltys/seedvault/transport/restore/FullRestore.kt b/app/src/main/java/com/stevesoltys/seedvault/transport/restore/FullRestore.kt
-index 5fba99c..f95460f 100644
+index 5fba99c0484f6730cfc5e2e2a996698b61afd065..f95460fdd1ad2ff444464eeca0c5392c362e0d59 100644
 --- a/app/src/main/java/com/stevesoltys/seedvault/transport/restore/FullRestore.kt
 +++ b/app/src/main/java/com/stevesoltys/seedvault/transport/restore/FullRestore.kt
 @@ -22,8 +22,8 @@ import com.stevesoltys.seedvault.header.getADForFull
@@ -667,7 +671,7 @@ index 5fba99c..f95460f 100644
  import java.io.IOException
  import java.io.InputStream
 diff --git a/app/src/main/java/com/stevesoltys/seedvault/transport/restore/KVRestore.kt b/app/src/main/java/com/stevesoltys/seedvault/transport/restore/KVRestore.kt
-index c1ee697..77971dd 100644
+index c1ee697953b89b11b6b0132d0e47bbc3f029058f..77971ddb26b5db6e19bc3ff535c68ce2fc48b241 100644
 --- a/app/src/main/java/com/stevesoltys/seedvault/transport/restore/KVRestore.kt
 +++ b/app/src/main/java/com/stevesoltys/seedvault/transport/restore/KVRestore.kt
 @@ -25,8 +25,8 @@ import com.stevesoltys.seedvault.repo.Loader
@@ -682,7 +686,7 @@ index c1ee697..77971dd 100644
  import java.security.GeneralSecurityException
  import java.util.zip.GZIPInputStream
 diff --git a/app/src/main/java/com/stevesoltys/seedvault/transport/restore/RestoreCoordinator.kt b/app/src/main/java/com/stevesoltys/seedvault/transport/restore/RestoreCoordinator.kt
-index 85e3f94..6bb2dec 100644
+index 85e3f94b726ff248711f7f5d6e4f3e0809b067be..6bb2dec27a346cc5bf6b128dafaffe3430525013 100644
 --- a/app/src/main/java/com/stevesoltys/seedvault/transport/restore/RestoreCoordinator.kt
 +++ b/app/src/main/java/com/stevesoltys/seedvault/transport/restore/RestoreCoordinator.kt
 @@ -31,9 +31,9 @@ import com.stevesoltys.seedvault.settings.SettingsManager
@@ -699,10 +703,10 @@ index 85e3f94..6bb2dec 100644
  import java.security.GeneralSecurityException
  
 diff --git a/app/src/main/java/com/stevesoltys/seedvault/ui/SystemData.kt b/app/src/main/java/com/stevesoltys/seedvault/ui/SystemData.kt
-index 546e452..11fbf35 100644
+index abcc7471b190ee2343971b5b55d1baebe8c4c08a..1af1b26e723910cdc192a77ad8a2ccb1788336b1 100644
 --- a/app/src/main/java/com/stevesoltys/seedvault/ui/SystemData.kt
 +++ b/app/src/main/java/com/stevesoltys/seedvault/ui/SystemData.kt
-@@ -12,8 +12,8 @@ import com.stevesoltys.seedvault.R
+@@ -13,8 +13,8 @@ import com.stevesoltys.seedvault.R
  internal const val PACKAGE_NAME_SMS = "com.android.providers.telephony"
  internal const val PACKAGE_NAME_SETTINGS = "com.android.providers.settings"
  internal const val PACKAGE_NAME_CALL_LOG = "com.android.calllogbackup"
@@ -711,10 +715,10 @@ index 546e452..11fbf35 100644
 +internal const val PACKAGE_NAME_CONTACTS = "app.grapheneos.backup.contacts"
 +internal const val PACKAGE_NAME_SYSTEM = "@app.grapheneos.system@"
  
- val systemData = mapOf(
-     PACKAGE_NAME_SMS to SystemData(R.string.backup_sms, R.drawable.ic_message),
+ val systemData = buildMap {
+     // SMS/MMS data is stored only for the primary user - android:singleUser="true".
 diff --git a/app/src/main/java/com/stevesoltys/seedvault/ui/check/FileCheckResultActivity.kt b/app/src/main/java/com/stevesoltys/seedvault/ui/check/FileCheckResultActivity.kt
-index 62700af..d231755 100644
+index 62700af185a5f01f48f5f4ba0f540cfaa88b2d86..d2317555146f600f9dfde11f8c87e77a6bc5733b 100644
 --- a/app/src/main/java/com/stevesoltys/seedvault/ui/check/FileCheckResultActivity.kt
 +++ b/app/src/main/java/com/stevesoltys/seedvault/ui/check/FileCheckResultActivity.kt
 @@ -7,9 +7,9 @@ package com.stevesoltys.seedvault.ui.check
@@ -731,7 +735,7 @@ index 62700af..d231755 100644
  
  class FileCheckResultActivity : CheckResultActivity() {
 diff --git a/app/src/main/java/com/stevesoltys/seedvault/ui/files/FileSelectionFragment.kt b/app/src/main/java/com/stevesoltys/seedvault/ui/files/FileSelectionFragment.kt
-index 17c7df2..3eaeffc 100644
+index 17c7df222a94ed22184af025a224e2ec3c4fdb05..3eaeffcd8c5c34d030fd9c47b48c88b1edd631c4 100644
 --- a/app/src/main/java/com/stevesoltys/seedvault/ui/files/FileSelectionFragment.kt
 +++ b/app/src/main/java/com/stevesoltys/seedvault/ui/files/FileSelectionFragment.kt
 @@ -10,7 +10,7 @@ import android.view.View
@@ -744,7 +748,7 @@ index 17c7df2..3eaeffc 100644
  import org.koin.androidx.viewmodel.ext.android.viewModel
  
 diff --git a/app/src/main/java/com/stevesoltys/seedvault/ui/files/FileSelectionViewModel.kt b/app/src/main/java/com/stevesoltys/seedvault/ui/files/FileSelectionViewModel.kt
-index d401a19..6daff82 100644
+index d401a19f25d36365309e0ecc1796ed873659e9ac..6daff82e2b7cf2cf0255b1f3c2855a0dcaa34186 100644
 --- a/app/src/main/java/com/stevesoltys/seedvault/ui/files/FileSelectionViewModel.kt
 +++ b/app/src/main/java/com/stevesoltys/seedvault/ui/files/FileSelectionViewModel.kt
 @@ -8,8 +8,8 @@ package com.stevesoltys.seedvault.ui.files
@@ -759,7 +763,7 @@ index d401a19..6daff82 100644
  class FileSelectionViewModel(
      app: Application,
 diff --git a/app/src/main/java/com/stevesoltys/seedvault/ui/recoverycode/RecoveryCodeViewModel.kt b/app/src/main/java/com/stevesoltys/seedvault/ui/recoverycode/RecoveryCodeViewModel.kt
-index faf0b5f..658fada 100644
+index faf0b5f55d494ec97867ee95a1127da9dadba800..658fadae067d8cc31b94428c5bc44bf6c7743705 100644
 --- a/app/src/main/java/com/stevesoltys/seedvault/ui/recoverycode/RecoveryCodeViewModel.kt
 +++ b/app/src/main/java/com/stevesoltys/seedvault/ui/recoverycode/RecoveryCodeViewModel.kt
 @@ -25,7 +25,7 @@ import kotlinx.coroutines.DelicateCoroutinesApi
@@ -772,7 +776,7 @@ index faf0b5f..658fada 100644
  import kotlin.system.exitProcess
  
 diff --git a/app/src/main/java/com/stevesoltys/seedvault/ui/storage/BackupStorageViewModel.kt b/app/src/main/java/com/stevesoltys/seedvault/ui/storage/BackupStorageViewModel.kt
-index 04031b0..535c4a0 100644
+index 04031b0d08b89706b0ee1d37cc33291072fa1a3f..535c4a0fd717a31c72ef779da3cadebc86548cd4 100644
 --- a/app/src/main/java/com/stevesoltys/seedvault/ui/storage/BackupStorageViewModel.kt
 +++ b/app/src/main/java/com/stevesoltys/seedvault/ui/storage/BackupStorageViewModel.kt
 @@ -24,10 +24,10 @@ import com.stevesoltys.seedvault.worker.FileBackupWorker
@@ -791,7 +795,7 @@ index 04031b0..535c4a0 100644
  
  private val TAG = BackupStorageViewModel::class.java.simpleName
 diff --git a/app/src/main/java/com/stevesoltys/seedvault/ui/storage/RestoreStorageViewModel.kt b/app/src/main/java/com/stevesoltys/seedvault/ui/storage/RestoreStorageViewModel.kt
-index cb15bca..403dc85 100644
+index cb15bcabf69b52779e00e9c02eacffe9e1afafc2..403dc85ae3c97daef4878d28bb129b0063f6c817 100644
 --- a/app/src/main/java/com/stevesoltys/seedvault/ui/storage/RestoreStorageViewModel.kt
 +++ b/app/src/main/java/com/stevesoltys/seedvault/ui/storage/RestoreStorageViewModel.kt
 @@ -15,10 +15,10 @@ import com.stevesoltys.seedvault.backend.webdav.WebDavHandler
@@ -810,7 +814,7 @@ index cb15bca..403dc85 100644
  private val TAG = RestoreStorageViewModel::class.java.simpleName
  
 diff --git a/app/src/main/java/com/stevesoltys/seedvault/ui/storage/StorageViewModel.kt b/app/src/main/java/com/stevesoltys/seedvault/ui/storage/StorageViewModel.kt
-index f61a434..b16b95d 100644
+index f61a434375bac1cac3016360de0b1ad9071896c2..b16b95db0c6539f1c20e924c09144b3891bdb1bb 100644
 --- a/app/src/main/java/com/stevesoltys/seedvault/ui/storage/StorageViewModel.kt
 +++ b/app/src/main/java/com/stevesoltys/seedvault/ui/storage/StorageViewModel.kt
 @@ -23,10 +23,10 @@ import com.stevesoltys.seedvault.ui.MutableLiveEvent
@@ -829,7 +833,7 @@ index f61a434..b16b95d 100644
  private const val TAG = "StorageViewModel"
  
 diff --git a/app/src/main/java/com/stevesoltys/seedvault/worker/ApkBackup.kt b/app/src/main/java/com/stevesoltys/seedvault/worker/ApkBackup.kt
-index 8d61456..84e63c1 100644
+index 8d61456044f8f6ca90b0a859bb51b5ad55cb4a36..84e63c1a33e5b8984af6cf56550f311c7c2604b8 100644
 --- a/app/src/main/java/com/stevesoltys/seedvault/worker/ApkBackup.kt
 +++ b/app/src/main/java/com/stevesoltys/seedvault/worker/ApkBackup.kt
 @@ -25,7 +25,7 @@ import com.stevesoltys.seedvault.repo.hexFromProto
@@ -842,7 +846,7 @@ index 8d61456..84e63c1 100644
  import java.io.FileInputStream
  import java.io.IOException
 diff --git a/app/src/main/java/com/stevesoltys/seedvault/worker/ApkBackupManager.kt b/app/src/main/java/com/stevesoltys/seedvault/worker/ApkBackupManager.kt
-index 3a5bfcb..16a9b80 100644
+index 3a5bfcbe69a36c632276e0c3f6add2db941dcce8..16a9b8020733130439f8adf4ddb50c5ce1f48bfe 100644
 --- a/app/src/main/java/com/stevesoltys/seedvault/worker/ApkBackupManager.kt
 +++ b/app/src/main/java/com/stevesoltys/seedvault/worker/ApkBackupManager.kt
 @@ -19,7 +19,7 @@ import com.stevesoltys.seedvault.transport.backup.PackageService
@@ -855,7 +859,7 @@ index 3a5bfcb..16a9b80 100644
  
  internal class ApkBackupManager(
 diff --git a/app/src/main/java/com/stevesoltys/seedvault/worker/FileBackupWorker.kt b/app/src/main/java/com/stevesoltys/seedvault/worker/FileBackupWorker.kt
-index bb983b1..a8b01b2 100644
+index bb983b1ac5f9784f8cb17452b0ce5b9e2c5cc7a2..a8b01b2e372d162c47f0745526d8f4e0701c2460 100644
 --- a/app/src/main/java/com/stevesoltys/seedvault/worker/FileBackupWorker.kt
 +++ b/app/src/main/java/com/stevesoltys/seedvault/worker/FileBackupWorker.kt
 @@ -19,10 +19,10 @@ import androidx.work.WorkManager
@@ -874,7 +878,7 @@ index bb983b1..a8b01b2 100644
  import org.koin.core.component.inject
  import java.util.concurrent.TimeUnit.HOURS
 diff --git a/app/src/main/java/com/stevesoltys/seedvault/worker/FileCheckerWorker.kt b/app/src/main/java/com/stevesoltys/seedvault/worker/FileCheckerWorker.kt
-index 17599fd..48a1cd1 100644
+index 17599fdf132ead2d0f0bbe355a2ec9cc74062b76..48a1cd11f582236d8c888afc272f33a33a11b783 100644
 --- a/app/src/main/java/com/stevesoltys/seedvault/worker/FileCheckerWorker.kt
 +++ b/app/src/main/java/com/stevesoltys/seedvault/worker/FileCheckerWorker.kt
 @@ -13,8 +13,8 @@ import com.stevesoltys.seedvault.BackupStateManager
@@ -889,7 +893,7 @@ index 17599fd..48a1cd1 100644
  import org.koin.core.component.inject
  
 diff --git a/app/src/main/java/com/stevesoltys/seedvault/worker/IconManager.kt b/app/src/main/java/com/stevesoltys/seedvault/worker/IconManager.kt
-index fdf48fb..89ade77 100644
+index fdf48fb9e3a35dbefe094698393681e60aadb4cc..89ade77f7e2c9c2be3b98018eb6d6a24d4ecce6c 100644
 --- a/app/src/main/java/com/stevesoltys/seedvault/worker/IconManager.kt
 +++ b/app/src/main/java/com/stevesoltys/seedvault/worker/IconManager.kt
 @@ -24,9 +24,9 @@ import com.stevesoltys.seedvault.repo.Loader
@@ -906,7 +910,7 @@ index fdf48fb..89ade77 100644
  import java.io.ByteArrayOutputStream
  import java.io.File
 diff --git a/app/src/test/java/com/stevesoltys/seedvault/backend/saf/DocumentFileTest.kt b/app/src/test/java/com/stevesoltys/seedvault/backend/saf/DocumentFileTest.kt
-index c3fea42..6d6609c 100644
+index c3fea428840ebbfd1f4490c25f0876fc91ec63ab..6d6609c923a93789f0ac4a0de691a826c271115b 100644
 --- a/app/src/test/java/com/stevesoltys/seedvault/backend/saf/DocumentFileTest.kt
 +++ b/app/src/test/java/com/stevesoltys/seedvault/backend/saf/DocumentFileTest.kt
 @@ -14,7 +14,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -919,7 +923,7 @@ index c3fea42..6d6609c 100644
  import org.junit.Assert.assertEquals
  import org.junit.Assert.assertTrue
 diff --git a/app/src/test/java/com/stevesoltys/seedvault/repo/AppBackupManagerTest.kt b/app/src/test/java/com/stevesoltys/seedvault/repo/AppBackupManagerTest.kt
-index 06c7d74..877fcf0 100644
+index 06c7d74b475c78e9feb2e2fe929ae7f5c9a14cee..877fcf08c923814e553955ca480c49fe7e09ff11 100644
 --- a/app/src/test/java/com/stevesoltys/seedvault/repo/AppBackupManagerTest.kt
 +++ b/app/src/test/java/com/stevesoltys/seedvault/repo/AppBackupManagerTest.kt
 @@ -15,12 +15,12 @@ import io.mockk.every
@@ -942,7 +946,7 @@ index 06c7d74..877fcf0 100644
  import org.junit.jupiter.api.Test
  import org.junit.jupiter.api.assertThrows
 diff --git a/app/src/test/java/com/stevesoltys/seedvault/repo/BackupReceiverTest.kt b/app/src/test/java/com/stevesoltys/seedvault/repo/BackupReceiverTest.kt
-index 384dce2..52e5c57 100644
+index 384dce2336d823922293420136a6bb6868107905..52e5c5721ebaf74e10e82cabc5229fd185fa4624 100644
 --- a/app/src/test/java/com/stevesoltys/seedvault/repo/BackupReceiverTest.kt
 +++ b/app/src/test/java/com/stevesoltys/seedvault/repo/BackupReceiverTest.kt
 @@ -15,8 +15,8 @@ import io.mockk.just
@@ -957,7 +961,7 @@ index 384dce2..52e5c57 100644
  import org.junit.jupiter.api.Test
  import org.junit.jupiter.api.assertThrows
 diff --git a/app/src/test/java/com/stevesoltys/seedvault/repo/BlobCreatorTest.kt b/app/src/test/java/com/stevesoltys/seedvault/repo/BlobCreatorTest.kt
-index a55b492..41fe7a9 100644
+index a55b492e58171b03ce6a666eec3bb51e10e41e74..41fe7a9f6b7032b7fde14caa51db11b8cba81a36 100644
 --- a/app/src/test/java/com/stevesoltys/seedvault/repo/BlobCreatorTest.kt
 +++ b/app/src/test/java/com/stevesoltys/seedvault/repo/BlobCreatorTest.kt
 @@ -13,11 +13,11 @@ import io.mockk.every
@@ -978,7 +982,7 @@ index a55b492..41fe7a9 100644
  import org.junit.jupiter.api.Assertions.assertEquals
  import org.junit.jupiter.api.Assertions.assertNotEquals
 diff --git a/app/src/test/java/com/stevesoltys/seedvault/repo/CheckerTest.kt b/app/src/test/java/com/stevesoltys/seedvault/repo/CheckerTest.kt
-index f0830ba..c6b532f 100644
+index f0830ba1c3cea81741187601b16c4d16f0f2befe..c6b532f9d0b3b9197cd6af8a0ea006547a01cce9 100644
 --- a/app/src/test/java/com/stevesoltys/seedvault/repo/CheckerTest.kt
 +++ b/app/src/test/java/com/stevesoltys/seedvault/repo/CheckerTest.kt
 @@ -21,11 +21,11 @@ import io.mockk.just
@@ -999,7 +1003,7 @@ index f0830ba..c6b532f 100644
  import org.junit.jupiter.api.Assertions.assertInstanceOf
  import org.junit.jupiter.api.Assertions.assertNull
 diff --git a/app/src/test/java/com/stevesoltys/seedvault/repo/PrunerTest.kt b/app/src/test/java/com/stevesoltys/seedvault/repo/PrunerTest.kt
-index a7bdeb9..2e6f441 100644
+index a7bdeb9314c90962d14c954eed9d0193cabadacc..2e6f4418fefc3537f05ce88edae76d3f27b40adc 100644
 --- a/app/src/test/java/com/stevesoltys/seedvault/repo/PrunerTest.kt
 +++ b/app/src/test/java/com/stevesoltys/seedvault/repo/PrunerTest.kt
 @@ -18,11 +18,11 @@ import io.mockk.just
@@ -1020,7 +1024,7 @@ index a7bdeb9..2e6f441 100644
  import java.security.GeneralSecurityException
  import java.time.LocalDateTime
 diff --git a/app/src/test/java/com/stevesoltys/seedvault/repo/SnapshotManagerTest.kt b/app/src/test/java/com/stevesoltys/seedvault/repo/SnapshotManagerTest.kt
-index 1beab74..397194f 100644
+index 1beab74fe0637b7fff14cde5bdf84c9dc06c2d41..397194fa4ec4b1ddd9e8cfab2ccaa6928fcbf5b6 100644
 --- a/app/src/test/java/com/stevesoltys/seedvault/repo/SnapshotManagerTest.kt
 +++ b/app/src/test/java/com/stevesoltys/seedvault/repo/SnapshotManagerTest.kt
 @@ -16,11 +16,11 @@ import io.mockk.just
@@ -1041,7 +1045,7 @@ index 1beab74..397194f 100644
  import org.junit.jupiter.api.Assertions.assertEquals
  import org.junit.jupiter.api.Assertions.assertFalse
 diff --git a/app/src/test/java/com/stevesoltys/seedvault/restore/AppSelectionManagerTest.kt b/app/src/test/java/com/stevesoltys/seedvault/restore/AppSelectionManagerTest.kt
-index 2d98c3a..ed37ea3 100644
+index 2d98c3a3c2b96a1957437bb4dd402c940098407b..ed37ea3570af2f07789e6d35eafbe29227595b8d 100644
 --- a/app/src/test/java/com/stevesoltys/seedvault/restore/AppSelectionManagerTest.kt
 +++ b/app/src/test/java/com/stevesoltys/seedvault/restore/AppSelectionManagerTest.kt
 @@ -27,7 +27,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -1054,7 +1058,7 @@ index 2d98c3a..ed37ea3 100644
  import org.junit.jupiter.api.Assertions.assertEquals
  import org.junit.jupiter.api.Assertions.assertFalse
 diff --git a/app/src/test/java/com/stevesoltys/seedvault/restore/install/ApkBackupRestoreTest.kt b/app/src/test/java/com/stevesoltys/seedvault/restore/install/ApkBackupRestoreTest.kt
-index 66dbabf..4ef6de9 100644
+index 66dbabfea114b27668208d8fdd5698b4822fa4da..4ef6de985e0b4d1d582cb0a79878fb301789a52a 100644
 --- a/app/src/test/java/com/stevesoltys/seedvault/restore/install/ApkBackupRestoreTest.kt
 +++ b/app/src/test/java/com/stevesoltys/seedvault/restore/install/ApkBackupRestoreTest.kt
 @@ -43,8 +43,8 @@ import io.mockk.mockk
@@ -1069,7 +1073,7 @@ index 66dbabf..4ef6de9 100644
  import org.junit.jupiter.api.Assertions.assertEquals
  import org.junit.jupiter.api.Assertions.assertFalse
 diff --git a/app/src/test/java/com/stevesoltys/seedvault/restore/install/ApkRestoreTest.kt b/app/src/test/java/com/stevesoltys/seedvault/restore/install/ApkRestoreTest.kt
-index 29bf091..1b3d295 100644
+index 29bf091632c389018465de37134be69619063835..1b3d295398e2cf2613ccb36a5739ff877409f1ad 100644
 --- a/app/src/test/java/com/stevesoltys/seedvault/restore/install/ApkRestoreTest.kt
 +++ b/app/src/test/java/com/stevesoltys/seedvault/restore/install/ApkRestoreTest.kt
 @@ -46,9 +46,9 @@ import io.mockk.mockk
@@ -1086,7 +1090,7 @@ index 29bf091..1b3d295 100644
  import org.junit.jupiter.api.Assertions.assertEquals
  import org.junit.jupiter.api.Assertions.assertFalse
 diff --git a/app/src/test/java/com/stevesoltys/seedvault/restore/install/ApkRestoreV1Test.kt b/app/src/test/java/com/stevesoltys/seedvault/restore/install/ApkRestoreV1Test.kt
-index 21cf999..f58d8c5 100644
+index 21cf9991217d2ecde7cd454ba8f3759f44f812da..f58d8c516ed8eba9c98f37e7471b21e150cfea44 100644
 --- a/app/src/test/java/com/stevesoltys/seedvault/restore/install/ApkRestoreV1Test.kt
 +++ b/app/src/test/java/com/stevesoltys/seedvault/restore/install/ApkRestoreV1Test.kt
 @@ -42,8 +42,8 @@ import io.mockk.mockk
@@ -1101,7 +1105,7 @@ index 21cf999..f58d8c5 100644
  import org.junit.jupiter.api.Assertions.assertFalse
  import org.junit.jupiter.api.Assertions.assertNull
 diff --git a/app/src/test/java/com/stevesoltys/seedvault/transport/CoordinatorIntegrationTest.kt b/app/src/test/java/com/stevesoltys/seedvault/transport/CoordinatorIntegrationTest.kt
-index 7432976..7fd69bc 100644
+index 7432976cbf3796ac93c8edd0d95be7373b40a944..7fd69bcc5c0543a413d72b967408aee98aea13fd 100644
 --- a/app/src/test/java/com/stevesoltys/seedvault/transport/CoordinatorIntegrationTest.kt
 +++ b/app/src/test/java/com/stevesoltys/seedvault/transport/CoordinatorIntegrationTest.kt
 @@ -48,7 +48,7 @@ import io.mockk.mockk
@@ -1114,7 +1118,7 @@ index 7432976..7fd69bc 100644
  import org.junit.jupiter.api.Assertions.assertEquals
  import org.junit.jupiter.api.Assertions.fail
 diff --git a/app/src/test/java/com/stevesoltys/seedvault/transport/TransportTest.kt b/app/src/test/java/com/stevesoltys/seedvault/transport/TransportTest.kt
-index 07f6359..2dfeb85 100644
+index 07f63596fcdc77ba3dacfb76005724509af03720..2dfeb85a134cb66f5e2343dd8b7d8abf00700832 100644
 --- a/app/src/test/java/com/stevesoltys/seedvault/transport/TransportTest.kt
 +++ b/app/src/test/java/com/stevesoltys/seedvault/transport/TransportTest.kt
 @@ -40,10 +40,10 @@ import io.mockk.every
@@ -1133,7 +1137,7 @@ index 07f6359..2dfeb85 100644
  import org.junit.jupiter.api.TestInstance.Lifecycle.PER_METHOD
  import kotlin.random.Random
 diff --git a/app/src/test/java/com/stevesoltys/seedvault/transport/backup/BackupCoordinatorTest.kt b/app/src/test/java/com/stevesoltys/seedvault/transport/backup/BackupCoordinatorTest.kt
-index d99c15a..cfc9003 100644
+index d99c15a47555a581dbc140a737b7863176bf00db..cfc90031229e6e98872a709e5b53ae1fe59d3cd2 100644
 --- a/app/src/test/java/com/stevesoltys/seedvault/transport/backup/BackupCoordinatorTest.kt
 +++ b/app/src/test/java/com/stevesoltys/seedvault/transport/backup/BackupCoordinatorTest.kt
 @@ -27,8 +27,8 @@ import io.mockk.just
@@ -1148,7 +1152,7 @@ index d99c15a..cfc9003 100644
  import org.junit.jupiter.api.Test
  import java.io.IOException
 diff --git a/app/src/test/java/com/stevesoltys/seedvault/transport/backup/BackupCreationTest.kt b/app/src/test/java/com/stevesoltys/seedvault/transport/backup/BackupCreationTest.kt
-index 8f21f1e..2c503c4 100644
+index 8f21f1ea78b5c443ad4ac5d638c3b6bd1d880f3a..2c503c41fca242128a4174f8b33c86e66fa9a37d 100644
 --- a/app/src/test/java/com/stevesoltys/seedvault/transport/backup/BackupCreationTest.kt
 +++ b/app/src/test/java/com/stevesoltys/seedvault/transport/backup/BackupCreationTest.kt
 @@ -29,10 +29,10 @@ import io.mockk.just
@@ -1167,7 +1171,7 @@ index 8f21f1e..2c503c4 100644
  import org.junit.Test
  import org.junit.runner.RunWith
 diff --git a/app/src/test/java/com/stevesoltys/seedvault/transport/restore/FullRestoreTest.kt b/app/src/test/java/com/stevesoltys/seedvault/transport/restore/FullRestoreTest.kt
-index df73b79..f7f4f1a 100644
+index df73b79fe39b8fe46dff3d49cb1974092e655076..f7f4f1a548850fada927252c28f1cf64ddb16a9c 100644
 --- a/app/src/test/java/com/stevesoltys/seedvault/transport/restore/FullRestoreTest.kt
 +++ b/app/src/test/java/com/stevesoltys/seedvault/transport/restore/FullRestoreTest.kt
 @@ -25,7 +25,7 @@ import io.mockk.just
@@ -1180,7 +1184,7 @@ index df73b79..f7f4f1a 100644
  import org.junit.jupiter.api.Assertions.assertEquals
  import org.junit.jupiter.api.Assertions.assertFalse
 diff --git a/app/src/test/java/com/stevesoltys/seedvault/transport/restore/FullRestoreV1Test.kt b/app/src/test/java/com/stevesoltys/seedvault/transport/restore/FullRestoreV1Test.kt
-index 0b38af2..5dcf6dc 100644
+index 0b38af2a55885006183a9735d5e6e41259220592..5dcf6dc181121ae9e01dbf24f50687f4d3bb6fa4 100644
 --- a/app/src/test/java/com/stevesoltys/seedvault/transport/restore/FullRestoreV1Test.kt
 +++ b/app/src/test/java/com/stevesoltys/seedvault/transport/restore/FullRestoreV1Test.kt
 @@ -24,7 +24,7 @@ import io.mockk.every
@@ -1193,7 +1197,7 @@ index 0b38af2..5dcf6dc 100644
  import org.junit.jupiter.api.Assertions.assertEquals
  import org.junit.jupiter.api.Assertions.assertFalse
 diff --git a/app/src/test/java/com/stevesoltys/seedvault/transport/restore/KVRestoreV1Test.kt b/app/src/test/java/com/stevesoltys/seedvault/transport/restore/KVRestoreV1Test.kt
-index 53e6325..7a85808 100644
+index 53e6325007a4eb9fe9ee35e75d8d9831d17388fc..7a858087520940f83396d8e1fb3ed88c53bb56fc 100644
 --- a/app/src/test/java/com/stevesoltys/seedvault/transport/restore/KVRestoreV1Test.kt
 +++ b/app/src/test/java/com/stevesoltys/seedvault/transport/restore/KVRestoreV1Test.kt
 @@ -28,7 +28,7 @@ import io.mockk.mockkStatic
@@ -1206,7 +1210,7 @@ index 53e6325..7a85808 100644
  import org.junit.jupiter.api.Test
  import java.io.ByteArrayInputStream
 diff --git a/app/src/test/java/com/stevesoltys/seedvault/transport/restore/RestoreCoordinatorTest.kt b/app/src/test/java/com/stevesoltys/seedvault/transport/restore/RestoreCoordinatorTest.kt
-index 2e5af20..5c89d91 100644
+index 2e5af20fd3e15985409dbb6dc2b01a0d55023252..5c89d913b62407a1e34f0fa34824c437fe6d239b 100644
 --- a/app/src/test/java/com/stevesoltys/seedvault/transport/restore/RestoreCoordinatorTest.kt
 +++ b/app/src/test/java/com/stevesoltys/seedvault/transport/restore/RestoreCoordinatorTest.kt
 @@ -34,13 +34,13 @@ import io.mockk.just
@@ -1231,7 +1235,7 @@ index 2e5af20..5c89d91 100644
  import org.junit.jupiter.api.Assertions.assertNotNull
  import org.junit.jupiter.api.Assertions.assertThrows
 diff --git a/app/src/test/java/com/stevesoltys/seedvault/transport/restore/RestoreV0IntegrationTest.kt b/app/src/test/java/com/stevesoltys/seedvault/transport/restore/RestoreV0IntegrationTest.kt
-index 0e943de..d3b1232 100644
+index 0e943de153204684df5479f8eed0b6184a39f968..d3b1232a201e0ed441a053a1539b74110174e8ec 100644
 --- a/app/src/test/java/com/stevesoltys/seedvault/transport/restore/RestoreV0IntegrationTest.kt
 +++ b/app/src/test/java/com/stevesoltys/seedvault/transport/restore/RestoreV0IntegrationTest.kt
 @@ -31,7 +31,7 @@ import io.mockk.every
@@ -1244,7 +1248,7 @@ index 0e943de..d3b1232 100644
  import org.junit.jupiter.api.Assertions.assertEquals
  import org.junit.jupiter.api.Assertions.fail
 diff --git a/app/src/test/java/com/stevesoltys/seedvault/transport/restore/RestoreV1IntegrationTest.kt b/app/src/test/java/com/stevesoltys/seedvault/transport/restore/RestoreV1IntegrationTest.kt
-index 021c03d..24ed3dd 100644
+index 021c03d35515c549032d32d50bcd559f16dbbb39..24ed3dd6dd9c7a02b355d211aec65e8aaa01ee52 100644
 --- a/app/src/test/java/com/stevesoltys/seedvault/transport/restore/RestoreV1IntegrationTest.kt
 +++ b/app/src/test/java/com/stevesoltys/seedvault/transport/restore/RestoreV1IntegrationTest.kt
 @@ -30,8 +30,8 @@ import io.mockk.every
@@ -1259,7 +1263,7 @@ index 021c03d..24ed3dd 100644
  import org.junit.jupiter.api.Assertions.assertEquals
  import org.junit.jupiter.api.Assertions.fail
 diff --git a/contactsbackup/Android.bp b/contactsbackup/Android.bp
-index b3ffbb0..d4b93bd 100644
+index b3ffbb099538b59d15edb50a4e5d28024c9f6ed3..d4b93bd013800a45b46580049d64fffec4d58811 100644
 --- a/contactsbackup/Android.bp
 +++ b/contactsbackup/Android.bp
 @@ -16,16 +16,16 @@ android_app {
@@ -1283,10 +1287,10 @@ index b3ffbb0..d4b93bd 100644
      filename_from_src: true,
  }
 diff --git a/contactsbackup/build.gradle.kts b/contactsbackup/build.gradle.kts
-index 4f345f0..87e0c60 100644
+index ea799ddf300aff8e37d259eee96848cb1b5de56e..72f42cbbecf4ce184e87bcba2f70151e66c507e0 100644
 --- a/contactsbackup/build.gradle.kts
 +++ b/contactsbackup/build.gradle.kts
-@@ -9,11 +9,11 @@ plugins {
+@@ -10,11 +10,11 @@ plugins {
  }
  
  android {
@@ -1304,7 +1308,7 @@ diff --git a/contactsbackup/default-permissions_org.calyxos.backup.contacts.xml 
 similarity index 86%
 rename from contactsbackup/default-permissions_org.calyxos.backup.contacts.xml
 rename to contactsbackup/default-permissions_app.grapheneos.backup.contacts.xml
-index 6919a6b..a0ef537 100644
+index 6919a6bd17cad52f035c9687abe1bddd6b1e9fb8..a0ef5373ba8bf36dfc9165451addab76dba5e465 100644
 --- a/contactsbackup/default-permissions_org.calyxos.backup.contacts.xml
 +++ b/contactsbackup/default-permissions_app.grapheneos.backup.contacts.xml
 @@ -4,7 +4,7 @@
@@ -1320,7 +1324,7 @@ diff --git a/contactsbackup/src/androidTest/java/org/calyxos/backup/contacts/Bac
 similarity index 95%
 rename from contactsbackup/src/androidTest/java/org/calyxos/backup/contacts/BackupRestoreTest.kt
 rename to contactsbackup/src/androidTest/java/app/grapheneos/backup/contacts/BackupRestoreTest.kt
-index 42094e2..b198ea3 100644
+index 42094e2d486d3f6c9161a95b7b455e4a779b820a..b198ea3af96055d3788bc796fa4c2e55db3cc5cd 100644
 --- a/contactsbackup/src/androidTest/java/org/calyxos/backup/contacts/BackupRestoreTest.kt
 +++ b/contactsbackup/src/androidTest/java/app/grapheneos/backup/contacts/BackupRestoreTest.kt
 @@ -3,7 +3,7 @@
@@ -1347,7 +1351,7 @@ diff --git a/contactsbackup/src/androidTest/java/org/calyxos/backup/contacts/Con
 similarity index 99%
 rename from contactsbackup/src/androidTest/java/org/calyxos/backup/contacts/ContactUtils.kt
 rename to contactsbackup/src/androidTest/java/app/grapheneos/backup/contacts/ContactUtils.kt
-index c2b62ee..4c2bf4c 100644
+index c2b62ee1f6a0a90593f89246aee2065120500d64..4c2bf4c0e98d77c624bce228240c300cb6218edf 100644
 --- a/contactsbackup/src/androidTest/java/org/calyxos/backup/contacts/ContactUtils.kt
 +++ b/contactsbackup/src/androidTest/java/app/grapheneos/backup/contacts/ContactUtils.kt
 @@ -3,7 +3,7 @@
@@ -1360,7 +1364,7 @@ index c2b62ee..4c2bf4c 100644
  import android.content.ContentProviderOperation
  import android.content.ContentResolver
 diff --git a/contactsbackup/src/main/AndroidManifest.xml b/contactsbackup/src/main/AndroidManifest.xml
-index f77912b..29275fd 100644
+index f77912baacb6dda805b21d61db60608110979ce1..29275fd540b53e2fc89f731e4b4c74e9ab482e14 100644
 --- a/contactsbackup/src/main/AndroidManifest.xml
 +++ b/contactsbackup/src/main/AndroidManifest.xml
 @@ -5,7 +5,7 @@
@@ -1376,7 +1380,7 @@ diff --git a/contactsbackup/src/main/java/org/calyxos/backup/contacts/ContactsBa
 similarity index 99%
 rename from contactsbackup/src/main/java/org/calyxos/backup/contacts/ContactsBackupAgent.java
 rename to contactsbackup/src/main/java/app/grapheneos/backup/contacts/ContactsBackupAgent.java
-index 313b9b1..4e6a51f 100644
+index 313b9b11e6ea74422d7bedf54c357bbcca312380..4e6a51f5982c48930a89f20403a9c4484cf9ac30 100644
 --- a/contactsbackup/src/main/java/org/calyxos/backup/contacts/ContactsBackupAgent.java
 +++ b/contactsbackup/src/main/java/app/grapheneos/backup/contacts/ContactsBackupAgent.java
 @@ -3,7 +3,7 @@
@@ -1392,7 +1396,7 @@ diff --git a/contactsbackup/src/main/java/org/calyxos/backup/contacts/FullBackup
 similarity index 87%
 rename from contactsbackup/src/main/java/org/calyxos/backup/contacts/FullBackupFileHandler.java
 rename to contactsbackup/src/main/java/app/grapheneos/backup/contacts/FullBackupFileHandler.java
-index da01ae0..023a104 100644
+index da01ae07a9d7d76e7a8749d40cea14ef12f3f3f6..023a10447f0acc42e7074d95002b70f01d4058cc 100644
 --- a/contactsbackup/src/main/java/org/calyxos/backup/contacts/FullBackupFileHandler.java
 +++ b/contactsbackup/src/main/java/app/grapheneos/backup/contacts/FullBackupFileHandler.java
 @@ -3,7 +3,7 @@
@@ -1408,7 +1412,7 @@ diff --git a/contactsbackup/src/main/java/org/calyxos/backup/contacts/StartBroad
 similarity index 96%
 rename from contactsbackup/src/main/java/org/calyxos/backup/contacts/StartBroadcastReceiver.java
 rename to contactsbackup/src/main/java/app/grapheneos/backup/contacts/StartBroadcastReceiver.java
-index dca3eab..7ef95ac 100644
+index dca3eabec9b63c13d3e232be268f0c73bc92c843..7ef95ac7e284a7af1f41466501b3e976d2b9aae6 100644
 --- a/contactsbackup/src/main/java/org/calyxos/backup/contacts/StartBroadcastReceiver.java
 +++ b/contactsbackup/src/main/java/app/grapheneos/backup/contacts/StartBroadcastReceiver.java
 @@ -3,7 +3,7 @@
@@ -1424,7 +1428,7 @@ diff --git a/contactsbackup/src/main/java/org/calyxos/backup/contacts/VCardExpor
 similarity index 95%
 rename from contactsbackup/src/main/java/org/calyxos/backup/contacts/VCardExporter.java
 rename to contactsbackup/src/main/java/app/grapheneos/backup/contacts/VCardExporter.java
-index 96c54cd..bee04e1 100644
+index 96c54cdc060bfff3591e2db14f72a4a342e7933c..bee04e1f8fff1d860b168c48259fdf700a00ed1e 100644
 --- a/contactsbackup/src/main/java/org/calyxos/backup/contacts/VCardExporter.java
 +++ b/contactsbackup/src/main/java/app/grapheneos/backup/contacts/VCardExporter.java
 @@ -3,7 +3,7 @@
@@ -1449,7 +1453,7 @@ diff --git a/contactsbackup/src/main/java/org/calyxos/backup/contacts/VCardImpor
 similarity index 95%
 rename from contactsbackup/src/main/java/org/calyxos/backup/contacts/VCardImporter.java
 rename to contactsbackup/src/main/java/app/grapheneos/backup/contacts/VCardImporter.java
-index 8828f84..3801c51 100644
+index 8828f84494d9cfd8040d1ee67bbac97cba3e834c..3801c518fe3f79fdc36b76030268f7f492ec1923 100644
 --- a/contactsbackup/src/main/java/org/calyxos/backup/contacts/VCardImporter.java
 +++ b/contactsbackup/src/main/java/app/grapheneos/backup/contacts/VCardImporter.java
 @@ -3,7 +3,7 @@
@@ -1474,7 +1478,7 @@ diff --git a/contactsbackup/src/test/java/org/calyxos/backup/contacts/ContactsBa
 similarity index 97%
 rename from contactsbackup/src/test/java/org/calyxos/backup/contacts/ContactsBackupAgentTest.kt
 rename to contactsbackup/src/test/java/app/grapheneos/backup/contacts/ContactsBackupAgentTest.kt
-index 2cc08c8..e3ddbd0 100644
+index 2cc08c8f61176d67639f4bc6e682126676d28602..e3ddbd05ba1bdba1ef04e25ba16dd9e39b434194 100644
 --- a/contactsbackup/src/test/java/org/calyxos/backup/contacts/ContactsBackupAgentTest.kt
 +++ b/contactsbackup/src/test/java/app/grapheneos/backup/contacts/ContactsBackupAgentTest.kt
 @@ -3,7 +3,7 @@
@@ -1496,7 +1500,7 @@ index 2cc08c8..e3ddbd0 100644
  import org.junit.Assert.assertTrue
  import org.junit.Assert.fail
 diff --git a/core/Android.bp b/core/Android.bp
-index 915364b..94e9bb9 100644
+index 915364b855b8ab10388bd4122bf5961ce000e2bd..94e9bb98bc0e142d9c7319efc4e5316144ab8096 100644
 --- a/core/Android.bp
 +++ b/core/Android.bp
 @@ -14,7 +14,7 @@ android_library {
@@ -1509,10 +1513,10 @@ index 915364b..94e9bb9 100644
      static_libs: [
          "androidx.core_core-ktx",
 diff --git a/core/build.gradle.kts b/core/build.gradle.kts
-index cf62c6f..4c6b3cb 100644
+index e281dfb84964abf656cf357664371fe5a0d0c8cd..8f11586d45678dc66b46aba5e1df72e9c754f5fc 100644
 --- a/core/build.gradle.kts
 +++ b/core/build.gradle.kts
-@@ -9,7 +9,7 @@ java {
+@@ -11,7 +11,7 @@ java {
  }
  
  android {
@@ -1522,7 +1526,7 @@ index cf62c6f..4c6b3cb 100644
  
      defaultConfig {
 diff --git a/core/src/main/AndroidManifest.xml b/core/src/main/AndroidManifest.xml
-index 6099552..541208b 100644
+index 6099552b28c77a001aa76f9d9ae97cb5134682f8..541208b491abf2a49504a2f00be2d9840a9501c0 100644
 --- a/core/src/main/AndroidManifest.xml
 +++ b/core/src/main/AndroidManifest.xml
 @@ -3,7 +3,7 @@
@@ -1538,7 +1542,7 @@ diff --git a/core/src/main/java/org/calyxos/seedvault/core/ByteArrayUtils.kt b/c
 similarity index 88%
 rename from core/src/main/java/org/calyxos/seedvault/core/ByteArrayUtils.kt
 rename to core/src/main/java/app/grapheneos/seedvault/core/ByteArrayUtils.kt
-index 4ce2c4e..020eba0 100644
+index 4ce2c4e79dbfcc9c9a21be7c0e8c3ef11606d3c4..020eba0d02074483c2589cdb3ef8525440d66a6d 100644
 --- a/core/src/main/java/org/calyxos/seedvault/core/ByteArrayUtils.kt
 +++ b/core/src/main/java/app/grapheneos/seedvault/core/ByteArrayUtils.kt
 @@ -3,7 +3,7 @@
@@ -1554,7 +1558,7 @@ diff --git a/core/src/main/java/org/calyxos/seedvault/core/MemoryLogger.kt b/cor
 similarity index 93%
 rename from core/src/main/java/org/calyxos/seedvault/core/MemoryLogger.kt
 rename to core/src/main/java/app/grapheneos/seedvault/core/MemoryLogger.kt
-index 065e7fb..a1e5708 100644
+index 065e7fba7b771c1bcc8d5fba9bf6fa3ddcba044c..a1e57086b97cb067781c44b30aea771b35f17b79 100644
 --- a/core/src/main/java/org/calyxos/seedvault/core/MemoryLogger.kt
 +++ b/core/src/main/java/app/grapheneos/seedvault/core/MemoryLogger.kt
 @@ -3,7 +3,7 @@
@@ -1570,7 +1574,7 @@ diff --git a/core/src/main/java/org/calyxos/seedvault/core/backends/Backend.kt b
 similarity index 98%
 rename from core/src/main/java/org/calyxos/seedvault/core/backends/Backend.kt
 rename to core/src/main/java/app/grapheneos/seedvault/core/backends/Backend.kt
-index 8a37dea..58b5c32 100644
+index 8a37dead89249eab813c1b7feadbe6d63202378f..58b5c32408aee5b2f38d7b352c9f7a039e84fbca 100644
 --- a/core/src/main/java/org/calyxos/seedvault/core/backends/Backend.kt
 +++ b/core/src/main/java/app/grapheneos/seedvault/core/backends/Backend.kt
 @@ -3,7 +3,7 @@
@@ -1586,7 +1590,7 @@ diff --git a/core/src/main/java/org/calyxos/seedvault/core/backends/BackendFacto
 similarity index 57%
 rename from core/src/main/java/org/calyxos/seedvault/core/backends/BackendFactory.kt
 rename to core/src/main/java/app/grapheneos/seedvault/core/backends/BackendFactory.kt
-index 5fd9b8f..895103c 100644
+index 5fd9b8fc84f82f6907694c676ada1b3001967a04..895103ca81bc1e56d3cda5accb7110d5c7f04bb7 100644
 --- a/core/src/main/java/org/calyxos/seedvault/core/backends/BackendFactory.kt
 +++ b/core/src/main/java/app/grapheneos/seedvault/core/backends/BackendFactory.kt
 @@ -3,13 +3,13 @@
@@ -1612,7 +1616,7 @@ diff --git a/core/src/main/java/org/calyxos/seedvault/core/backends/BackendPrope
 similarity index 97%
 rename from core/src/main/java/org/calyxos/seedvault/core/backends/BackendProperties.kt
 rename to core/src/main/java/app/grapheneos/seedvault/core/backends/BackendProperties.kt
-index 1b31136..537a394 100644
+index 0e118237723d1f7be5fc40ba915a5ef996aa8c84..38a87ea506edca18146e7793c8617e778ad6554a 100644
 --- a/core/src/main/java/org/calyxos/seedvault/core/backends/BackendProperties.kt
 +++ b/core/src/main/java/app/grapheneos/seedvault/core/backends/BackendProperties.kt
 @@ -3,7 +3,7 @@
@@ -1628,7 +1632,7 @@ diff --git a/core/src/main/java/org/calyxos/seedvault/core/backends/BackendSaver
 similarity index 95%
 rename from core/src/main/java/org/calyxos/seedvault/core/backends/BackendSaver.kt
 rename to core/src/main/java/app/grapheneos/seedvault/core/backends/BackendSaver.kt
-index aa19cb9..6564996 100644
+index aa19cb9ca25dc4b307b9456c9ee83875c6adceca..656499676f7cea513a86e24370e713f602a2c9f9 100644
 --- a/core/src/main/java/org/calyxos/seedvault/core/backends/BackendSaver.kt
 +++ b/core/src/main/java/app/grapheneos/seedvault/core/backends/BackendSaver.kt
 @@ -3,7 +3,7 @@
@@ -1644,7 +1648,7 @@ diff --git a/core/src/main/java/org/calyxos/seedvault/core/backends/BackendTest.
 similarity index 98%
 rename from core/src/main/java/org/calyxos/seedvault/core/backends/BackendTest.kt
 rename to core/src/main/java/app/grapheneos/seedvault/core/backends/BackendTest.kt
-index f9ac278..7d8034c 100644
+index b60d0ac2b71a803c0c57d74573672ebde03046a9..565b7162be2601586109f602223692fe331a66f7 100644
 --- a/core/src/main/java/org/calyxos/seedvault/core/backends/BackendTest.kt
 +++ b/core/src/main/java/app/grapheneos/seedvault/core/backends/BackendTest.kt
 @@ -3,10 +3,10 @@
@@ -1664,7 +1668,7 @@ diff --git a/core/src/main/java/org/calyxos/seedvault/core/backends/Constants.kt
 similarity index 96%
 rename from core/src/main/java/org/calyxos/seedvault/core/backends/Constants.kt
 rename to core/src/main/java/app/grapheneos/seedvault/core/backends/Constants.kt
-index 5722efc..68c7b5d 100644
+index 5722efc770bc6a14c105e95336e9e8be4b3a69be..68c7b5d9ba6a5250e551705519da628dcf1f9245 100644
 --- a/core/src/main/java/org/calyxos/seedvault/core/backends/Constants.kt
 +++ b/core/src/main/java/app/grapheneos/seedvault/core/backends/Constants.kt
 @@ -3,7 +3,7 @@
@@ -1680,7 +1684,7 @@ diff --git a/core/src/main/java/org/calyxos/seedvault/core/backends/FileHandle.k
 similarity index 89%
 rename from core/src/main/java/org/calyxos/seedvault/core/backends/FileHandle.kt
 rename to core/src/main/java/app/grapheneos/seedvault/core/backends/FileHandle.kt
-index ce63aa7..8c77a75 100644
+index ce63aa75a0a9690dfa72605b7d4b1113aaeed9fa..8c77a75f2b5ffa1edec53a69c632e56cb543b40f 100644
 --- a/core/src/main/java/org/calyxos/seedvault/core/backends/FileHandle.kt
 +++ b/core/src/main/java/app/grapheneos/seedvault/core/backends/FileHandle.kt
 @@ -3,12 +3,12 @@
@@ -1705,7 +1709,7 @@ diff --git a/core/src/main/java/org/calyxos/seedvault/core/backends/IBackendMana
 similarity index 88%
 rename from core/src/main/java/org/calyxos/seedvault/core/backends/IBackendManager.kt
 rename to core/src/main/java/app/grapheneos/seedvault/core/backends/IBackendManager.kt
-index 5b03295..ac1afb7 100644
+index 5b03295ae84ca8324423d6ef2ba21c484f8af2a5..ac1afb7e4b4f04b8ccceb1537244a6a3fd91de30 100644
 --- a/core/src/main/java/org/calyxos/seedvault/core/backends/IBackendManager.kt
 +++ b/core/src/main/java/app/grapheneos/seedvault/core/backends/IBackendManager.kt
 @@ -3,7 +3,7 @@
@@ -1721,7 +1725,7 @@ diff --git a/core/src/main/java/org/calyxos/seedvault/core/backends/RetryBackend
 similarity index 98%
 rename from core/src/main/java/org/calyxos/seedvault/core/backends/RetryBackend.kt
 rename to core/src/main/java/app/grapheneos/seedvault/core/backends/RetryBackend.kt
-index 9ccdffd..4badb34 100644
+index fe3003184acc4d0c246b83315bb39331d04ecac3..ca109e26958e7831c4804b7e51b11798b3740a93 100644
 --- a/core/src/main/java/org/calyxos/seedvault/core/backends/RetryBackend.kt
 +++ b/core/src/main/java/app/grapheneos/seedvault/core/backends/RetryBackend.kt
 @@ -3,7 +3,7 @@
@@ -1737,7 +1741,7 @@ diff --git a/core/src/main/java/org/calyxos/seedvault/core/backends/saf/Document
 similarity index 91%
 rename from core/src/main/java/org/calyxos/seedvault/core/backends/saf/DocumentFileCache.kt
 rename to core/src/main/java/app/grapheneos/seedvault/core/backends/saf/DocumentFileCache.kt
-index 8db103a..bfcbccd 100644
+index 8db103af60929fb28c3d899caff274d18de51c7f..bfcbccd4df709261f8b96cd68bb8d646078c198e 100644
 --- a/core/src/main/java/org/calyxos/seedvault/core/backends/saf/DocumentFileCache.kt
 +++ b/core/src/main/java/app/grapheneos/seedvault/core/backends/saf/DocumentFileCache.kt
 @@ -3,15 +3,15 @@
@@ -1766,7 +1770,7 @@ diff --git a/core/src/main/java/org/calyxos/seedvault/core/backends/saf/SafBacke
 similarity index 87%
 rename from core/src/main/java/org/calyxos/seedvault/core/backends/saf/SafBackend.kt
 rename to core/src/main/java/app/grapheneos/seedvault/core/backends/saf/SafBackend.kt
-index c31aebb..0f8ff4f 100644
+index c31aebbef7e04651af66f3b4f0ded7177882ee1e..0f8ff4f3242c2de50a815451fafc8644b1792bd4 100644
 --- a/core/src/main/java/org/calyxos/seedvault/core/backends/saf/SafBackend.kt
 +++ b/core/src/main/java/app/grapheneos/seedvault/core/backends/saf/SafBackend.kt
 @@ -3,7 +3,7 @@
@@ -1829,7 +1833,7 @@ diff --git a/core/src/main/java/org/calyxos/seedvault/core/backends/saf/SafHelpe
 similarity index 98%
 rename from core/src/main/java/org/calyxos/seedvault/core/backends/saf/SafHelper.kt
 rename to core/src/main/java/app/grapheneos/seedvault/core/backends/saf/SafHelper.kt
-index e99a875..47ab873 100644
+index e99a8752978633cd4564b83df557f043cb1503f4..47ab873b7b7a33e4c07c7a11670b3b956b904691 100644
 --- a/core/src/main/java/org/calyxos/seedvault/core/backends/saf/SafHelper.kt
 +++ b/core/src/main/java/app/grapheneos/seedvault/core/backends/saf/SafHelper.kt
 @@ -3,7 +3,7 @@
@@ -1854,7 +1858,7 @@ diff --git a/core/src/main/java/org/calyxos/seedvault/core/backends/saf/SafPrope
 similarity index 95%
 rename from core/src/main/java/org/calyxos/seedvault/core/backends/saf/SafProperties.kt
 rename to core/src/main/java/app/grapheneos/seedvault/core/backends/saf/SafProperties.kt
-index cfe4c27..7fbe229 100644
+index cfe4c27afc46a15a0999512dea2b1275796e084b..7fbe2291ab9d762f1d28aeb1cf8f5227f1f073d6 100644
 --- a/core/src/main/java/org/calyxos/seedvault/core/backends/saf/SafProperties.kt
 +++ b/core/src/main/java/app/grapheneos/seedvault/core/backends/saf/SafProperties.kt
 @@ -3,7 +3,7 @@
@@ -1879,7 +1883,7 @@ diff --git a/core/src/main/java/org/calyxos/seedvault/core/backends/saf/UriUtils
 similarity index 96%
 rename from core/src/main/java/org/calyxos/seedvault/core/backends/saf/UriUtils.kt
 rename to core/src/main/java/app/grapheneos/seedvault/core/backends/saf/UriUtils.kt
-index 07d0d3e..1abc848 100644
+index 07d0d3e4d535b454c080ec57ecdf632e435abf7f..1abc848e3bd7104c8023f67fd070cf05647edf79 100644
 --- a/core/src/main/java/org/calyxos/seedvault/core/backends/saf/UriUtils.kt
 +++ b/core/src/main/java/app/grapheneos/seedvault/core/backends/saf/UriUtils.kt
 @@ -3,7 +3,7 @@
@@ -1895,7 +1899,7 @@ diff --git a/core/src/main/java/org/calyxos/seedvault/core/backends/webdav/WebDa
 similarity index 92%
 rename from core/src/main/java/org/calyxos/seedvault/core/backends/webdav/WebDavBackend.kt
 rename to core/src/main/java/app/grapheneos/seedvault/core/backends/webdav/WebDavBackend.kt
-index 956b894..f73de15 100644
+index 04030f8f813d0f6e7cd94a7b00e0edccaab262ce..f68f8b71c286432e26d1ef75a0ee648a4165e81e 100644
 --- a/core/src/main/java/org/calyxos/seedvault/core/backends/webdav/WebDavBackend.kt
 +++ b/core/src/main/java/app/grapheneos/seedvault/core/backends/webdav/WebDavBackend.kt
 @@ -3,7 +3,7 @@
@@ -1905,9 +1909,9 @@ index 956b894..f73de15 100644
 -package org.calyxos.seedvault.core.backends.webdav
 +package app.grapheneos.seedvault.core.backends.webdav
  
- import at.bitfire.dav4jvm.BasicDigestAuthHandler
- import at.bitfire.dav4jvm.DavCollection
-@@ -21,25 +21,25 @@ import okhttp3.OkHttpClient
+ import at.bitfire.dav4jvm.okhttp.BasicDigestAuthHandler
+ import at.bitfire.dav4jvm.okhttp.DavCollection
+@@ -22,25 +22,25 @@ import okhttp3.OkHttpClient
  import okhttp3.RequestBody
  import okhttp3.internal.http2.StreamResetException
  import okio.BufferedSink
@@ -1956,7 +1960,7 @@ diff --git a/core/src/main/java/org/calyxos/seedvault/core/backends/webdav/WebDa
 similarity index 79%
 rename from core/src/main/java/org/calyxos/seedvault/core/backends/webdav/WebDavConfig.kt
 rename to core/src/main/java/app/grapheneos/seedvault/core/backends/webdav/WebDavConfig.kt
-index a2d2c18..a582537 100644
+index a2d2c1801bd7682fe7307c5810f74227e98267f0..a58253798e9242d4d6eb02fe599d4660008937ca 100644
 --- a/core/src/main/java/org/calyxos/seedvault/core/backends/webdav/WebDavConfig.kt
 +++ b/core/src/main/java/app/grapheneos/seedvault/core/backends/webdav/WebDavConfig.kt
 @@ -3,7 +3,7 @@
@@ -1972,7 +1976,7 @@ diff --git a/core/src/main/java/org/calyxos/seedvault/core/backends/webdav/WebDa
 similarity index 98%
 rename from core/src/main/java/org/calyxos/seedvault/core/backends/webdav/WebDavHelper.kt
 rename to core/src/main/java/app/grapheneos/seedvault/core/backends/webdav/WebDavHelper.kt
-index 6717283..f23bd0b 100644
+index 3ef67c7ef6889ff1052a627fe8216a7a5b0a4374..7f1827c707cef14eec054332f6ba02a2a41e2b87 100644
 --- a/core/src/main/java/org/calyxos/seedvault/core/backends/webdav/WebDavHelper.kt
 +++ b/core/src/main/java/app/grapheneos/seedvault/core/backends/webdav/WebDavHelper.kt
 @@ -3,7 +3,7 @@
@@ -1982,13 +1986,13 @@ index 6717283..f23bd0b 100644
 -package org.calyxos.seedvault.core.backends.webdav
 +package app.grapheneos.seedvault.core.backends.webdav
  
- import at.bitfire.dav4jvm.DavCollection
- import at.bitfire.dav4jvm.MultiResponseCallback
+ import at.bitfire.dav4jvm.Property
+ import at.bitfire.dav4jvm.okhttp.DavCollection
 diff --git a/core/src/main/java/org/calyxos/seedvault/core/backends/webdav/WebDavProperties.kt b/core/src/main/java/app/grapheneos/seedvault/core/backends/webdav/WebDavProperties.kt
 similarity index 78%
 rename from core/src/main/java/org/calyxos/seedvault/core/backends/webdav/WebDavProperties.kt
 rename to core/src/main/java/app/grapheneos/seedvault/core/backends/webdav/WebDavProperties.kt
-index 4d47fb3..3ccffbc 100644
+index 4d47fb3733b32c5396d0f2bccfc8bc07bf34acad..3ccffbc0582bc662f0457d7fed4c0c886a09a979 100644
 --- a/core/src/main/java/org/calyxos/seedvault/core/backends/webdav/WebDavProperties.kt
 +++ b/core/src/main/java/app/grapheneos/seedvault/core/backends/webdav/WebDavProperties.kt
 @@ -3,10 +3,10 @@
@@ -2008,7 +2012,7 @@ diff --git a/core/src/main/java/org/calyxos/seedvault/core/crypto/CoreCrypto.kt 
 similarity index 98%
 rename from core/src/main/java/org/calyxos/seedvault/core/crypto/CoreCrypto.kt
 rename to core/src/main/java/app/grapheneos/seedvault/core/crypto/CoreCrypto.kt
-index d6a3050..6838ebe 100644
+index d6a30500c7feab3f13603aa11ecc7e9ab2549e97..6838ebe2db3345f5cbc582d3e42f90ce87df8461 100644
 --- a/core/src/main/java/org/calyxos/seedvault/core/crypto/CoreCrypto.kt
 +++ b/core/src/main/java/app/grapheneos/seedvault/core/crypto/CoreCrypto.kt
 @@ -3,7 +3,7 @@
@@ -2024,7 +2028,7 @@ diff --git a/core/src/main/java/org/calyxos/seedvault/core/crypto/Hkdf.kt b/core
 similarity index 94%
 rename from core/src/main/java/org/calyxos/seedvault/core/crypto/Hkdf.kt
 rename to core/src/main/java/app/grapheneos/seedvault/core/crypto/Hkdf.kt
-index 4baa31e..53ad894 100644
+index 4baa31eb08e1c68ba51e76f82f48ae1a331716d5..53ad8940736db565f816886685dae66585293ded 100644
 --- a/core/src/main/java/org/calyxos/seedvault/core/crypto/Hkdf.kt
 +++ b/core/src/main/java/app/grapheneos/seedvault/core/crypto/Hkdf.kt
 @@ -3,9 +3,9 @@
@@ -2043,7 +2047,7 @@ diff --git a/core/src/main/java/org/calyxos/seedvault/core/crypto/KeyManager.kt 
 similarity index 91%
 rename from core/src/main/java/org/calyxos/seedvault/core/crypto/KeyManager.kt
 rename to core/src/main/java/app/grapheneos/seedvault/core/crypto/KeyManager.kt
-index ec15fa3..93b300e 100644
+index ec15fa31eb55cb15a4189be511a4578bab7ca5de..93b300e29188ec3ce754cfa58910b10104970dda 100644
 --- a/core/src/main/java/org/calyxos/seedvault/core/crypto/KeyManager.kt
 +++ b/core/src/main/java/app/grapheneos/seedvault/core/crypto/KeyManager.kt
 @@ -3,7 +3,7 @@
@@ -2059,7 +2063,7 @@ diff --git a/core/src/test/java/org/calyxos/seedvault/core/backends/RetryBackend
 similarity index 97%
 rename from core/src/test/java/org/calyxos/seedvault/core/backends/RetryBackendTest.kt
 rename to core/src/test/java/app/grapheneos/seedvault/core/backends/RetryBackendTest.kt
-index 6c747be..272fa05 100644
+index 2b2efc857c2014cf8ed2462d5055c83ed47c60c8..36364b8c67bca824412cf2fec50f868f059036a6 100644
 --- a/core/src/test/java/org/calyxos/seedvault/core/backends/RetryBackendTest.kt
 +++ b/core/src/test/java/app/grapheneos/seedvault/core/backends/RetryBackendTest.kt
 @@ -3,7 +3,7 @@
@@ -2072,13 +2076,13 @@ index 6c747be..272fa05 100644
  import io.mockk.coEvery
  import io.mockk.coVerify
 diff --git a/core/src/test/java/org/calyxos/seedvault/core/backends/webdav/WebDavBackendTest.kt b/core/src/test/java/app/grapheneos/seedvault/core/backends/webdav/WebDavBackendTest.kt
-similarity index 81%
+similarity index 78%
 rename from core/src/test/java/org/calyxos/seedvault/core/backends/webdav/WebDavBackendTest.kt
 rename to core/src/test/java/app/grapheneos/seedvault/core/backends/webdav/WebDavBackendTest.kt
-index 5a118e4..9422185 100644
+index 7106e8a63e502d60eadb190ddd9d0cb56fd1529a..6d9e34b5924d03ac8179760c4b5c2fa4bad4a322 100644
 --- a/core/src/test/java/org/calyxos/seedvault/core/backends/webdav/WebDavBackendTest.kt
 +++ b/core/src/test/java/app/grapheneos/seedvault/core/backends/webdav/WebDavBackendTest.kt
-@@ -3,11 +3,11 @@
+@@ -3,12 +3,12 @@
   * SPDX-License-Identifier: Apache-2.0
   */
  
@@ -2088,16 +2092,18 @@ index 5a118e4..9422185 100644
  import kotlinx.coroutines.runBlocking
 -import org.calyxos.seedvault.core.backends.Backend
 -import org.calyxos.seedvault.core.backends.BackendTest
+-import org.junit.Test
 +import app.grapheneos.seedvault.core.backends.Backend
 +import app.grapheneos.seedvault.core.backends.BackendTest
- import kotlin.test.Test
++import kotlin.test.Test
  
- public class WebDavBackendTest : BackendTest() {
+ internal class WebDavBackendTest : BackendTest() {
+     override val backend: Backend = WebDavBackend(WebDavTestConfig.getConfig(), ".SeedvaultTest")
 diff --git a/core/src/test/java/org/calyxos/seedvault/core/backends/webdav/WebDavTestConfig.kt b/core/src/test/java/app/grapheneos/seedvault/core/backends/webdav/WebDavTestConfig.kt
 similarity index 90%
 rename from core/src/test/java/org/calyxos/seedvault/core/backends/webdav/WebDavTestConfig.kt
 rename to core/src/test/java/app/grapheneos/seedvault/core/backends/webdav/WebDavTestConfig.kt
-index 982dd2a..cf340b8 100644
+index 982dd2a8592a3a930c88e0affc0d6bcb21462c5a..cf340b80baac2e38298d99c4a0f217af1caf3a4b 100644
 --- a/core/src/test/java/org/calyxos/seedvault/core/backends/webdav/WebDavTestConfig.kt
 +++ b/core/src/test/java/app/grapheneos/seedvault/core/backends/webdav/WebDavTestConfig.kt
 @@ -3,7 +3,7 @@
@@ -2113,7 +2119,7 @@ diff --git a/core/src/test/java/org/calyxos/seedvault/core/crypto/HkdfTest.kt b/
 similarity index 98%
 rename from core/src/test/java/org/calyxos/seedvault/core/crypto/HkdfTest.kt
 rename to core/src/test/java/app/grapheneos/seedvault/core/crypto/HkdfTest.kt
-index 9de5acc..b8bd699 100644
+index 9de5acc690e221893c51719afad1100c6f30a409..b8bd69916dbc893264aedcccdd25a3cec00d13e5 100644
 --- a/core/src/test/java/org/calyxos/seedvault/core/crypto/HkdfTest.kt
 +++ b/core/src/test/java/app/grapheneos/seedvault/core/crypto/HkdfTest.kt
 @@ -3,7 +3,7 @@
@@ -2918,7 +2924,7 @@ z!t)yg1A`Py0|O{tH~CEN43ewIop3>U4x$5;a#VbgtU$?2#HYR}OfytLhuI-z$N+Cv
 THjt%43_=Y3tPBh@d_g<_b_{>I
 
 diff --git a/storage/demo/src/main/java/de/grobox/storagebackuptester/App.kt b/storage/demo/src/main/java/de/grobox/storagebackuptester/App.kt
-index ee7446d..c9ba141 100644
+index ee7446d0deb4b5b5193ee2dcda10266d7a57bc77..c9ba141ff69caaed7990968e8a11ef247db9ce75 100644
 --- a/storage/demo/src/main/java/de/grobox/storagebackuptester/App.kt
 +++ b/storage/demo/src/main/java/de/grobox/storagebackuptester/App.kt
 @@ -13,10 +13,10 @@ import com.google.android.material.color.DynamicColors
@@ -2937,7 +2943,7 @@ index ee7446d..c9ba141 100644
  class App : Application() {
  
 diff --git a/storage/demo/src/main/java/de/grobox/storagebackuptester/Job.kt b/storage/demo/src/main/java/de/grobox/storagebackuptester/Job.kt
-index 54b1642..1ace278 100644
+index 54b1642559e9423de089232b7b1ac802b65ac4a2..1ace278927e48b8c8247d4e3ec6cef6ab7721ac7 100644
 --- a/storage/demo/src/main/java/de/grobox/storagebackuptester/Job.kt
 +++ b/storage/demo/src/main/java/de/grobox/storagebackuptester/Job.kt
 @@ -6,15 +6,15 @@
@@ -2966,7 +2972,7 @@ index 54b1642..1ace278 100644
  
  // debug with:
 diff --git a/storage/demo/src/main/java/de/grobox/storagebackuptester/MainViewModel.kt b/storage/demo/src/main/java/de/grobox/storagebackuptester/MainViewModel.kt
-index 9bc7f13..9869aa2 100644
+index 9bc7f134879d0436d02fb099bb77e82059565f06..9869aa23e1df5731e3146b438b189c1f22d4358a 100644
 --- a/storage/demo/src/main/java/de/grobox/storagebackuptester/MainViewModel.kt
 +++ b/storage/demo/src/main/java/de/grobox/storagebackuptester/MainViewModel.kt
 @@ -21,15 +21,15 @@ import de.grobox.storagebackuptester.scanner.scanUri
@@ -2995,7 +3001,7 @@ index 9bc7f13..9869aa2 100644
  private val logEmptyState = """
      Press the button below to simulate a backup. Your files won't be changed and not uploaded anywhere. This is just to test code for a future real backup.
 diff --git a/storage/demo/src/main/java/de/grobox/storagebackuptester/backup/BackupStats.kt b/storage/demo/src/main/java/de/grobox/storagebackuptester/backup/BackupStats.kt
-index 51d6c91..ecf0ed3 100644
+index 51d6c91efa29d3e909a0eb4edc66790715b020a4..ecf0ed31d7f5cd001acb1baf082efda2ba65a5a9 100644
 --- a/storage/demo/src/main/java/de/grobox/storagebackuptester/backup/BackupStats.kt
 +++ b/storage/demo/src/main/java/de/grobox/storagebackuptester/backup/BackupStats.kt
 @@ -12,9 +12,9 @@ import android.text.format.DateUtils.getRelativeTimeSpanString
@@ -3012,7 +3018,7 @@ index 51d6c91..ecf0ed3 100644
  import kotlin.time.toDuration
  
 diff --git a/storage/demo/src/main/java/de/grobox/storagebackuptester/crypto/KeyManager.kt b/storage/demo/src/main/java/de/grobox/storagebackuptester/crypto/KeyManager.kt
-index 1554912..38c9bdb 100644
+index 1554912c73d93667d015bdb9b8eb0c4349d00b1a..38c9bdb60d5ac5665693ddbe58559b9996f13af1 100644
 --- a/storage/demo/src/main/java/de/grobox/storagebackuptester/crypto/KeyManager.kt
 +++ b/storage/demo/src/main/java/de/grobox/storagebackuptester/crypto/KeyManager.kt
 @@ -10,12 +10,12 @@ import android.security.keystore.KeyProperties.PURPOSE_ENCRYPT
@@ -3031,7 +3037,7 @@ index 1554912..38c9bdb 100644
      private const val KEY_SIZE = 256
      private const val KEY_SIZE_BYTES = KEY_SIZE / 8
 diff --git a/storage/demo/src/main/java/de/grobox/storagebackuptester/plugin/TestSafBackend.kt b/storage/demo/src/main/java/de/grobox/storagebackuptester/plugin/TestSafBackend.kt
-index a416424..35c9131 100644
+index a416424c6ba2bcad11846e849849cd982a9a77cb..35c9131861b9272115d20c95fa0aeb86a2a62868 100644
 --- a/storage/demo/src/main/java/de/grobox/storagebackuptester/plugin/TestSafBackend.kt
 +++ b/storage/demo/src/main/java/de/grobox/storagebackuptester/plugin/TestSafBackend.kt
 @@ -7,14 +7,14 @@ package de.grobox.storagebackuptester.plugin
@@ -3058,7 +3064,7 @@ index a416424..35c9131 100644
  import java.io.OutputStream
  import kotlin.reflect.KClass
 diff --git a/storage/demo/src/main/java/de/grobox/storagebackuptester/restore/DemoFileSelectionFragment.kt b/storage/demo/src/main/java/de/grobox/storagebackuptester/restore/DemoFileSelectionFragment.kt
-index 31da8aa..4801a4e 100644
+index 31da8aac29813983e8a7eb6533f45bd589739733..4801a4e71dfed35b0160ce7ff4eb37ac34921ffe 100644
 --- a/storage/demo/src/main/java/de/grobox/storagebackuptester/restore/DemoFileSelectionFragment.kt
 +++ b/storage/demo/src/main/java/de/grobox/storagebackuptester/restore/DemoFileSelectionFragment.kt
 @@ -14,8 +14,8 @@ import androidx.fragment.app.activityViewModels
@@ -3087,7 +3093,7 @@ index 31da8aa..4801a4e 100644
          val footer = bottomStub.inflate() as ExtendedFloatingActionButton
          fab = footer
 diff --git a/storage/demo/src/main/java/de/grobox/storagebackuptester/restore/DemoSnapshotFragment.kt b/storage/demo/src/main/java/de/grobox/storagebackuptester/restore/DemoSnapshotFragment.kt
-index bd57857..46e66e0 100644
+index bd57857bf1b3827846b032829474a9de4299411d..46e66e019f73794a03795b09c01952f19d218b37 100644
 --- a/storage/demo/src/main/java/de/grobox/storagebackuptester/restore/DemoSnapshotFragment.kt
 +++ b/storage/demo/src/main/java/de/grobox/storagebackuptester/restore/DemoSnapshotFragment.kt
 @@ -14,8 +14,8 @@ import android.widget.Button
@@ -3111,7 +3117,7 @@ index bd57857..46e66e0 100644
          val footer = bottomStub.inflate()
          footer.findViewById<Button>(R.id.button).setOnClickListener {
 diff --git a/storage/demo/src/main/java/de/grobox/storagebackuptester/restore/RestoreStats.kt b/storage/demo/src/main/java/de/grobox/storagebackuptester/restore/RestoreStats.kt
-index 4d8583e..bb49b79 100644
+index 4d8583e696d5183749a2cbaaed725fb63c2c511a..bb49b79463a3d32a1ed0277de05acf1520961187 100644
 --- a/storage/demo/src/main/java/de/grobox/storagebackuptester/restore/RestoreStats.kt
 +++ b/storage/demo/src/main/java/de/grobox/storagebackuptester/restore/RestoreStats.kt
 @@ -10,8 +10,8 @@ import android.text.format.DateUtils
@@ -3126,7 +3132,7 @@ index 4d8583e..bb49b79 100644
  import kotlin.time.toDuration
  
 diff --git a/storage/demo/src/main/java/de/grobox/storagebackuptester/scanner/DocumentScanner.kt b/storage/demo/src/main/java/de/grobox/storagebackuptester/scanner/DocumentScanner.kt
-index fa19c35..98b858e 100644
+index fa19c358b0f42b29da10273c991e73172a62bf25..98b858e2cdd61d563394623723ef0e1667f3ca55 100644
 --- a/storage/demo/src/main/java/de/grobox/storagebackuptester/scanner/DocumentScanner.kt
 +++ b/storage/demo/src/main/java/de/grobox/storagebackuptester/scanner/DocumentScanner.kt
 @@ -10,8 +10,8 @@ import android.content.Context
@@ -3141,7 +3147,7 @@ index fa19c35..98b858e 100644
  import java.util.Date
  import kotlin.time.measureTimedValue
 diff --git a/storage/demo/src/main/java/de/grobox/storagebackuptester/scanner/MediaScanner.kt b/storage/demo/src/main/java/de/grobox/storagebackuptester/scanner/MediaScanner.kt
-index 25a8f7b..f34308c 100644
+index 25a8f7ba65b448a6e7725803f441dd39820fb2f6..f34308cf35266ac8e0e51ef7a00dc81700e97b13 100644
 --- a/storage/demo/src/main/java/de/grobox/storagebackuptester/scanner/MediaScanner.kt
 +++ b/storage/demo/src/main/java/de/grobox/storagebackuptester/scanner/MediaScanner.kt
 @@ -9,8 +9,8 @@ import android.annotation.SuppressLint
@@ -3156,7 +3162,7 @@ index 25a8f7b..f34308c 100644
  import java.util.Date
  import kotlin.time.TimedValue
 diff --git a/storage/demo/src/main/java/de/grobox/storagebackuptester/settings/InfoFragment.kt b/storage/demo/src/main/java/de/grobox/storagebackuptester/settings/InfoFragment.kt
-index 1a7ce44..ecdd6bb 100644
+index 1a7ce44e0a0fdd814dd6a7f23696677dc72fed29..ecdd6bbfc9676d1c37eed28c4964e337871f80a4 100644
 --- a/storage/demo/src/main/java/de/grobox/storagebackuptester/settings/InfoFragment.kt
 +++ b/storage/demo/src/main/java/de/grobox/storagebackuptester/settings/InfoFragment.kt
 @@ -12,10 +12,10 @@ import de.grobox.storagebackuptester.App
@@ -3175,7 +3181,7 @@ index 1a7ce44..ecdd6bb 100644
  class InfoFragment : MediaScanFragment() {
  
 diff --git a/storage/demo/src/main/java/de/grobox/storagebackuptester/settings/SettingsFragment.kt b/storage/demo/src/main/java/de/grobox/storagebackuptester/settings/SettingsFragment.kt
-index 1d02515..fd45ae2 100644
+index 1d02515816230973f8674ac4910072e4f7d53fa6..fd45ae2ca3b26d015013f37bf7b106f8e3b0ba5e 100644
 --- a/storage/demo/src/main/java/de/grobox/storagebackuptester/settings/SettingsFragment.kt
 +++ b/storage/demo/src/main/java/de/grobox/storagebackuptester/settings/SettingsFragment.kt
 @@ -22,10 +22,10 @@ import de.grobox.storagebackuptester.R
@@ -3194,7 +3200,7 @@ index 1d02515..fd45ae2 100644
  class SettingsFragment : BackupContentFragment() {
  
 diff --git a/storage/lib/build.gradle.kts b/storage/lib/build.gradle.kts
-index 1a6cae7..e36eb60 100644
+index d66e80e82d3ca7357aa308e2ea47ed8d17742488..e1c4d5444aa2d2679c3998770f24be24be557b7d 100644
 --- a/storage/lib/build.gradle.kts
 +++ b/storage/lib/build.gradle.kts
 @@ -14,7 +14,7 @@ plugins {
@@ -3207,7 +3213,7 @@ index 1a6cae7..e36eb60 100644
  
      defaultConfig {
 diff --git a/storage/lib/proguard-rules.pro b/storage/lib/proguard-rules.pro
-index a310d66..dce96f4 100644
+index a310d6633b14296072f6bec57d01d50a1c086e0b..dce96f4379777439a717ca45963a8cd2a59883be 100644
 --- a/storage/lib/proguard-rules.pro
 +++ b/storage/lib/proguard-rules.pro
 @@ -23,7 +23,7 @@
@@ -3231,7 +3237,7 @@ diff --git a/storage/lib/src/androidTest/java/org/calyxos/backup/storage/db/Chun
 similarity index 99%
 rename from storage/lib/src/androidTest/java/org/calyxos/backup/storage/db/ChunksCacheTest.kt
 rename to storage/lib/src/androidTest/java/app/grapheneos/backup/storage/db/ChunksCacheTest.kt
-index d06a2af..b3f592d 100644
+index d06a2af6f33721ee2c5c908a1ee67e2da5d7e70d..b3f592d065d0e61e9c97506e7e275e9a6886318f 100644
 --- a/storage/lib/src/androidTest/java/org/calyxos/backup/storage/db/ChunksCacheTest.kt
 +++ b/storage/lib/src/androidTest/java/app/grapheneos/backup/storage/db/ChunksCacheTest.kt
 @@ -3,7 +3,7 @@
@@ -3247,7 +3253,7 @@ diff --git a/storage/lib/src/androidTest/java/org/calyxos/backup/storage/db/File
 similarity index 97%
 rename from storage/lib/src/androidTest/java/org/calyxos/backup/storage/db/FilesCacheTest.kt
 rename to storage/lib/src/androidTest/java/app/grapheneos/backup/storage/db/FilesCacheTest.kt
-index 6ab4b52..39032df 100644
+index 6ab4b5260b72706a2b64b54e1e546e49b4442354..39032dffc4ad3d5e6dd3ff933851c0415d676566 100644
 --- a/storage/lib/src/androidTest/java/org/calyxos/backup/storage/db/FilesCacheTest.kt
 +++ b/storage/lib/src/androidTest/java/app/grapheneos/backup/storage/db/FilesCacheTest.kt
 @@ -3,7 +3,7 @@
@@ -3263,7 +3269,7 @@ diff --git a/storage/lib/src/androidTest/java/org/calyxos/backup/storage/db/Migr
 similarity index 96%
 rename from storage/lib/src/androidTest/java/org/calyxos/backup/storage/db/MigrationTest.kt
 rename to storage/lib/src/androidTest/java/app/grapheneos/backup/storage/db/MigrationTest.kt
-index 9167926..d15e857 100644
+index 91679266fee7b0259ad464697c9162945738ce78..d15e85767ce92f9bd3d2bcfb24fb4ad0fbab4469 100644
 --- a/storage/lib/src/androidTest/java/org/calyxos/backup/storage/db/MigrationTest.kt
 +++ b/storage/lib/src/androidTest/java/app/grapheneos/backup/storage/db/MigrationTest.kt
 @@ -3,14 +3,14 @@
@@ -3287,7 +3293,7 @@ diff --git a/storage/lib/src/androidTest/java/org/calyxos/backup/storage/db/UriS
 similarity index 95%
 rename from storage/lib/src/androidTest/java/org/calyxos/backup/storage/db/UriStoreTest.kt
 rename to storage/lib/src/androidTest/java/app/grapheneos/backup/storage/db/UriStoreTest.kt
-index ced6d11..152e2d5 100644
+index ced6d11d674a543f89f4b9fbf87fa0806cb17c2c..152e2d58e9dd218a21544682002e149065f03fb3 100644
 --- a/storage/lib/src/androidTest/java/org/calyxos/backup/storage/db/UriStoreTest.kt
 +++ b/storage/lib/src/androidTest/java/app/grapheneos/backup/storage/db/UriStoreTest.kt
 @@ -3,14 +3,14 @@
@@ -3308,7 +3314,7 @@ index ced6d11..152e2d5 100644
  import org.hamcrest.MatcherAssert.assertThat
  import org.junit.After
 diff --git a/storage/lib/src/main/AndroidManifest.xml b/storage/lib/src/main/AndroidManifest.xml
-index 9f80734..d0bfdcc 100644
+index 9f807340f1bd531fffe87025cfd782221c99fd06..d0bfdcc08cf8aaa05cfcc7e3ba40c5c771951231 100644
 --- a/storage/lib/src/main/AndroidManifest.xml
 +++ b/storage/lib/src/main/AndroidManifest.xml
 @@ -5,7 +5,7 @@
@@ -3324,7 +3330,7 @@ diff --git a/storage/lib/src/main/java/org/calyxos/backup/storage/SnapshotRetrie
 similarity index 81%
 rename from storage/lib/src/main/java/org/calyxos/backup/storage/SnapshotRetriever.kt
 rename to storage/lib/src/main/java/app/grapheneos/backup/storage/SnapshotRetriever.kt
-index 75a5658..bef69a0 100644
+index 75a5658f5bff4d6fc7e0ddc50063adb82381eb78..bef69a0612dbbed0996a8630d94011a114daa3d6 100644
 --- a/storage/lib/src/main/java/org/calyxos/backup/storage/SnapshotRetriever.kt
 +++ b/storage/lib/src/main/java/app/grapheneos/backup/storage/SnapshotRetriever.kt
 @@ -3,17 +3,17 @@
@@ -3358,7 +3364,7 @@ diff --git a/storage/lib/src/main/java/org/calyxos/backup/storage/TimeUtils.kt b
 similarity index 97%
 rename from storage/lib/src/main/java/org/calyxos/backup/storage/TimeUtils.kt
 rename to storage/lib/src/main/java/app/grapheneos/backup/storage/TimeUtils.kt
-index c598df9..ed390a5 100644
+index c598df9272b79797489a670ed1b845a1d1e612c0..ed390a5b9698c9b845f439ba71e118ead2de874c 100644
 --- a/storage/lib/src/main/java/org/calyxos/backup/storage/TimeUtils.kt
 +++ b/storage/lib/src/main/java/app/grapheneos/backup/storage/TimeUtils.kt
 @@ -3,7 +3,7 @@
@@ -3374,7 +3380,7 @@ diff --git a/storage/lib/src/main/java/org/calyxos/backup/storage/UriUtils.kt b/
 similarity index 66%
 rename from storage/lib/src/main/java/org/calyxos/backup/storage/UriUtils.kt
 rename to storage/lib/src/main/java/app/grapheneos/backup/storage/UriUtils.kt
-index 773c7a1..8180507 100644
+index 773c7a1689d6e8b1402cfb7d71c01325ec6a211b..8180507999eb27d6b7a5a70711e0b4951698db75 100644
 --- a/storage/lib/src/main/java/org/calyxos/backup/storage/UriUtils.kt
 +++ b/storage/lib/src/main/java/app/grapheneos/backup/storage/UriUtils.kt
 @@ -3,13 +3,13 @@
@@ -3400,7 +3406,7 @@ diff --git a/storage/lib/src/main/java/org/calyxos/backup/storage/api/BackupCont
 similarity index 92%
 rename from storage/lib/src/main/java/org/calyxos/backup/storage/api/BackupContentType.kt
 rename to storage/lib/src/main/java/app/grapheneos/backup/storage/api/BackupContentType.kt
-index 21df988..29de13b 100644
+index 21df9889dd8d2ffe528b542035b9c789b7706aca..29de13bdabac8b51a56020b96d374be3f1e0a564 100644
 --- a/storage/lib/src/main/java/org/calyxos/backup/storage/api/BackupContentType.kt
 +++ b/storage/lib/src/main/java/app/grapheneos/backup/storage/api/BackupContentType.kt
 @@ -3,15 +3,15 @@
@@ -3427,7 +3433,7 @@ diff --git a/storage/lib/src/main/java/org/calyxos/backup/storage/api/BackupFile
 similarity index 89%
 rename from storage/lib/src/main/java/org/calyxos/backup/storage/api/BackupFile.kt
 rename to storage/lib/src/main/java/app/grapheneos/backup/storage/api/BackupFile.kt
-index 3a5eed8..fcff948 100644
+index 3a5eed8c980b0768b2ed44f5a5bc7f10e975307d..fcff9480327dda1035094dc197c6f435c24f2461 100644
 --- a/storage/lib/src/main/java/org/calyxos/backup/storage/api/BackupFile.kt
 +++ b/storage/lib/src/main/java/app/grapheneos/backup/storage/api/BackupFile.kt
 @@ -3,7 +3,7 @@
@@ -3443,7 +3449,7 @@ diff --git a/storage/lib/src/main/java/org/calyxos/backup/storage/api/BackupObse
 similarity index 97%
 rename from storage/lib/src/main/java/org/calyxos/backup/storage/api/BackupObserver.kt
 rename to storage/lib/src/main/java/app/grapheneos/backup/storage/api/BackupObserver.kt
-index 0824673..8ff9186 100644
+index 0824673c0d1ae3ed5a24044b3bc2c168c9d57d5c..8ff918643c732e5d638c2ec0de4b522a39a59756 100644
 --- a/storage/lib/src/main/java/org/calyxos/backup/storage/api/BackupObserver.kt
 +++ b/storage/lib/src/main/java/app/grapheneos/backup/storage/api/BackupObserver.kt
 @@ -3,7 +3,7 @@
@@ -3459,7 +3465,7 @@ diff --git a/storage/lib/src/main/java/org/calyxos/backup/storage/api/CheckObser
 similarity index 89%
 rename from storage/lib/src/main/java/org/calyxos/backup/storage/api/CheckObserver.kt
 rename to storage/lib/src/main/java/app/grapheneos/backup/storage/api/CheckObserver.kt
-index 2ca2f8c..2d1440b 100644
+index 2ca2f8c2fd319e688676400aba5232c47c99f212..2d1440b02695a3a6097f50e14e4ecc6bfcf60910 100644
 --- a/storage/lib/src/main/java/org/calyxos/backup/storage/api/CheckObserver.kt
 +++ b/storage/lib/src/main/java/app/grapheneos/backup/storage/api/CheckObserver.kt
 @@ -3,7 +3,7 @@
@@ -3475,7 +3481,7 @@ diff --git a/storage/lib/src/main/java/org/calyxos/backup/storage/api/CheckResul
 similarity index 94%
 rename from storage/lib/src/main/java/org/calyxos/backup/storage/api/CheckResult.kt
 rename to storage/lib/src/main/java/app/grapheneos/backup/storage/api/CheckResult.kt
-index 4dc13dc..e2b6791 100644
+index 4dc13dc4c18c0cee2d259c26f98a764cacb0231b..e2b6791c32595d3721646eff23a5dc04e1245608 100644
 --- a/storage/lib/src/main/java/org/calyxos/backup/storage/api/CheckResult.kt
 +++ b/storage/lib/src/main/java/app/grapheneos/backup/storage/api/CheckResult.kt
 @@ -3,9 +3,9 @@
@@ -3494,7 +3500,7 @@ diff --git a/storage/lib/src/main/java/org/calyxos/backup/storage/api/RestoreObs
 similarity index 93%
 rename from storage/lib/src/main/java/org/calyxos/backup/storage/api/RestoreObserver.kt
 rename to storage/lib/src/main/java/app/grapheneos/backup/storage/api/RestoreObserver.kt
-index e11afb5..fc26100 100644
+index e11afb57fc4ab2f4e04abcbf33d3be1f949f8360..fc261003c0b3a6f958e56dd9283f79db4e0f89e9 100644
 --- a/storage/lib/src/main/java/org/calyxos/backup/storage/api/RestoreObserver.kt
 +++ b/storage/lib/src/main/java/app/grapheneos/backup/storage/api/RestoreObserver.kt
 @@ -3,7 +3,7 @@
@@ -3510,7 +3516,7 @@ diff --git a/storage/lib/src/main/java/org/calyxos/backup/storage/api/Snapshot.k
 similarity index 88%
 rename from storage/lib/src/main/java/org/calyxos/backup/storage/api/Snapshot.kt
 rename to storage/lib/src/main/java/app/grapheneos/backup/storage/api/Snapshot.kt
-index 8054c36..a63367e 100644
+index 8054c36d660a89bbac514c4a3f3be5bcaf9031bf..a63367e834d58564e70c38f963763009a1b30aaa 100644
 --- a/storage/lib/src/main/java/org/calyxos/backup/storage/api/Snapshot.kt
 +++ b/storage/lib/src/main/java/app/grapheneos/backup/storage/api/Snapshot.kt
 @@ -3,11 +3,11 @@
@@ -3533,7 +3539,7 @@ diff --git a/storage/lib/src/main/java/org/calyxos/backup/storage/api/StorageBac
 similarity index 88%
 rename from storage/lib/src/main/java/org/calyxos/backup/storage/api/StorageBackup.kt
 rename to storage/lib/src/main/java/app/grapheneos/backup/storage/api/StorageBackup.kt
-index 09a15a0..494aa6a 100644
+index 09a15a057102a5507c62ffe3a9d2f8d205ef8f61..494aa6a5dd0ee644413829eead1914dbd1f6af15 100644
 --- a/storage/lib/src/main/java/org/calyxos/backup/storage/api/StorageBackup.kt
 +++ b/storage/lib/src/main/java/app/grapheneos/backup/storage/api/StorageBackup.kt
 @@ -3,7 +3,7 @@
@@ -3598,7 +3604,7 @@ diff --git a/storage/lib/src/main/java/org/calyxos/backup/storage/api/StoragePlu
 similarity index 98%
 rename from storage/lib/src/main/java/org/calyxos/backup/storage/api/StoragePlugin.kt
 rename to storage/lib/src/main/java/app/grapheneos/backup/storage/api/StoragePlugin.kt
-index f3a7c8b..3f0f1a5 100644
+index f3a7c8bcd2062b0ab29c623b9971326fc3c230ee..3f0f1a523840c08223d29fbf58da21e5b2cc0ee2 100644
 --- a/storage/lib/src/main/java/org/calyxos/backup/storage/api/StoragePlugin.kt
 +++ b/storage/lib/src/main/java/app/grapheneos/backup/storage/api/StoragePlugin.kt
 @@ -3,7 +3,7 @@
@@ -3614,7 +3620,7 @@ diff --git a/storage/lib/src/main/java/org/calyxos/backup/storage/backup/Backup.
 similarity index 92%
 rename from storage/lib/src/main/java/org/calyxos/backup/storage/backup/Backup.kt
 rename to storage/lib/src/main/java/app/grapheneos/backup/storage/backup/Backup.kt
-index 381eb3f..d4b7471 100644
+index 381eb3fdf45ff8dcaf50acc0c0bb1ac8013d5a3d..d4b7471f7a57acb6ff3f279acec3717f74bb905f 100644
 --- a/storage/lib/src/main/java/org/calyxos/backup/storage/backup/Backup.kt
 +++ b/storage/lib/src/main/java/app/grapheneos/backup/storage/backup/Backup.kt
 @@ -3,7 +3,7 @@
@@ -3663,7 +3669,7 @@ diff --git a/storage/lib/src/main/java/org/calyxos/backup/storage/backup/BackupJ
 similarity index 98%
 rename from storage/lib/src/main/java/org/calyxos/backup/storage/backup/BackupJobService.kt
 rename to storage/lib/src/main/java/app/grapheneos/backup/storage/backup/BackupJobService.kt
-index 1009677..39310ed 100644
+index 10096771c7acfdd5a47c3f07d5b7c8af1db0e2d1..39310edcc0a1b7547f6b8d8e0770de2ff1204a23 100644
 --- a/storage/lib/src/main/java/org/calyxos/backup/storage/backup/BackupJobService.kt
 +++ b/storage/lib/src/main/java/app/grapheneos/backup/storage/backup/BackupJobService.kt
 @@ -3,7 +3,7 @@
@@ -3679,7 +3685,7 @@ diff --git a/storage/lib/src/main/java/org/calyxos/backup/storage/backup/BackupS
 similarity index 86%
 rename from storage/lib/src/main/java/org/calyxos/backup/storage/backup/BackupService.kt
 rename to storage/lib/src/main/java/app/grapheneos/backup/storage/backup/BackupService.kt
-index 2ea3232..fcc023b 100644
+index 2ea3232cf33afc2b01f5db2d287304358ef31c8a..fcc023bce0c3b4fef71281a4098cd897f6a3d6f0 100644
 --- a/storage/lib/src/main/java/org/calyxos/backup/storage/backup/BackupService.kt
 +++ b/storage/lib/src/main/java/app/grapheneos/backup/storage/backup/BackupService.kt
 @@ -3,7 +3,7 @@
@@ -3712,7 +3718,7 @@ diff --git a/storage/lib/src/main/java/org/calyxos/backup/storage/backup/BackupW
 similarity index 85%
 rename from storage/lib/src/main/java/org/calyxos/backup/storage/backup/BackupWorker.kt
 rename to storage/lib/src/main/java/app/grapheneos/backup/storage/backup/BackupWorker.kt
-index d309bd5..3651071 100644
+index d309bd58befda7eda0a6ad073ad0bb377f761630..3651071fd984ba9d4f71b7140bb1371c598daaf4 100644
 --- a/storage/lib/src/main/java/org/calyxos/backup/storage/backup/BackupWorker.kt
 +++ b/storage/lib/src/main/java/app/grapheneos/backup/storage/backup/BackupWorker.kt
 @@ -3,7 +3,7 @@
@@ -3754,7 +3760,7 @@ diff --git a/storage/lib/src/main/java/org/calyxos/backup/storage/backup/ChunkWr
 similarity index 93%
 rename from storage/lib/src/main/java/org/calyxos/backup/storage/backup/ChunkWriter.kt
 rename to storage/lib/src/main/java/app/grapheneos/backup/storage/backup/ChunkWriter.kt
-index 9e0973d..cc52a72 100644
+index 9e0973d5679515eb04a272e8d93921990bb24eb8..cc52a725d9825127ecc0f9203c99dea3bf849375 100644
 --- a/storage/lib/src/main/java/org/calyxos/backup/storage/backup/ChunkWriter.kt
 +++ b/storage/lib/src/main/java/app/grapheneos/backup/storage/backup/ChunkWriter.kt
 @@ -3,18 +3,18 @@
@@ -3787,7 +3793,7 @@ diff --git a/storage/lib/src/main/java/org/calyxos/backup/storage/backup/Chunker
 similarity index 92%
 rename from storage/lib/src/main/java/org/calyxos/backup/storage/backup/Chunker.kt
 rename to storage/lib/src/main/java/app/grapheneos/backup/storage/backup/Chunker.kt
-index fc26b9e..5417742 100644
+index fc26b9eb4c7f8db289e2bf21e2e6d55386ef6323..5417742d10b94043f66f25cd2812bdf11090f105 100644
 --- a/storage/lib/src/main/java/org/calyxos/backup/storage/backup/Chunker.kt
 +++ b/storage/lib/src/main/java/app/grapheneos/backup/storage/backup/Chunker.kt
 @@ -3,10 +3,10 @@
@@ -3808,7 +3814,7 @@ diff --git a/storage/lib/src/main/java/org/calyxos/backup/storage/backup/ChunksC
 similarity index 88%
 rename from storage/lib/src/main/java/org/calyxos/backup/storage/backup/ChunksCacheRepopulater.kt
 rename to storage/lib/src/main/java/app/grapheneos/backup/storage/backup/ChunksCacheRepopulater.kt
-index df8142d..7915a5a 100644
+index df8142d9368be402744283b6deac874bcd2e9ff4..7915a5a432302647515af4cbbc85e389ecd3b53b 100644
 --- a/storage/lib/src/main/java/org/calyxos/backup/storage/backup/ChunksCacheRepopulater.kt
 +++ b/storage/lib/src/main/java/app/grapheneos/backup/storage/backup/ChunksCacheRepopulater.kt
 @@ -3,18 +3,18 @@
@@ -3844,7 +3850,7 @@ diff --git a/storage/lib/src/main/java/org/calyxos/backup/storage/backup/FileBac
 similarity index 89%
 rename from storage/lib/src/main/java/org/calyxos/backup/storage/backup/FileBackup.kt
 rename to storage/lib/src/main/java/app/grapheneos/backup/storage/backup/FileBackup.kt
-index fac7bb1..c79d23a 100644
+index fac7bb11e28d48a7a6cc5070b497ada15118693c..c79d23ac73eba43a0d7c6973ee10dc3e0d9e4775 100644
 --- a/storage/lib/src/main/java/org/calyxos/backup/storage/backup/FileBackup.kt
 +++ b/storage/lib/src/main/java/app/grapheneos/backup/storage/backup/FileBackup.kt
 @@ -3,18 +3,18 @@
@@ -3879,7 +3885,7 @@ diff --git a/storage/lib/src/main/java/org/calyxos/backup/storage/backup/Notific
 similarity index 91%
 rename from storage/lib/src/main/java/org/calyxos/backup/storage/backup/NotificationBackupObserver.kt
 rename to storage/lib/src/main/java/app/grapheneos/backup/storage/backup/NotificationBackupObserver.kt
-index f23b784..4c30278 100644
+index f23b78476f8094f5bf7640c078510fdd69292626..4c3027861f984959768c42b9063f9a0feef0ae32 100644
 --- a/storage/lib/src/main/java/org/calyxos/backup/storage/backup/NotificationBackupObserver.kt
 +++ b/storage/lib/src/main/java/app/grapheneos/backup/storage/backup/NotificationBackupObserver.kt
 @@ -3,13 +3,13 @@
@@ -3905,7 +3911,7 @@ diff --git a/storage/lib/src/main/java/org/calyxos/backup/storage/backup/SmallFi
 similarity index 92%
 rename from storage/lib/src/main/java/org/calyxos/backup/storage/backup/SmallFileBackup.kt
 rename to storage/lib/src/main/java/app/grapheneos/backup/storage/backup/SmallFileBackup.kt
-index 4c98b71..a621106 100644
+index 4c98b71cb166c1c5f6509da4924598692d74886c..a621106704be2c49dd8eaefa7ed5e7012582bfa4 100644
 --- a/storage/lib/src/main/java/org/calyxos/backup/storage/backup/SmallFileBackup.kt
 +++ b/storage/lib/src/main/java/app/grapheneos/backup/storage/backup/SmallFileBackup.kt
 @@ -3,18 +3,18 @@
@@ -3940,7 +3946,7 @@ diff --git a/storage/lib/src/main/java/org/calyxos/backup/storage/backup/ZipChun
 similarity index 93%
 rename from storage/lib/src/main/java/org/calyxos/backup/storage/backup/ZipChunker.kt
 rename to storage/lib/src/main/java/app/grapheneos/backup/storage/backup/ZipChunker.kt
-index 69c94a4..cd965af 100644
+index 69c94a4d14a65f943785d24600fd03c5eea823ab..cd965af5243dac3f4cbad91138a811eeacb9008b 100644
 --- a/storage/lib/src/main/java/org/calyxos/backup/storage/backup/ZipChunker.kt
 +++ b/storage/lib/src/main/java/app/grapheneos/backup/storage/backup/ZipChunker.kt
 @@ -3,11 +3,11 @@
@@ -3963,7 +3969,7 @@ diff --git a/storage/lib/src/main/java/org/calyxos/backup/storage/check/Checker.
 similarity index 92%
 rename from storage/lib/src/main/java/org/calyxos/backup/storage/check/Checker.kt
 rename to storage/lib/src/main/java/app/grapheneos/backup/storage/check/Checker.kt
-index b053fc4..13d48a9 100644
+index b053fc4215e2ac58b74bd00a75c0853a4de49178..13d48a91f42c43450403340bcaa5765398a8daab 100644
 --- a/storage/lib/src/main/java/org/calyxos/backup/storage/check/Checker.kt
 +++ b/storage/lib/src/main/java/app/grapheneos/backup/storage/check/Checker.kt
 @@ -3,7 +3,7 @@
@@ -4018,7 +4024,7 @@ diff --git a/storage/lib/src/main/java/org/calyxos/backup/storage/check/CheckerW
 similarity index 89%
 rename from storage/lib/src/main/java/org/calyxos/backup/storage/check/CheckerWorker.kt
 rename to storage/lib/src/main/java/app/grapheneos/backup/storage/check/CheckerWorker.kt
-index ebb856c..ed6fbe4 100644
+index ebb856c9abf3380c0409984c5781aeb7f092f2a4..ed6fbe4a62ba2543468b279aa260c1d4c4350539 100644
 --- a/storage/lib/src/main/java/org/calyxos/backup/storage/check/CheckerWorker.kt
 +++ b/storage/lib/src/main/java/app/grapheneos/backup/storage/check/CheckerWorker.kt
 @@ -3,7 +3,7 @@
@@ -4056,7 +4062,7 @@ diff --git a/storage/lib/src/main/java/org/calyxos/backup/storage/check/Notifica
 similarity index 85%
 rename from storage/lib/src/main/java/org/calyxos/backup/storage/check/NotificationCheckObserver.kt
 rename to storage/lib/src/main/java/app/grapheneos/backup/storage/check/NotificationCheckObserver.kt
-index 9bda55c..6f9b084 100644
+index 9bda55ccb45ac21c3541c4c4ad599a59e7ecb130..6f9b084d181f76a63bebdf25517682550e4f38d1 100644
 --- a/storage/lib/src/main/java/org/calyxos/backup/storage/check/NotificationCheckObserver.kt
 +++ b/storage/lib/src/main/java/app/grapheneos/backup/storage/check/NotificationCheckObserver.kt
 @@ -3,11 +3,11 @@
@@ -4078,7 +4084,7 @@ diff --git a/storage/lib/src/main/java/org/calyxos/backup/storage/content/Conten
 similarity index 93%
 rename from storage/lib/src/main/java/org/calyxos/backup/storage/content/ContentFile.kt
 rename to storage/lib/src/main/java/app/grapheneos/backup/storage/content/ContentFile.kt
-index 73347f4..a26bb1a 100644
+index 73347f483a8130c46a60dab794af582747929e70..a26bb1aa3aa6bae4ae77aa183abb73a86368c37f 100644
 --- a/storage/lib/src/main/java/org/calyxos/backup/storage/content/ContentFile.kt
 +++ b/storage/lib/src/main/java/app/grapheneos/backup/storage/content/ContentFile.kt
 @@ -3,16 +3,16 @@
@@ -4108,7 +4114,7 @@ diff --git a/storage/lib/src/main/java/org/calyxos/backup/storage/crypto/ChunkCr
 similarity index 80%
 rename from storage/lib/src/main/java/org/calyxos/backup/storage/crypto/ChunkCrypto.kt
 rename to storage/lib/src/main/java/app/grapheneos/backup/storage/crypto/ChunkCrypto.kt
-index aee1ce9..acd04f2 100644
+index aee1ce9b1b6c4a0d05e3b56067bce8b7cf7448a2..acd04f28f05631ba61f8f83af9bd6d0dcefaef8d 100644
 --- a/storage/lib/src/main/java/org/calyxos/backup/storage/crypto/ChunkCrypto.kt
 +++ b/storage/lib/src/main/java/app/grapheneos/backup/storage/crypto/ChunkCrypto.kt
 @@ -3,12 +3,12 @@
@@ -4133,7 +4139,7 @@ diff --git a/storage/lib/src/main/java/org/calyxos/backup/storage/crypto/StreamC
 similarity index 87%
 rename from storage/lib/src/main/java/org/calyxos/backup/storage/crypto/StreamCrypto.kt
 rename to storage/lib/src/main/java/app/grapheneos/backup/storage/crypto/StreamCrypto.kt
-index 32dd1b3..a03d84d 100644
+index 32dd1b3e5076344d92344b101b4808fd695a87d6..a03d84d69d7c77d8d4328289ae11afd63bf84314 100644
 --- a/storage/lib/src/main/java/org/calyxos/backup/storage/crypto/StreamCrypto.kt
 +++ b/storage/lib/src/main/java/app/grapheneos/backup/storage/crypto/StreamCrypto.kt
 @@ -3,12 +3,12 @@
@@ -4158,7 +4164,7 @@ diff --git a/storage/lib/src/main/java/org/calyxos/backup/storage/db/ChunksCache
 similarity index 97%
 rename from storage/lib/src/main/java/org/calyxos/backup/storage/db/ChunksCache.kt
 rename to storage/lib/src/main/java/app/grapheneos/backup/storage/db/ChunksCache.kt
-index a7c9c42..36ea647 100644
+index a7c9c4206e6e657168178b5dcf060b29c25bcb55..36ea647472047eea3a3cc5697b5d5a6abec232a4 100644
 --- a/storage/lib/src/main/java/org/calyxos/backup/storage/db/ChunksCache.kt
 +++ b/storage/lib/src/main/java/app/grapheneos/backup/storage/db/ChunksCache.kt
 @@ -3,7 +3,7 @@
@@ -4183,7 +4189,7 @@ diff --git a/storage/lib/src/main/java/org/calyxos/backup/storage/db/Db.kt b/sto
 similarity index 97%
 rename from storage/lib/src/main/java/org/calyxos/backup/storage/db/Db.kt
 rename to storage/lib/src/main/java/app/grapheneos/backup/storage/db/Db.kt
-index fb924f5..6ab75f1 100644
+index fb924f5522222e1a843fd66fa8e9772768118500..6ab75f1f82bf5481033abf5496cda9b3e2621e4d 100644
 --- a/storage/lib/src/main/java/org/calyxos/backup/storage/db/Db.kt
 +++ b/storage/lib/src/main/java/app/grapheneos/backup/storage/db/Db.kt
 @@ -3,7 +3,7 @@
@@ -4199,7 +4205,7 @@ diff --git a/storage/lib/src/main/java/org/calyxos/backup/storage/db/FilesCache.
 similarity index 97%
 rename from storage/lib/src/main/java/org/calyxos/backup/storage/db/FilesCache.kt
 rename to storage/lib/src/main/java/app/grapheneos/backup/storage/db/FilesCache.kt
-index 093863a..00fc1af 100644
+index 093863ada8c3cb6bbe030a1a09b61d303bfde1ce..00fc1afe1646d7d1f366e109027c13e38770fa7c 100644
 --- a/storage/lib/src/main/java/org/calyxos/backup/storage/db/FilesCache.kt
 +++ b/storage/lib/src/main/java/app/grapheneos/backup/storage/db/FilesCache.kt
 @@ -3,7 +3,7 @@
@@ -4215,7 +4221,7 @@ diff --git a/storage/lib/src/main/java/org/calyxos/backup/storage/db/UriStore.kt
 similarity index 94%
 rename from storage/lib/src/main/java/org/calyxos/backup/storage/db/UriStore.kt
 rename to storage/lib/src/main/java/app/grapheneos/backup/storage/db/UriStore.kt
-index bd33e9d..ede24c2 100644
+index bd33e9d2f2e760b30b6e18b53d60f5a0a1e2e2f8..ede24c2de4ebf311809b7fe69405af0a9f27aa8b 100644
 --- a/storage/lib/src/main/java/org/calyxos/backup/storage/db/UriStore.kt
 +++ b/storage/lib/src/main/java/app/grapheneos/backup/storage/db/UriStore.kt
 @@ -3,7 +3,7 @@
@@ -4231,7 +4237,7 @@ diff --git a/storage/lib/src/main/java/org/calyxos/backup/storage/prune/Pruner.k
 similarity index 85%
 rename from storage/lib/src/main/java/org/calyxos/backup/storage/prune/Pruner.kt
 rename to storage/lib/src/main/java/app/grapheneos/backup/storage/prune/Pruner.kt
-index a903f86..8d9058d 100644
+index a903f86712b0d3d62de2d6a76114b0001ec2cf55..8d9058d3fa1db1784184b6e8706431c08ab76907 100644
 --- a/storage/lib/src/main/java/org/calyxos/backup/storage/prune/Pruner.kt
 +++ b/storage/lib/src/main/java/app/grapheneos/backup/storage/prune/Pruner.kt
 @@ -3,19 +3,19 @@
@@ -4269,7 +4275,7 @@ diff --git a/storage/lib/src/main/java/org/calyxos/backup/storage/prune/Retentio
 similarity index 93%
 rename from storage/lib/src/main/java/org/calyxos/backup/storage/prune/RetentionManager.kt
 rename to storage/lib/src/main/java/app/grapheneos/backup/storage/prune/RetentionManager.kt
-index 985f300..f366314 100644
+index 985f30012c690005f6f8a82f3954b5447eaa5861..f3663149c70af4391d3f36bc08a430d30df98be4 100644
 --- a/storage/lib/src/main/java/org/calyxos/backup/storage/prune/RetentionManager.kt
 +++ b/storage/lib/src/main/java/app/grapheneos/backup/storage/prune/RetentionManager.kt
 @@ -3,14 +3,14 @@
@@ -4303,7 +4309,7 @@ diff --git a/storage/lib/src/main/java/org/calyxos/backup/storage/restore/Abstra
 similarity index 80%
 rename from storage/lib/src/main/java/org/calyxos/backup/storage/restore/AbstractChunkRestore.kt
 rename to storage/lib/src/main/java/app/grapheneos/backup/storage/restore/AbstractChunkRestore.kt
-index 9234a9f..52aef08 100644
+index 9234a9fc5b3f570c1baebbf8d789eb5e052d54e6..52aef08e84d82f7dc5ad36a7ea807d7a804abafd 100644
 --- a/storage/lib/src/main/java/org/calyxos/backup/storage/restore/AbstractChunkRestore.kt
 +++ b/storage/lib/src/main/java/app/grapheneos/backup/storage/restore/AbstractChunkRestore.kt
 @@ -3,13 +3,13 @@
@@ -4330,7 +4336,7 @@ diff --git a/storage/lib/src/main/java/org/calyxos/backup/storage/restore/FileRe
 similarity index 95%
 rename from storage/lib/src/main/java/org/calyxos/backup/storage/restore/FileRestore.kt
 rename to storage/lib/src/main/java/app/grapheneos/backup/storage/restore/FileRestore.kt
-index 273fa1c..831b54f 100644
+index 273fa1cffbef435b88f94bff0a81f2032acfb1f2..831b54f0e5ad9a48049a1cab6ab5532d0af30775 100644
 --- a/storage/lib/src/main/java/org/calyxos/backup/storage/restore/FileRestore.kt
 +++ b/storage/lib/src/main/java/app/grapheneos/backup/storage/restore/FileRestore.kt
 @@ -3,7 +3,7 @@
@@ -4363,7 +4369,7 @@ diff --git a/storage/lib/src/main/java/org/calyxos/backup/storage/restore/FileSp
 similarity index 95%
 rename from storage/lib/src/main/java/org/calyxos/backup/storage/restore/FileSplitter.kt
 rename to storage/lib/src/main/java/app/grapheneos/backup/storage/restore/FileSplitter.kt
-index a4f97fb..264769c 100644
+index a4f97fb953b356e9dcf965c24b34036ceb8b9359..264769c6967a6317822f07f963a5cbd9c8c4244d 100644
 --- a/storage/lib/src/main/java/org/calyxos/backup/storage/restore/FileSplitter.kt
 +++ b/storage/lib/src/main/java/app/grapheneos/backup/storage/restore/FileSplitter.kt
 @@ -3,12 +3,12 @@
@@ -4388,7 +4394,7 @@ diff --git a/storage/lib/src/main/java/org/calyxos/backup/storage/restore/MultiC
 similarity index 92%
 rename from storage/lib/src/main/java/org/calyxos/backup/storage/restore/MultiChunkRestore.kt
 rename to storage/lib/src/main/java/app/grapheneos/backup/storage/restore/MultiChunkRestore.kt
-index aa622d9..3eca3b6 100644
+index aa622d9bb9ee8d5e694559e69819e1052d8a7eda..3eca3b6e6a4629ca81cb3e2b3c66f9235317714a 100644
 --- a/storage/lib/src/main/java/org/calyxos/backup/storage/restore/MultiChunkRestore.kt
 +++ b/storage/lib/src/main/java/app/grapheneos/backup/storage/restore/MultiChunkRestore.kt
 @@ -3,14 +3,14 @@
@@ -4415,7 +4421,7 @@ diff --git a/storage/lib/src/main/java/org/calyxos/backup/storage/restore/Notifi
 similarity index 88%
 rename from storage/lib/src/main/java/org/calyxos/backup/storage/restore/NotificationRestoreObserver.kt
 rename to storage/lib/src/main/java/app/grapheneos/backup/storage/restore/NotificationRestoreObserver.kt
-index 9af0786..6372661 100644
+index 9af078659cdc0aa6fffd8366d5559d569f34ecdb..6372661e158a01b153c15ba6f3966c58803555c1 100644
 --- a/storage/lib/src/main/java/org/calyxos/backup/storage/restore/NotificationRestoreObserver.kt
 +++ b/storage/lib/src/main/java/app/grapheneos/backup/storage/restore/NotificationRestoreObserver.kt
 @@ -3,13 +3,13 @@
@@ -4440,7 +4446,7 @@ diff --git a/storage/lib/src/main/java/org/calyxos/backup/storage/restore/Restor
 similarity index 89%
 rename from storage/lib/src/main/java/org/calyxos/backup/storage/restore/Restore.kt
 rename to storage/lib/src/main/java/app/grapheneos/backup/storage/restore/Restore.kt
-index dd9b39c..4444c87 100644
+index dd9b39c808ffdf119f5eee48eaa4a5947566db11..4444c8736493ed31dff30faa367752191b06e1a0 100644
 --- a/storage/lib/src/main/java/org/calyxos/backup/storage/restore/Restore.kt
 +++ b/storage/lib/src/main/java/app/grapheneos/backup/storage/restore/Restore.kt
 @@ -3,24 +3,24 @@
@@ -4485,7 +4491,7 @@ diff --git a/storage/lib/src/main/java/org/calyxos/backup/storage/restore/Restor
 similarity index 81%
 rename from storage/lib/src/main/java/org/calyxos/backup/storage/restore/RestoreService.kt
 rename to storage/lib/src/main/java/app/grapheneos/backup/storage/restore/RestoreService.kt
-index 365cf7c..f8ad46f 100644
+index 365cf7c127bc6fce7d803a25e81b7c37039ccbdc..f8ad46f63121dd5d61ee767884a3a9e8cf74ec69 100644
 --- a/storage/lib/src/main/java/org/calyxos/backup/storage/restore/RestoreService.kt
 +++ b/storage/lib/src/main/java/app/grapheneos/backup/storage/restore/RestoreService.kt
 @@ -3,7 +3,7 @@
@@ -4524,7 +4530,7 @@ diff --git a/storage/lib/src/main/java/org/calyxos/backup/storage/restore/Single
 similarity index 83%
 rename from storage/lib/src/main/java/org/calyxos/backup/storage/restore/SingleChunkRestore.kt
 rename to storage/lib/src/main/java/app/grapheneos/backup/storage/restore/SingleChunkRestore.kt
-index f7c7c1c..1bd15cc 100644
+index f7c7c1c4dc3e1562b0d65023944699a189cb5689..1bd15cc01c6a4b97722c0d50d5f469e3fcabb545 100644
 --- a/storage/lib/src/main/java/org/calyxos/backup/storage/restore/SingleChunkRestore.kt
 +++ b/storage/lib/src/main/java/app/grapheneos/backup/storage/restore/SingleChunkRestore.kt
 @@ -3,13 +3,13 @@
@@ -4550,7 +4556,7 @@ diff --git a/storage/lib/src/main/java/org/calyxos/backup/storage/restore/ZipChu
 similarity index 91%
 rename from storage/lib/src/main/java/org/calyxos/backup/storage/restore/ZipChunkRestore.kt
 rename to storage/lib/src/main/java/app/grapheneos/backup/storage/restore/ZipChunkRestore.kt
-index d62ece1..769d645 100644
+index d62ece13dc5ebb14e0638a1660452324951b660b..769d645c343a3a4361ac6673255364bf0c078c8d 100644
 --- a/storage/lib/src/main/java/org/calyxos/backup/storage/restore/ZipChunkRestore.kt
 +++ b/storage/lib/src/main/java/app/grapheneos/backup/storage/restore/ZipChunkRestore.kt
 @@ -3,13 +3,13 @@
@@ -4576,7 +4582,7 @@ diff --git a/storage/lib/src/main/java/org/calyxos/backup/storage/scanner/Docume
 similarity index 92%
 rename from storage/lib/src/main/java/org/calyxos/backup/storage/scanner/DocumentScanner.kt
 rename to storage/lib/src/main/java/app/grapheneos/backup/storage/scanner/DocumentScanner.kt
-index 46d34ad..0c2b2fe 100644
+index 46d34ad2cea355202cab1d11735db2c1fc213699..0c2b2fec243576814a43964f4e697b23a7a35eaa 100644
 --- a/storage/lib/src/main/java/org/calyxos/backup/storage/scanner/DocumentScanner.kt
 +++ b/storage/lib/src/main/java/app/grapheneos/backup/storage/scanner/DocumentScanner.kt
 @@ -3,7 +3,7 @@
@@ -4607,7 +4613,7 @@ diff --git a/storage/lib/src/main/java/org/calyxos/backup/storage/scanner/FileSc
 similarity index 86%
 rename from storage/lib/src/main/java/org/calyxos/backup/storage/scanner/FileScanner.kt
 rename to storage/lib/src/main/java/app/grapheneos/backup/storage/scanner/FileScanner.kt
-index 7bb22bb..3b95290 100644
+index 7bb22bb94f53cceaafb923a3bc184be4763cffa4..3b9529050f3d798c1303eca93644f53c8385ea81 100644
 --- a/storage/lib/src/main/java/org/calyxos/backup/storage/scanner/FileScanner.kt
 +++ b/storage/lib/src/main/java/app/grapheneos/backup/storage/scanner/FileScanner.kt
 @@ -3,19 +3,19 @@
@@ -4642,7 +4648,7 @@ diff --git a/storage/lib/src/main/java/org/calyxos/backup/storage/scanner/MediaS
 similarity index 95%
 rename from storage/lib/src/main/java/org/calyxos/backup/storage/scanner/MediaScanner.kt
 rename to storage/lib/src/main/java/app/grapheneos/backup/storage/scanner/MediaScanner.kt
-index e181b5f..055fc83 100644
+index e181b5f0f82abc92c0fcb52192b5ea92e21d535d..055fc8391bacc5944857e5a3400ffca1acf57efc 100644
 --- a/storage/lib/src/main/java/org/calyxos/backup/storage/scanner/MediaScanner.kt
 +++ b/storage/lib/src/main/java/app/grapheneos/backup/storage/scanner/MediaScanner.kt
 @@ -3,7 +3,7 @@
@@ -4673,7 +4679,7 @@ diff --git a/storage/lib/src/main/java/org/calyxos/backup/storage/ui/Notificatio
 similarity index 98%
 rename from storage/lib/src/main/java/org/calyxos/backup/storage/ui/Notifications.kt
 rename to storage/lib/src/main/java/app/grapheneos/backup/storage/ui/Notifications.kt
-index ef8b286..edb19e3 100644
+index ef8b28606b54319af50b2e5c52fa5b2d8b1a7dc3..edb19e33ce07ec4f59a6bdc0fe4bae7cc9409507 100644
 --- a/storage/lib/src/main/java/org/calyxos/backup/storage/ui/Notifications.kt
 +++ b/storage/lib/src/main/java/app/grapheneos/backup/storage/ui/Notifications.kt
 @@ -3,7 +3,7 @@
@@ -4702,7 +4708,7 @@ diff --git a/storage/lib/src/main/java/org/calyxos/backup/storage/ui/backup/Back
 similarity index 95%
 rename from storage/lib/src/main/java/org/calyxos/backup/storage/ui/backup/BackupContentAdapter.kt
 rename to storage/lib/src/main/java/app/grapheneos/backup/storage/ui/backup/BackupContentAdapter.kt
-index 4f65bbe..d9fcc9d 100644
+index 4f65bbe48e164801486a1e6daa95e6039342f29f..d9fcc9d62eda16747467ca3543488ff24085aa74 100644
 --- a/storage/lib/src/main/java/org/calyxos/backup/storage/ui/backup/BackupContentAdapter.kt
 +++ b/storage/lib/src/main/java/app/grapheneos/backup/storage/ui/backup/BackupContentAdapter.kt
 @@ -3,7 +3,7 @@
@@ -4729,7 +4735,7 @@ diff --git a/storage/lib/src/main/java/org/calyxos/backup/storage/ui/backup/Back
 similarity index 94%
 rename from storage/lib/src/main/java/org/calyxos/backup/storage/ui/backup/BackupContentFragment.kt
 rename to storage/lib/src/main/java/app/grapheneos/backup/storage/ui/backup/BackupContentFragment.kt
-index 081c906..dbf6625 100644
+index 081c9067734e016287b149953001bea8c720c791..dbf66255844c340d2f4c20ee7e9cf833a60a163c 100644
 --- a/storage/lib/src/main/java/org/calyxos/backup/storage/ui/backup/BackupContentFragment.kt
 +++ b/storage/lib/src/main/java/app/grapheneos/backup/storage/ui/backup/BackupContentFragment.kt
 @@ -3,7 +3,7 @@
@@ -4758,7 +4764,7 @@ diff --git a/storage/lib/src/main/java/org/calyxos/backup/storage/ui/backup/Back
 similarity index 75%
 rename from storage/lib/src/main/java/org/calyxos/backup/storage/ui/backup/BackupContentItem.kt
 rename to storage/lib/src/main/java/app/grapheneos/backup/storage/ui/backup/BackupContentItem.kt
-index b2e10c0..594ee33 100644
+index b2e10c023626490a8e121cd987cd989cf88ef531..594ee3300b7920846797ae887d925e316829cfa7 100644
 --- a/storage/lib/src/main/java/org/calyxos/backup/storage/ui/backup/BackupContentItem.kt
 +++ b/storage/lib/src/main/java/app/grapheneos/backup/storage/ui/backup/BackupContentItem.kt
 @@ -3,12 +3,12 @@
@@ -4781,7 +4787,7 @@ diff --git a/storage/lib/src/main/java/org/calyxos/backup/storage/ui/backup/Back
 similarity index 85%
 rename from storage/lib/src/main/java/org/calyxos/backup/storage/ui/backup/BackupContentViewModel.kt
 rename to storage/lib/src/main/java/app/grapheneos/backup/storage/ui/backup/BackupContentViewModel.kt
-index d316860..300cbd2 100644
+index d3168606f198d7c29587ca4a94337b7126db968c..300cbd211c94e9d955997cf3e8fda2801dce141d 100644
 --- a/storage/lib/src/main/java/org/calyxos/backup/storage/ui/backup/BackupContentViewModel.kt
 +++ b/storage/lib/src/main/java/app/grapheneos/backup/storage/ui/backup/BackupContentViewModel.kt
 @@ -3,7 +3,7 @@
@@ -4812,7 +4818,7 @@ diff --git a/storage/lib/src/main/java/org/calyxos/backup/storage/ui/check/Check
 similarity index 81%
 rename from storage/lib/src/main/java/org/calyxos/backup/storage/ui/check/CheckResultActivity.kt
 rename to storage/lib/src/main/java/app/grapheneos/backup/storage/ui/check/CheckResultActivity.kt
-index 26d3dc5..51705b3 100644
+index 26d3dc575dd7d5d3114e73bdf00c7d2390ad8f10..51705b3a4b2619723a10e09d4cb3ba1a07dae1fa 100644
 --- a/storage/lib/src/main/java/org/calyxos/backup/storage/ui/check/CheckResultActivity.kt
 +++ b/storage/lib/src/main/java/app/grapheneos/backup/storage/ui/check/CheckResultActivity.kt
 @@ -3,18 +3,18 @@
@@ -4845,7 +4851,7 @@ diff --git a/storage/lib/src/main/java/org/calyxos/backup/storage/ui/check/Check
 similarity index 93%
 rename from storage/lib/src/main/java/org/calyxos/backup/storage/ui/check/CheckResultFragment.kt
 rename to storage/lib/src/main/java/app/grapheneos/backup/storage/ui/check/CheckResultFragment.kt
-index ddb566a..ddc6574 100644
+index ddb566ad170e007c4613ea25e9330273ab34b351..ddc65741c1eab69e0dd312f3d5ba33f64ee7ebc7 100644
 --- a/storage/lib/src/main/java/org/calyxos/backup/storage/ui/check/CheckResultFragment.kt
 +++ b/storage/lib/src/main/java/app/grapheneos/backup/storage/ui/check/CheckResultFragment.kt
 @@ -3,7 +3,7 @@
@@ -4878,7 +4884,7 @@ diff --git a/storage/lib/src/main/java/org/calyxos/backup/storage/ui/check/Snaps
 similarity index 92%
 rename from storage/lib/src/main/java/org/calyxos/backup/storage/ui/check/SnapshotFilesFragment.kt
 rename to storage/lib/src/main/java/app/grapheneos/backup/storage/ui/check/SnapshotFilesFragment.kt
-index 98612a2..f1298bf 100644
+index 98612a2c4a68b042cdf55f9b05d8edfabe0ee859..f1298bfe0b7c1e7a8bb20061da2e97dfe871e5f3 100644
 --- a/storage/lib/src/main/java/org/calyxos/backup/storage/ui/check/SnapshotFilesFragment.kt
 +++ b/storage/lib/src/main/java/app/grapheneos/backup/storage/ui/check/SnapshotFilesFragment.kt
 @@ -3,7 +3,7 @@
@@ -4909,7 +4915,7 @@ diff --git a/storage/lib/src/main/java/org/calyxos/backup/storage/ui/restore/Fil
 similarity index 95%
 rename from storage/lib/src/main/java/org/calyxos/backup/storage/ui/restore/FileSelectionFragment.kt
 rename to storage/lib/src/main/java/app/grapheneos/backup/storage/ui/restore/FileSelectionFragment.kt
-index 720a345..9968266 100644
+index 720a345f169b7dda60e9f755cfac2847d14a8fd0..9968266ce268acbe9fe5afacb45676739d852b51 100644
 --- a/storage/lib/src/main/java/org/calyxos/backup/storage/ui/restore/FileSelectionFragment.kt
 +++ b/storage/lib/src/main/java/app/grapheneos/backup/storage/ui/restore/FileSelectionFragment.kt
 @@ -3,7 +3,7 @@
@@ -4934,7 +4940,7 @@ diff --git a/storage/lib/src/main/java/org/calyxos/backup/storage/ui/restore/Fil
 similarity index 98%
 rename from storage/lib/src/main/java/org/calyxos/backup/storage/ui/restore/FileSelectionManager.kt
 rename to storage/lib/src/main/java/app/grapheneos/backup/storage/ui/restore/FileSelectionManager.kt
-index 2326292..ee74e7d 100644
+index 2326292775ce36fe04b0baa6e85cf9f19e29f5d5..ee74e7de039557bfa17e9111bcf49ae4d25ec2c2 100644
 --- a/storage/lib/src/main/java/org/calyxos/backup/storage/ui/restore/FileSelectionManager.kt
 +++ b/storage/lib/src/main/java/app/grapheneos/backup/storage/ui/restore/FileSelectionManager.kt
 @@ -3,14 +3,14 @@
@@ -4959,7 +4965,7 @@ diff --git a/storage/lib/src/main/java/org/calyxos/backup/storage/ui/restore/Fil
 similarity index 93%
 rename from storage/lib/src/main/java/org/calyxos/backup/storage/ui/restore/FilesAdapter.kt
 rename to storage/lib/src/main/java/app/grapheneos/backup/storage/ui/restore/FilesAdapter.kt
-index b1ed580..90c977d 100644
+index b1ed58079b1cd708d4a3e3d0eeac2090cf09f550..90c977dd224b7a42a518a88a1ddee68b283fd5fd 100644
 --- a/storage/lib/src/main/java/org/calyxos/backup/storage/ui/restore/FilesAdapter.kt
 +++ b/storage/lib/src/main/java/app/grapheneos/backup/storage/ui/restore/FilesAdapter.kt
 @@ -3,7 +3,7 @@
@@ -4992,7 +4998,7 @@ diff --git a/storage/lib/src/main/java/org/calyxos/backup/storage/ui/restore/Fil
 similarity index 92%
 rename from storage/lib/src/main/java/org/calyxos/backup/storage/ui/restore/FilesItem.kt
 rename to storage/lib/src/main/java/app/grapheneos/backup/storage/ui/restore/FilesItem.kt
-index 64cfa6a..2869a2a 100644
+index 64cfa6ae98178deb5a73d17b6e003836a074ff17..2869a2ac51a09408ac755224c7ec739bac41d51e 100644
 --- a/storage/lib/src/main/java/org/calyxos/backup/storage/ui/restore/FilesItem.kt
 +++ b/storage/lib/src/main/java/app/grapheneos/backup/storage/ui/restore/FilesItem.kt
 @@ -3,9 +3,9 @@
@@ -5011,7 +5017,7 @@ diff --git a/storage/lib/src/main/java/org/calyxos/backup/storage/ui/restore/Sna
 similarity index 93%
 rename from storage/lib/src/main/java/org/calyxos/backup/storage/ui/restore/SnapshotAdapter.kt
 rename to storage/lib/src/main/java/app/grapheneos/backup/storage/ui/restore/SnapshotAdapter.kt
-index 8b2d892..f818143 100644
+index 8b2d8921ff0e2e1b336b63fd22d45694ffa5ce3c..f8181438595f605ec904218281453c9377652622 100644
 --- a/storage/lib/src/main/java/org/calyxos/backup/storage/ui/restore/SnapshotAdapter.kt
 +++ b/storage/lib/src/main/java/app/grapheneos/backup/storage/ui/restore/SnapshotAdapter.kt
 @@ -3,7 +3,7 @@
@@ -5040,7 +5046,7 @@ diff --git a/storage/lib/src/main/java/org/calyxos/backup/storage/ui/restore/Sna
 similarity index 91%
 rename from storage/lib/src/main/java/org/calyxos/backup/storage/ui/restore/SnapshotFragment.kt
 rename to storage/lib/src/main/java/app/grapheneos/backup/storage/ui/restore/SnapshotFragment.kt
-index 4ea1d48..7591dff 100644
+index 4ea1d489091d89cec63d948fd88902ed3de503a9..7591dff325176146b8cdc0072be840a36fb1ad4c 100644
 --- a/storage/lib/src/main/java/org/calyxos/backup/storage/ui/restore/SnapshotFragment.kt
 +++ b/storage/lib/src/main/java/app/grapheneos/backup/storage/ui/restore/SnapshotFragment.kt
 @@ -3,7 +3,7 @@
@@ -5066,7 +5072,7 @@ index 4ea1d48..7591dff 100644
  public interface SnapshotViewModel {
      public val snapshots: LiveData<SnapshotResult>
 diff --git a/storage/lib/src/main/proto/backup_document_file.proto b/storage/lib/src/main/proto/backup_document_file.proto
-index 712362d..49aec1f 100644
+index 712362de3f02d7c8f6d6f067c782d496cf1b6861..49aec1fe6ef14527c655bec58503f9ee12d09f9e 100644
 --- a/storage/lib/src/main/proto/backup_document_file.proto
 +++ b/storage/lib/src/main/proto/backup_document_file.proto
 @@ -1,6 +1,6 @@
@@ -5078,7 +5084,7 @@ index 712362d..49aec1f 100644
  option java_multiple_files = true;
  
 diff --git a/storage/lib/src/main/proto/backup_media_file.proto b/storage/lib/src/main/proto/backup_media_file.proto
-index e947c89..242ff7d 100644
+index e947c891a2cc4da496cc659c09cbf0fbb87ae4ac..242ff7de9c740cef489029e6dfc7968d2b21798b 100644
 --- a/storage/lib/src/main/proto/backup_media_file.proto
 +++ b/storage/lib/src/main/proto/backup_media_file.proto
 @@ -1,6 +1,6 @@
@@ -5090,7 +5096,7 @@ index e947c89..242ff7d 100644
  option java_multiple_files = true;
  
 diff --git a/storage/lib/src/main/proto/backup_snapshot.proto b/storage/lib/src/main/proto/backup_snapshot.proto
-index 30a91d7..4b76b69 100644
+index 30a91d7e8084e8a06b72e888fa9a0a28f0ef6226..4b76b694db8effadc0006de7f43c04b0fd7d83c2 100644
 --- a/storage/lib/src/main/proto/backup_snapshot.proto
 +++ b/storage/lib/src/main/proto/backup_snapshot.proto
 @@ -1,6 +1,6 @@
@@ -5102,7 +5108,7 @@ index 30a91d7..4b76b69 100644
  import "backup_media_file.proto";
  import "backup_document_file.proto";
 diff --git a/storage/lib/src/main/res/layout/activity_check_results.xml b/storage/lib/src/main/res/layout/activity_check_results.xml
-index 724afcf..eb577d6 100644
+index 724afcf80cf8ba4f6dc851561aba668e693330cf..eb577d682c06ee8a130e9111453ebd706474cdfc 100644
 --- a/storage/lib/src/main/res/layout/activity_check_results.xml
 +++ b/storage/lib/src/main/res/layout/activity_check_results.xml
 @@ -4,6 +4,6 @@
@@ -5117,7 +5123,7 @@ diff --git a/storage/lib/src/test/java/org/calyxos/backup/storage/BackupRestoreT
 similarity index 92%
 rename from storage/lib/src/test/java/org/calyxos/backup/storage/BackupRestoreTest.kt
 rename to storage/lib/src/test/java/app/grapheneos/backup/storage/BackupRestoreTest.kt
-index 8cbae95..bc5816d 100644
+index 8cbae95068ad418bd9bfca5bd2310db50b663e8b..bc5816dc3d8442a5ba40e9c8d713ff6042fc509c 100644
 --- a/storage/lib/src/test/java/org/calyxos/backup/storage/BackupRestoreTest.kt
 +++ b/storage/lib/src/test/java/app/grapheneos/backup/storage/BackupRestoreTest.kt
 @@ -3,7 +3,7 @@
@@ -5212,7 +5218,7 @@ diff --git a/storage/lib/src/test/java/org/calyxos/backup/storage/TestUtils.kt b
 similarity index 93%
 rename from storage/lib/src/test/java/org/calyxos/backup/storage/TestUtils.kt
 rename to storage/lib/src/test/java/app/grapheneos/backup/storage/TestUtils.kt
-index 27f3d09..72aba3f 100644
+index 27f3d096849836b628ab3f9586cc131fe29e38b3..72aba3f75a8124b61e2c0024e1f3fc61356b907c 100644
 --- a/storage/lib/src/test/java/org/calyxos/backup/storage/TestUtils.kt
 +++ b/storage/lib/src/test/java/app/grapheneos/backup/storage/TestUtils.kt
 @@ -3,7 +3,7 @@
@@ -5239,7 +5245,7 @@ diff --git a/storage/lib/src/test/java/org/calyxos/backup/storage/backup/BackupT
 similarity index 86%
 rename from storage/lib/src/test/java/org/calyxos/backup/storage/backup/BackupTest.kt
 rename to storage/lib/src/test/java/app/grapheneos/backup/storage/backup/BackupTest.kt
-index be81924..375a3af 100644
+index be81924d2557c0a02bc7e5ed02e4c1fb23f7fa8d..375a3af285a388079bbf9f3c3ee4bc7c1adaee0d 100644
 --- a/storage/lib/src/test/java/org/calyxos/backup/storage/backup/BackupTest.kt
 +++ b/storage/lib/src/test/java/app/grapheneos/backup/storage/backup/BackupTest.kt
 @@ -3,7 +3,7 @@
@@ -5298,7 +5304,7 @@ diff --git a/storage/lib/src/test/java/org/calyxos/backup/storage/backup/ChunkWr
 similarity index 95%
 rename from storage/lib/src/test/java/org/calyxos/backup/storage/backup/ChunkWriterTest.kt
 rename to storage/lib/src/test/java/app/grapheneos/backup/storage/backup/ChunkWriterTest.kt
-index 8ad0cc4..de78f81 100644
+index 8ad0cc4d3d5d2203e40acd95235c7e7d704dd91e..de78f8117e1fdf08f02054729a383861fc791c71 100644
 --- a/storage/lib/src/test/java/org/calyxos/backup/storage/backup/ChunkWriterTest.kt
 +++ b/storage/lib/src/test/java/app/grapheneos/backup/storage/backup/ChunkWriterTest.kt
 @@ -3,7 +3,7 @@
@@ -5343,7 +5349,7 @@ diff --git a/storage/lib/src/test/java/org/calyxos/backup/storage/backup/Chunker
 similarity index 96%
 rename from storage/lib/src/test/java/org/calyxos/backup/storage/backup/ChunkerTest.kt
 rename to storage/lib/src/test/java/app/grapheneos/backup/storage/backup/ChunkerTest.kt
-index 5b96c1b..0c0621d 100644
+index 5b96c1b33d1bcca39902b5a200a5876458131c07..0c0621d051013807a57bf6bd714e8c5da3b91f3b 100644
 --- a/storage/lib/src/test/java/org/calyxos/backup/storage/backup/ChunkerTest.kt
 +++ b/storage/lib/src/test/java/app/grapheneos/backup/storage/backup/ChunkerTest.kt
 @@ -3,10 +3,10 @@
@@ -5364,7 +5370,7 @@ diff --git a/storage/lib/src/test/java/org/calyxos/backup/storage/backup/ChunksC
 similarity index 84%
 rename from storage/lib/src/test/java/org/calyxos/backup/storage/backup/ChunksCacheRepopulaterTest.kt
 rename to storage/lib/src/test/java/app/grapheneos/backup/storage/backup/ChunksCacheRepopulaterTest.kt
-index 989fd0f..abeefb6 100644
+index 989fd0fdc4596d868b7a3ff95d70c0920a4c91d6..abeefb637fb12642525a7dff781436eaa2e4aa11 100644
 --- a/storage/lib/src/test/java/org/calyxos/backup/storage/backup/ChunksCacheRepopulaterTest.kt
 +++ b/storage/lib/src/test/java/app/grapheneos/backup/storage/backup/ChunksCacheRepopulaterTest.kt
 @@ -3,7 +3,7 @@
@@ -5416,7 +5422,7 @@ diff --git a/storage/lib/src/test/java/org/calyxos/backup/storage/backup/SmallFi
 similarity index 85%
 rename from storage/lib/src/test/java/org/calyxos/backup/storage/backup/SmallFileBackupIntegrationTest.kt
 rename to storage/lib/src/test/java/app/grapheneos/backup/storage/backup/SmallFileBackupIntegrationTest.kt
-index 3fa48c6..7d497d5 100644
+index 3fa48c6e98a15f031c981845940866d17348367e..7d497d5f06ea7184e854021078a0116e7c4c82f5 100644
 --- a/storage/lib/src/test/java/org/calyxos/backup/storage/backup/SmallFileBackupIntegrationTest.kt
 +++ b/storage/lib/src/test/java/app/grapheneos/backup/storage/backup/SmallFileBackupIntegrationTest.kt
 @@ -3,7 +3,7 @@
@@ -5465,7 +5471,7 @@ diff --git a/storage/lib/src/test/java/org/calyxos/backup/storage/backup/SmallFi
 similarity index 95%
 rename from storage/lib/src/test/java/org/calyxos/backup/storage/backup/SmallFileBackupTest.kt
 rename to storage/lib/src/test/java/app/grapheneos/backup/storage/backup/SmallFileBackupTest.kt
-index 0e45a24..6493d14 100644
+index 0e45a245d7f3e1853eb820a0cd892eb092eb9056..6493d141cb0d87e9722619e20264558471222321 100644
 --- a/storage/lib/src/test/java/org/calyxos/backup/storage/backup/SmallFileBackupTest.kt
 +++ b/storage/lib/src/test/java/app/grapheneos/backup/storage/backup/SmallFileBackupTest.kt
 @@ -3,7 +3,7 @@
@@ -5506,7 +5512,7 @@ diff --git a/storage/lib/src/test/java/org/calyxos/backup/storage/backup/ZipChun
 similarity index 95%
 rename from storage/lib/src/test/java/org/calyxos/backup/storage/backup/ZipChunkerTest.kt
 rename to storage/lib/src/test/java/app/grapheneos/backup/storage/backup/ZipChunkerTest.kt
-index 1c0d853..afe2875 100644
+index 1c0d853bba601ce8cd70b71761d4385e23634831..afe287534491b1be3f5135f83e2e11f640617166 100644
 --- a/storage/lib/src/test/java/org/calyxos/backup/storage/backup/ZipChunkerTest.kt
 +++ b/storage/lib/src/test/java/app/grapheneos/backup/storage/backup/ZipChunkerTest.kt
 @@ -3,7 +3,7 @@
@@ -5535,7 +5541,7 @@ diff --git a/storage/lib/src/test/java/org/calyxos/backup/storage/prune/PrunerTe
 similarity index 78%
 rename from storage/lib/src/test/java/org/calyxos/backup/storage/prune/PrunerTest.kt
 rename to storage/lib/src/test/java/app/grapheneos/backup/storage/prune/PrunerTest.kt
-index 81cd666..4e3152f 100644
+index 81cd66655a700083122d6b6dc783c15407cc5dbc..4e3152f0c26b6c1982546f6d08d0c9d2879d1463 100644
 --- a/storage/lib/src/test/java/org/calyxos/backup/storage/prune/PrunerTest.kt
 +++ b/storage/lib/src/test/java/app/grapheneos/backup/storage/prune/PrunerTest.kt
 @@ -3,7 +3,7 @@
@@ -5603,7 +5609,7 @@ diff --git a/storage/lib/src/test/java/org/calyxos/backup/storage/prune/Retentio
 similarity index 95%
 rename from storage/lib/src/test/java/org/calyxos/backup/storage/prune/RetentionManagerTest.kt
 rename to storage/lib/src/test/java/app/grapheneos/backup/storage/prune/RetentionManagerTest.kt
-index f1ca548..eee6b4e 100644
+index f1ca5488ecfed7a3ea3ec6e2c27407e5d8d90b75..eee6b4e7858ec13084a83fe65979742103400bce 100644
 --- a/storage/lib/src/test/java/org/calyxos/backup/storage/prune/RetentionManagerTest.kt
 +++ b/storage/lib/src/test/java/app/grapheneos/backup/storage/prune/RetentionManagerTest.kt
 @@ -3,16 +3,16 @@
@@ -5632,7 +5638,7 @@ diff --git a/storage/lib/src/test/java/org/calyxos/backup/storage/restore/FileSp
 similarity index 91%
 rename from storage/lib/src/test/java/org/calyxos/backup/storage/restore/FileSplitterTest.kt
 rename to storage/lib/src/test/java/app/grapheneos/backup/storage/restore/FileSplitterTest.kt
-index 603557a..567e379 100644
+index 603557aaa29d4abfe765867351d2cc8f34c83466..567e379b5136dd707fa1199124e9945ad306760c 100644
 --- a/storage/lib/src/test/java/org/calyxos/backup/storage/restore/FileSplitterTest.kt
 +++ b/storage/lib/src/test/java/app/grapheneos/backup/storage/restore/FileSplitterTest.kt
 @@ -3,13 +3,13 @@

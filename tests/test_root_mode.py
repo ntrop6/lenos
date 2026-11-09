@@ -21,6 +21,7 @@ import sys
 import tempfile
 import unittest
 import zipfile
+import zlib
 from pathlib import Path
 
 from harness import VENDOR
@@ -77,17 +78,33 @@ class TestRootProfiles(unittest.TestCase):
         self.assertEqual(self.data["schema"], 1)
         self.assertEqual(self.data["kmi"], "android15-6.6")
         self.assertEqual(self.data["arch"], "aarch64")
-        self.assertIn("resukisu", self.data["profiles"])
+        self.assertIn("bakasu", self.data["profiles"])
         self.assertIn("kernelsu", self.data["profiles"])
 
     def test_every_asset_uses_a_full_sha256_and_a_real_url(self):
-        blobs = [self.data["patcher"]]
-        for profile in self.data["profiles"].values():
-            blobs.extend(profile[key] for key in ("manager", "lkm", "init"))
-        for blob in blobs:
-            self.assertRegex(blob["sha256"], r"^[0-9a-f]{64}$")
-            self.assertTrue(blob["url"].startswith("https://"))
-            self.assertNotIn("nightly.link", blob["url"])
+        self.assertRegex(self.data["patcher"]["sha256"], r"^[0-9a-f]{64}$")
+        self.assertTrue(self.data["patcher"]["url"].startswith("https://"))
+        self.assertNotIn("nightly.link", self.data["patcher"]["url"])
+        for name, profile in self.data["profiles"].items():
+            manager = profile["manager"]
+            self.assertRegex(manager["sha256"], r"^[0-9a-f]{64}$")
+            self.assertTrue(manager["url"].startswith("https://"), name)
+            self.assertNotIn("nightly.link", manager["url"])
+            for key in ("lkm", "init"):
+                blob = profile[key]
+                self.assertRegex(blob["sha256"], r"^[0-9a-f]{64}$")
+                self.assertRegex(blob["member_sha256"], r"^[0-9a-f]{64}$")
+                embedded = blob.get("embedded")
+                if embedded is not None:
+                    self.assertEqual(embedded["asset"], "manager")
+                    self.assertRegex(embedded["sha256"], r"^[0-9a-f]{64}$")
+                    self.assertIsInstance(embedded["offset"], int)
+                    self.assertGreaterEqual(embedded["offset"], 0)
+                    self.assertEqual(embedded["compression"], "raw-deflate")
+                    self.assertNotIn("url", blob)
+                else:
+                    self.assertTrue(blob["url"].startswith("https://"), name)
+                    self.assertNotIn("nightly.link", blob["url"])
 
     def test_manager_certificates_are_pinned(self):
         for name, profile in self.data["profiles"].items():
@@ -97,15 +114,30 @@ class TestRootProfiles(unittest.TestCase):
             self.assertTrue(manager["cert_size"] > 0, name)
 
     def test_expected_pins_have_not_drifted(self):
-        resukisu = self.data["profiles"]["resukisu"]
+        self.assertNotIn("resukisu", self.data["profiles"])
+        bakasu = self.data["profiles"]["bakasu"]
         self.assertEqual(
-            resukisu["manager"]["sha256"],
-            "78862d9adcca1c1281e0df26680e9cb7d7cb6ebee7cb5994b2ffbde9e0ab377a",
+            bakasu["source_commit"],
+            "239e1e8871b8fcd51a6e5b3002e0ba522fdd99fb",
         )
         self.assertEqual(
-            resukisu["lkm"]["member_sha256"],
-            "8937c94461a3da8d39bb86f968d491fb46a08602bff4132d6ab4ff8acef026cc",
+            bakasu["manager"]["sha256"],
+            "25657bc449439687608fffa04b4b586de90fc405e3dc6217bd997fc71ba0a0a1",
         )
+        self.assertEqual(
+            bakasu["lkm"]["member_sha256"],
+            "4241d4334d22b5824023c848086f803973b8af44f28032572bd1146cd938501d",
+        )
+        self.assertEqual(
+            bakasu["init"]["member_sha256"],
+            "761afc0cac6ad839685493246cb352fa70a51ac2898daad70d1e88bf394b6dde",
+        )
+        self.assertEqual(
+            bakasu["lkm"]["embedded"]["sha256"],
+            "c80b0cb7a5b240ea442a3963f2f0cfabde0b1cd197056772793064766ae9263a",
+        )
+        self.assertEqual(bakasu["lkm"]["embedded"]["offset"], 920170)
+        self.assertEqual(bakasu["init"]["embedded"]["offset"], 2405158)
         kernelsu = self.data["profiles"]["kernelsu"]
         self.assertEqual(
             kernelsu["manager"]["sha256"],
@@ -149,14 +181,14 @@ class TestRootDriver(unittest.TestCase):
         self.assertIn("ROOTLESS", result.stdout)
         self.assertNotIn("manager.apk", result.stdout)
 
-    def test_resukisu_flash_plan_is_mode_aware(self):
+    def test_bakasu_flash_plan_is_mode_aware(self):
         result = self.run_driver(
-            "flash-plan", env={"LENOS_ROOT": "resukisu"}
+            "flash-plan", env={"LENOS_ROOT": "bakasu"}
         )
         self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertIn("ROOT (resukisu)", result.stdout)
-        self.assertIn("lenos-asteroids-resukisu-manager.apk", result.stdout)
-        self.assertIn("extracted-resukisu", result.stdout)
+        self.assertIn("ROOT (bakasu)", result.stdout)
+        self.assertIn("lenos-asteroids-bakasu-manager.apk", result.stdout)
+        self.assertIn("extracted-bakasu", result.stdout)
         self.assertIn('scp "build-host:', result.stdout)
         self.assertNotIn("ROOTLESS", result.stdout)
 
@@ -183,7 +215,7 @@ class TestRootDriver(unittest.TestCase):
         self.assertIn("refusing to print a lock sequence", rootless.stdout)
         self.assertNotIn("fastboot flashing lock", rootless.stdout)
         self.assertNotIn("avb_custom_key", rootless.stdout)
-        for mode in ("resukisu", "kernelsu"):
+        for mode in ("bakasu", "kernelsu"):
             result = self.run_driver("lock-gates", env={"LENOS_ROOT": mode})
             self.assertEqual(result.returncode, 1)
             self.assertIn("will not run", result.stdout)
@@ -457,7 +489,7 @@ class TestRootDriver(unittest.TestCase):
             wizard = root / "fake-wizard.sh"
             wizard.write_text("#!/bin/sh\nexit 0\n", encoding="utf-8")
             wizard.chmod(0o755)
-            state = ws / "lenos-root/resukisu"
+            state = ws / "lenos-root/bakasu"
             state.mkdir(parents=True)
             (state / "init_boot.img").write_bytes(b"state init")
             (state / "manager.apk").write_bytes(b"manager")
@@ -516,7 +548,7 @@ class TestRootDriver(unittest.TestCase):
             result = self.run_driver(
                 "package",
                 env={
-                    "LENOS_ROOT": "resukisu",
+                    "LENOS_ROOT": "bakasu",
                     "LENOS_WORKSPACE": str(ws),
                     "LENOS_SOURCE": str(src),
                     "LENOS_KEYDIR": str(keys),
@@ -537,8 +569,8 @@ class TestRootDriver(unittest.TestCase):
             self.assertIn("check-source", calls)
             self.assertIn("status", calls)
             self.assertIn("verify-image", calls)
-            self.assertTrue((ws / "lenos-asteroids-resukisu.zip").is_file())
-            self.assertTrue((ws / "lenos-asteroids-resukisu-manager.apk").is_file())
+            self.assertTrue((ws / "lenos-asteroids-bakasu.zip").is_file())
+            self.assertTrue((ws / "lenos-asteroids-bakasu-manager.apk").is_file())
 
     def test_root_prepare_never_talks_to_a_device(self):
         body = ROOT_TOOL.read_text(encoding="utf-8")
@@ -594,21 +626,61 @@ class TestRootHelpers(unittest.TestCase):
             )
             self.assertEqual(lenos_root.board_partition_limit(source), 8 * 1024 * 1024)
 
+    def test_embedded_raw_deflate_payload_is_extracted_and_pinned(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            payload = b"\x7fELF" + b"fake BakaSU payload\n"
+            compressor = zlib.compressobj(level=9, wbits=-15)
+            compressed = compressor.compress(payload) + compressor.flush()
+            prefix = b"BakaSU embedded ksud\n"
+            blob = prefix + compressed
+            manager = root / "manager.apk"
+            with zipfile.ZipFile(manager, "w") as archive:
+                archive.writestr("lib/arm64-v8a/libksud.so", blob)
+            digest = hashlib.sha256(payload).hexdigest()
+            asset = {
+                "name": "android15-6.6_kernelsu.ko",
+                "sha256": digest,
+                "member_sha256": digest,
+                "embedded": {
+                    "asset": "manager",
+                    "member": "lib/arm64-v8a/libksud.so",
+                    "sha256": hashlib.sha256(blob).hexdigest(),
+                    "offset": len(prefix),
+                    "compression": "raw-deflate",
+                },
+            }
+            output = root / "kernelsu.ko"
+            lenos_root.extract_embedded_asset(manager, asset, output)
+            self.assertEqual(output.read_bytes(), payload)
+            self.assertEqual(output.stat().st_mode & 0o777, 0o644)
+
+            executable = root / "ksuinit"
+            lenos_root.extract_embedded_asset(
+                manager, asset, executable, executable=True
+            )
+            self.assertEqual(executable.read_bytes(), payload)
+            self.assertEqual(executable.stat().st_mode & 0o777, 0o755)
+
+            asset["member_sha256"] = "0" * 64
+            with self.assertRaises(lenos_root.RootError):
+                lenos_root.extract_embedded_asset(manager, asset, output)
+
     def test_incomplete_root_state_is_rejected(self):
         with tempfile.TemporaryDirectory() as directory:
             state_dir = Path(directory)
             (state_dir / "root-state.json").write_text(
-                '{"schema": 1, "mode": "resukisu"}\n', encoding="utf-8"
+                '{"schema": 1, "mode": "bakasu"}\n', encoding="utf-8"
             )
             with self.assertRaises(lenos_root.RootError):
-                lenos_root.load_state(state_dir, "resukisu")
+                lenos_root.load_state(state_dir, "bakasu")
 
     def test_root_state_rejects_malformed_hashes_and_oversized_images(self):
         with tempfile.TemporaryDirectory() as directory:
             state_dir = Path(directory)
             state = {
                 "schema": 1,
-                "mode": "resukisu",
+                "mode": "bakasu",
                 "kmi": "android15-6.6",
                 "base_ota_sha256": "a" * 64,
                 "patched_init_boot_sha256": "b" * 64,
@@ -625,12 +697,12 @@ class TestRootHelpers(unittest.TestCase):
             state["patched_init_boot_size"] = 3
             state_file.write_text(json.dumps(state), encoding="utf-8")
             with self.assertRaises(lenos_root.RootError):
-                lenos_root.load_state(state_dir, "resukisu")
+                lenos_root.load_state(state_dir, "bakasu")
             state["patched_init_boot_size"] = 1
             state["manager_sha256"] = "not-a-hash"
             state_file.write_text(json.dumps(state), encoding="utf-8")
             with self.assertRaises(lenos_root.RootError):
-                lenos_root.load_state(state_dir, "resukisu")
+                lenos_root.load_state(state_dir, "bakasu")
 
     def test_check_source_binds_state_to_ota_and_init_boot(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -643,7 +715,7 @@ class TestRootHelpers(unittest.TestCase):
             state_dir.mkdir()
             state = {
                 "schema": 1,
-                "mode": "resukisu",
+                "mode": "bakasu",
                 "kmi": "android15-6.6",
                 "base_ota_sha256": hashlib.sha256(base.read_bytes()).hexdigest(),
                 "source_init_boot_sha256": hashlib.sha256(
@@ -722,7 +794,7 @@ class TestRootHelpers(unittest.TestCase):
                 str(ROOT_TOOL),
                 "check-source",
                 "--mode",
-                "resukisu",
+                "bakasu",
                 "--state-dir",
                 str(state_dir),
                 "--base-ota",
@@ -769,7 +841,7 @@ class TestRootHelpers(unittest.TestCase):
             init_hash = hashlib.sha256(b"patched init").hexdigest()
 
             profiles = json.loads(PROFILES.read_text(encoding="utf-8"))
-            profile = profiles["profiles"]["resukisu"]
+            profile = profiles["profiles"]["bakasu"]
             profile["manager"].update(
                 {
                     "sha256": manager_hash,
@@ -777,14 +849,16 @@ class TestRootHelpers(unittest.TestCase):
                     "cert_sha256": cert_hash,
                 }
             )
+            profile["lkm"]["sha256"] = ko_hash
             profile["lkm"]["member_sha256"] = ko_hash
+            profile["init"]["sha256"] = init_hash
             profile["init"]["member_sha256"] = init_hash
             profile_file = root / "profiles.json"
             profile_file.write_text(json.dumps(profiles), encoding="utf-8")
 
             state = {
                 "schema": 1,
-                "mode": "resukisu",
+                "mode": "bakasu",
                 "kmi": profiles["kmi"],
                 "base_ota_sha256": "a" * 64,
                 "patched_init_boot_sha256": hashlib.sha256(
@@ -804,7 +878,7 @@ class TestRootHelpers(unittest.TestCase):
             state_file = state_dir / "root-state.json"
             state_file.write_text(json.dumps(state), encoding="utf-8")
             args = argparse.Namespace(
-                mode="resukisu",
+                mode="bakasu",
                 state_dir=str(state_dir),
                 avbroot="",
                 profiles=str(profile_file),

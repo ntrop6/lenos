@@ -39,7 +39,7 @@ import java.util.Map;
  * etc.).
  *
  * Every privileged write tries the direct Settings/LockPatternUtils path first
- * and falls back to root (ReSukiSU su) on denial. Secrets travel on stdin only.
+ * and falls back to root (BakaSU su) on denial. Secrets travel on stdin only.
  */
 public class MainActivity extends Activity {
     static final String BFU_SETTING = "settings_reboot_after_timeout";
@@ -227,7 +227,7 @@ public class MainActivity extends Activity {
                     return; // programmatic re-sync, not a user change
                 }
                 if (!writeBfu(value)) {
-                    toast("Could not write BFU. Grant ReSukiSU root to this app.");
+                    toast("Could not write BFU. Grant BakaSU root to this app.");
                     refreshBfu();
                     return;
                 }
@@ -471,7 +471,7 @@ public class MainActivity extends Activity {
                 lock = new LockBridge(this);
             } catch (Throwable t) {
                 throw new IllegalStateException(
-                        "Lock APIs blocked. Grant ReSukiSU Superuser to lenOS security, then retry. "
+                        "Lock APIs blocked. Grant BakaSU Superuser to lenOS security, then retry. "
                                 + t.getClass().getSimpleName() + ": " + t.getMessage());
             }
         }
@@ -514,7 +514,7 @@ public class MainActivity extends Activity {
             return "FRP is still active.";
         }
         if (isPrivError(e)) {
-            return "Need ReSukiSU Superuser for \u201clenOS security\u201d, then retry.";
+            return "Need BakaSU Superuser for \u201clenOS security\u201d, then retry.";
         }
         return msg;
     }
@@ -532,7 +532,7 @@ public class MainActivity extends Activity {
 
     private static String rootFail(RootShell.Result r, Exception first) {
         if (r.code == 127) {
-            return "Root not available. In ReSukiSU grant Superuser to \u201clenOS security\u201d, then tap again.";
+            return "Root not available. In BakaSU grant Superuser to \u201clenOS security\u201d, then tap again.";
         }
         String detail = r.err.isEmpty() ? r.out : r.err;
         if (detail == null || detail.isEmpty()) {

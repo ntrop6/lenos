@@ -1,37 +1,40 @@
 diff --git a/core/java/com/android/internal/notification/SystemNotificationChannels.java b/core/java/com/android/internal/notification/SystemNotificationChannels.java
-index 972c2ea4..2d691237 100644
+index 415aaa0243a7af300b7b309d2aa344b422bbf1b1..4f6b780c17995ab67c8a79b36cd7ac0b686c6dd6 100644
 --- a/core/java/com/android/internal/notification/SystemNotificationChannels.java
 +++ b/core/java/com/android/internal/notification/SystemNotificationChannels.java
-@@ -71,6 +71,7 @@ public class SystemNotificationChannels {
-     public static final String ACCESSIBILITY_HEARING_DEVICE = "ACCESSIBILITY_HEARING_DEVICE";
+@@ -73,6 +73,7 @@ public class SystemNotificationChannels {
      public static final String ACCESSIBILITY_SECURITY_POLICY = "ACCESSIBILITY_SECURITY_POLICY";
      public static final String ABUSIVE_BACKGROUND_APPS = "ABUSIVE_BACKGROUND_APPS";
+     public static final String PARENTAL_CONTROLS = "PARENTAL_CONTROLS";
 +    public static final String MISSING_PERMISSION = "MISSING_PERMISSION";
  
      @VisibleForTesting
      static final String OBSOLETE_DO_NOT_DISTURB = "DO_NOT_DISTURB";
-@@ -230,6 +231,13 @@ public class SystemNotificationChannels {
-                 NotificationManager.IMPORTANCE_LOW);
-         channelsList.add(abusiveBackgroundAppsChannel);
- 
+@@ -240,6 +241,12 @@ public class SystemNotificationChannels {
+                             NotificationManager.IMPORTANCE_HIGH);
+             channelsList.add(parentalControlsChannel);
+         }
 +        final NotificationChannel missingPermissionChannel = new NotificationChannel(
 +                MISSING_PERMISSION,
 +                context.getString(R.string.notification_channel_missing_permission),
 +                NotificationManager.IMPORTANCE_HIGH);
 +        missingPermissionChannel.setBlockable(true);
 +        channelsList.add(missingPermissionChannel);
-+
+ 
          nm.createNotificationChannels(channelsList);
  
-         // Delete channels created by previous Android versions that are no longer used.
 diff --git a/core/res/res/values/strings.xml b/core/res/res/values/strings.xml
-index f9abbcd1..12c678ac 100644
+index b5e5c91156678e4b7a5f50a272892683d94e81e7..4aa3a01e1acd6ea71475f06da23f1fd2e72fb213 100644
 --- a/core/res/res/values/strings.xml
 +++ b/core/res/res/values/strings.xml
-@@ -6963,4 +6963,10 @@ ul.</string>
-     <string name="tv_watchdog_notification_channel_name">System Resource Alerts</string>
-     <string name="tv_watchdog_notification_title">Resource Overuse</string>
-     <string name="tv_watchdog_notification_content">"App '<xliff:g id="app_name">%1$s</xliff:g>' is using too many resources."</string>
+@@ -7342,4 +7342,14 @@
+     <string name="do_not_disturb_sync_notification_title">Do not disturb</string>
+     <!-- Notification content for Do not disturb sync [CHAR LIMIT=NONE] -->
+     <string name="do_not_disturb_sync_notification_content">Synced from your nearby device</string>
++    <!-- TvWatchdogService notification related messages -->
++    <string name="tv_watchdog_notification_channel_name">System Resource Alerts</string>
++    <string name="tv_watchdog_notification_title">Resource Overuse</string>
++    <string name="tv_watchdog_notification_content">"App '<xliff:g id="app_name">%1$s</xliff:g>' is using too many resources."</string>
 +
 +    <!-- lenOS (GrapheneOS): notifications about a denied special runtime permission -->
 +    <string name="notification_action_dont_show_again">Don’t show again</string>
@@ -40,7 +43,7 @@ index f9abbcd1..12c678ac 100644
 +    <string name="missing_sensors_permission_message">Tap to ask for permission.</string>
  </resources>
 diff --git a/proto/src/system_messages.proto b/proto/src/system_messages.proto
-index 968325f2..632fff4e 100644
+index 618b0966afeef2c5d9fad761b626a1f7c2aa8f50..bfcc560e4a49ee9e73d1f7f3d1f4a4a1a1a1a1a1 100644
 --- a/proto/src/system_messages.proto
 +++ b/proto/src/system_messages.proto
 @@ -321,3 +321,7 @@ message SystemMessage {
@@ -53,7 +56,7 @@ index 968325f2..632fff4e 100644
      // Legacy IDs existed as stable non-conflicting constants prior to the O release
 diff --git a/services/core/java/com/android/server/ext/IntentReceiver.java b/services/core/java/com/android/server/ext/IntentReceiver.java
 new file mode 100644
-index 00000000..99c6bff3
+index 0000000000000000000000000000000000000000..99c6bff3cbd9eb7c95688c92d666fe3b22444fef
 --- /dev/null
 +++ b/services/core/java/com/android/server/ext/IntentReceiver.java
 @@ -0,0 +1,121 @@
@@ -180,7 +183,7 @@ index 00000000..99c6bff3
 +}
 diff --git a/services/core/java/com/android/server/ext/MissingSpecialRuntimePermissionNotification.java b/services/core/java/com/android/server/ext/MissingSpecialRuntimePermissionNotification.java
 new file mode 100644
-index 00000000..00f73b9f
+index 0000000000000000000000000000000000000000..00f73b9f9b331bfd5ccabed8e1c7bc553efeb612
 --- /dev/null
 +++ b/services/core/java/com/android/server/ext/MissingSpecialRuntimePermissionNotification.java
 @@ -0,0 +1,178 @@
@@ -364,7 +367,7 @@ index 00000000..00f73b9f
 +}
 diff --git a/services/core/java/com/android/server/ext/SseUtils.java b/services/core/java/com/android/server/ext/SseUtils.java
 new file mode 100644
-index 00000000..42754cb0
+index 0000000000000000000000000000000000000000..42754cb0ae96d9d006ae7508fe312447969c4967
 --- /dev/null
 +++ b/services/core/java/com/android/server/ext/SseUtils.java
 @@ -0,0 +1,42 @@
@@ -411,10 +414,10 @@ index 00000000..42754cb0
 +    }
 +}
 diff --git a/services/core/java/com/android/server/pm/PackageManagerNative.java b/services/core/java/com/android/server/pm/PackageManagerNative.java
-index 2252e6fb..d4334be9 100644
+index da0790edaacd89a59e4bd93c9f38d247c4c3d0dc..993980d463dff8397be8cd32998fb86a39a5e5ca 100644
 --- a/services/core/java/com/android/server/pm/PackageManagerNative.java
 +++ b/services/core/java/com/android/server/pm/PackageManagerNative.java
-@@ -251,4 +251,15 @@ final class PackageManagerNative extends IPackageManagerNative.Stub {
+@@ -252,4 +252,15 @@ final class PackageManagerNative extends IPackageManagerNative.Stub {
          return mPm.mInstallerService.getStagingManager().getStagedApexInfos().toArray(
                  new StagedApexInfo[0]);
      }

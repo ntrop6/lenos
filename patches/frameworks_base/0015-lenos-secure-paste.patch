@@ -1,8 +1,8 @@
 diff --git a/services/core/java/com/android/server/clipboard/ClipboardService.java b/services/core/java/com/android/server/clipboard/ClipboardService.java
-index fe037070..5aca854a 100644
+index 19d6c69ceaa189f24408ab0824cd52803a617aa4..2036533069eb16bffe5e39453dc20c9867aa203d 100644
 --- a/services/core/java/com/android/server/clipboard/ClipboardService.java
 +++ b/services/core/java/com/android/server/clipboard/ClipboardService.java
-@@ -62,9 +62,11 @@ import android.content.Context;
+@@ -64,9 +64,11 @@ import android.content.Context;
  import android.content.IClipboard;
  import android.content.IOnPrimaryClipChangedListener;
  import android.content.Intent;
@@ -14,7 +14,7 @@ index fe037070..5aca854a 100644
  import android.graphics.drawable.Drawable;
  import android.hardware.display.DisplayManager;
  import android.net.Uri;
-@@ -682,6 +684,15 @@ public class ClipboardService extends SystemService {
+@@ -690,6 +692,15 @@ public class ClipboardService extends SystemService {
                  return null;
              }
              synchronized (mLock) {
@@ -30,7 +30,7 @@ index fe037070..5aca854a 100644
                  try {
                      addActiveOwnerLocked(intendingUid, intendingDeviceId, pkg);
                  } catch (SecurityException e) {
-@@ -691,7 +702,7 @@ public class ClipboardService extends SystemService {
+@@ -699,7 +710,7 @@ public class ClipboardService extends SystemService {
                      return null;
                  }
  
@@ -39,7 +39,7 @@ index fe037070..5aca854a 100644
                  if (clipboard == null) {
                      return null;
                  }
-@@ -725,9 +736,27 @@ public class ClipboardService extends SystemService {
+@@ -733,9 +744,27 @@ public class ClipboardService extends SystemService {
                  return null;
              }
              synchronized (mLock) {
@@ -68,7 +68,7 @@ index fe037070..5aca854a 100644
              }
          }
  
-@@ -824,8 +853,17 @@ public class ClipboardService extends SystemService {
+@@ -832,8 +861,17 @@ public class ClipboardService extends SystemService {
                  return false;
              }
              synchronized (mLock) {
@@ -86,7 +86,7 @@ index fe037070..5aca854a 100644
                      CharSequence text = clipboard.primaryClip.getItemAt(0).getText();
                      return text != null && text.length() > 0;
                  }
-@@ -1471,6 +1522,39 @@ public class ClipboardService extends SystemService {
+@@ -1478,6 +1516,39 @@ public class ClipboardService extends SystemService {
          return false;
      }
  

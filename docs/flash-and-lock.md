@@ -40,8 +40,8 @@ cat lenos-asteroids-rootless.zip.sha256
 For a root build, use the matching name:
 
 ```bash
-sha256sum lenos-asteroids-resukisu.zip     # or ...-kernelsu.zip
-cat lenos-asteroids-resukisu.zip.sha256
+sha256sum lenos-asteroids-bakasu.zip     # or ...-kernelsu.zip
+cat lenos-asteroids-bakasu.zip.sha256
 ```
 
 The extracted plan must contain a real `android-info.txt` and the correct

@@ -1,47 +1,35 @@
 diff --git a/packages/SystemUI/multivalentTests/src/com/android/systemui/screenshot/ScreenshotSoundControllerTest.kt b/packages/SystemUI/multivalentTests/src/com/android/systemui/screenshot/ScreenshotSoundControllerTest.kt
-index 6dd6995a..47d55d86 100644
+index 01f1ace1ecb10bd47b6404a9136d329cd3948900..935e208feb2ad484b5e3ce31abda08168663076c 100644
 --- a/packages/SystemUI/multivalentTests/src/com/android/systemui/screenshot/ScreenshotSoundControllerTest.kt
 +++ b/packages/SystemUI/multivalentTests/src/com/android/systemui/screenshot/ScreenshotSoundControllerTest.kt
-@@ -18,9 +18,11 @@ package com.android.systemui.screenshot
- 
- import android.media.MediaActionSound
+@@ -20,10 +20,12 @@ import android.media.MediaActionSound
  import android.media.MediaPlayer
+ import android.platform.test.annotations.DisableFlags
+ import android.platform.test.annotations.EnableFlags
 +import android.provider.Settings
  import androidx.test.ext.junit.runners.AndroidJUnit4
  import androidx.test.filters.SmallTest
+ import com.android.systemui.Flags.FLAG_SCREENSHOT_REMOVE_NONFORCED_SOUND
  import com.android.systemui.SysuiTestCase
 +import com.android.systemui.shared.settings.data.repository.FakeSystemSettingsRepository
  import java.lang.IllegalStateException
  import kotlinx.coroutines.ExperimentalCoroutinesApi
  import kotlinx.coroutines.test.TestScope
-@@ -33,7 +35,9 @@ import org.junit.runner.RunWith
- import org.mockito.Mockito.never
- import org.mockito.Mockito.verify
- import org.mockito.kotlin.any
-+import org.mockito.kotlin.doReturn
- import org.mockito.kotlin.mock
-+import org.mockito.kotlin.stub
- import org.mockito.kotlin.whenever
- 
- @SmallTest
-@@ -47,12 +51,14 @@ class ScreenshotSoundControllerTest : SysuiTestCase() {
+@@ -52,11 +54,13 @@ class ScreenshotSoundControllerTest : SysuiTestCase() {
      private val soundPolicy = mock<ScreenshotSoundPolicy>()
      private val bgDispatcher = UnconfinedTestDispatcher()
      private val scope = TestScope(bgDispatcher)
 +    private val fakeSystemSettingsRepo = FakeSystemSettingsRepository()
  
      @Before
--    fun setup() {
-+    fun setup() = runTest {
+     fun setup() = runTest {
          whenever(soundProvider.getScreenshotSound()).thenReturn(mediaPlayer)
          whenever(soundProvider.getForcedShutterSound()).thenReturn(mediaActionSound)
--        whenever(soundPolicy.shouldForceShutterSound()).thenReturn(false) // default
 +        fakeSystemSettingsRepo.setInt(Settings.System.SOUND_EFFECTS_ENABLED, 1)
-+        soundPolicy.stub { onBlocking { shouldForceShutterSound() }.doReturn(false) } // default
+         soundPolicy.stub { onBlocking { shouldForceShutterSound() }.doReturn(false) } // default
      }
  
-     @Test
-@@ -90,6 +96,19 @@ class ScreenshotSoundControllerTest : SysuiTestCase() {
+@@ -110,6 +114,19 @@ class ScreenshotSoundControllerTest : SysuiTestCase() {
              verify(mediaActionSound, never()).play(any())
          }
  
@@ -59,22 +47,24 @@ index 6dd6995a..47d55d86 100644
 +        }
 +
      @Test
+     @DisableFlags(FLAG_SCREENSHOT_REMOVE_NONFORCED_SOUND)
      fun playCameraSound_illegalStateException_doesNotThrow() =
-         scope.runTest {
-@@ -117,9 +136,10 @@ class ScreenshotSoundControllerTest : SysuiTestCase() {
+@@ -139,9 +156,11 @@ class ScreenshotSoundControllerTest : SysuiTestCase() {
          }
  
      @Test
--    fun screenshotSoundForced_usesShutterSound() {
+-    fun screenshotSoundForced_usesShutterSound() = runTest {
+-        soundPolicy.stub { onBlocking { shouldForceShutterSound() }.doReturn(true) }
+-        val controller = createController()
 +    fun screenshotSoundForced_ignoresSoundEffectsSetting() {
-         scope.runTest {
--            whenever(soundPolicy.shouldForceShutterSound()).thenReturn(true)
++        scope.runTest {
 +            fakeSystemSettingsRepo.setInt(Settings.System.SOUND_EFFECTS_ENABLED, 0)
 +            soundPolicy.stub { onBlocking { shouldForceShutterSound() }.doReturn(true) }
-             val controller = createController()
++            val controller = createController()
  
-             controller.playScreenshotSound()
-@@ -131,5 +151,11 @@ class ScreenshotSoundControllerTest : SysuiTestCase() {
+         controller.playScreenshotSound()
+         advanceUntilIdle()
+@@ -151,5 +170,11 @@ class ScreenshotSoundControllerTest : SysuiTestCase() {
      }
  
      private fun createController() =
@@ -87,108 +77,11 @@ index 6dd6995a..47d55d86 100644
 +            bgDispatcher,
 +        )
  }
-diff --git a/packages/SystemUI/multivalentTests/src/com/android/systemui/screenshot/ScreenshotSoundPolicyTest.kt b/packages/SystemUI/multivalentTests/src/com/android/systemui/screenshot/ScreenshotSoundPolicyTest.kt
-index 3f085768..b39d3220 100644
---- a/packages/SystemUI/multivalentTests/src/com/android/systemui/screenshot/ScreenshotSoundPolicyTest.kt
-+++ b/packages/SystemUI/multivalentTests/src/com/android/systemui/screenshot/ScreenshotSoundPolicyTest.kt
-@@ -17,28 +17,32 @@
- package com.android.systemui.screenshot
- 
- import android.hardware.camera2.CameraManager
--import android.platform.test.annotations.DisableFlags
--import android.platform.test.annotations.EnableFlags
- import androidx.test.ext.junit.runners.AndroidJUnit4
- import androidx.test.filters.SmallTest
--import com.android.systemui.Flags
- import com.android.systemui.SysuiTestCase
- import com.google.common.truth.Truth.assertThat
- import java.util.concurrent.Executor
-+import kotlinx.coroutines.ExperimentalCoroutinesApi
-+import kotlinx.coroutines.test.TestScope
-+import kotlinx.coroutines.test.UnconfinedTestDispatcher
-+import kotlinx.coroutines.test.runTest
- import org.junit.Before
- import org.junit.Test
- import org.junit.runner.RunWith
- import org.mockito.kotlin.any
-+import org.mockito.kotlin.doReturn
- import org.mockito.kotlin.mock
--import org.mockito.kotlin.never
--import org.mockito.kotlin.verify
-+import org.mockito.kotlin.stub
- import org.mockito.kotlin.whenever
- 
- @SmallTest
-+@OptIn(ExperimentalCoroutinesApi::class)
- @RunWith(AndroidJUnit4::class)
- class ScreenshotSoundPolicyTest : SysuiTestCase() {
-     private val cameraManager = mock<CameraManager>()
-     private val shutterSoundPolicy = mock<MediaShutterSoundPolicy>()
-+    private val testDispatcher = UnconfinedTestDispatcher()
-+    private val testScope = TestScope(testDispatcher)
- 
-     private lateinit var cameraAvailabilityCallback: CameraManager.AvailabilityCallback
-     private lateinit var screenshotSoundPolicy: ScreenshotSoundPolicy
-@@ -56,22 +60,18 @@ class ScreenshotSoundPolicyTest : SysuiTestCase() {
-                 return@thenAnswer Unit
-             }
-         screenshotSoundPolicy =
--            ScreenshotSoundPolicy(cameraManager, shutterSoundPolicy, context.mainExecutor)
--    }
--
--    @Test
--    @DisableFlags(Flags.FLAG_SCREENSHOT_FORCE_SHUTTER_SOUND)
--    fun flagOff_shouldNotForce() {
--        whenever(shutterSoundPolicy.mustPlayShutterSound()).thenReturn(true)
--        verify(cameraManager, never()).registerAvailabilityCallback(any<Executor>(), any())
--
--        assertThat(screenshotSoundPolicy.shouldForceShutterSound()).isFalse()
-+            ScreenshotSoundPolicy(
-+                cameraManager,
-+                shutterSoundPolicy,
-+                context.mainExecutor,
-+                testDispatcher,
-+                testScope,
-+            )
-     }
- 
-     @Test
--    @EnableFlags(Flags.FLAG_SCREENSHOT_FORCE_SHUTTER_SOUND)
--    fun cameraOff_shouldNotForce() {
--        whenever(shutterSoundPolicy.mustPlayShutterSound()).thenReturn(true)
-+    fun cameraOff_shouldNotForce() = runTest {
-+        shutterSoundPolicy.stub { onBlocking { mustPlayShutterSound() }.doReturn(true) }
-         cameraAvailabilityCallback.onCameraOpened("testCameraId", "testPackageId")
-         cameraAvailabilityCallback.onCameraClosed("testCameraId")
- 
-@@ -79,18 +79,16 @@ class ScreenshotSoundPolicyTest : SysuiTestCase() {
-     }
- 
-     @Test
--    @EnableFlags(Flags.FLAG_SCREENSHOT_FORCE_SHUTTER_SOUND)
--    fun shutterNotForced_shouldNotForce() {
--        whenever(shutterSoundPolicy.mustPlayShutterSound()).thenReturn(false)
-+    fun shutterNotForced_shouldNotForce() = runTest {
-+        shutterSoundPolicy.stub { onBlocking { mustPlayShutterSound() }.doReturn(false) }
-         cameraAvailabilityCallback.onCameraOpened("testCameraId", "testPackageId")
- 
-         assertThat(screenshotSoundPolicy.shouldForceShutterSound()).isFalse()
-     }
- 
-     @Test
--    @EnableFlags(Flags.FLAG_SCREENSHOT_FORCE_SHUTTER_SOUND)
--    fun shutterForcedAndCameraOpen_shouldForce() {
--        whenever(shutterSoundPolicy.mustPlayShutterSound()).thenReturn(true)
-+    fun shutterForcedAndCameraOpen_shouldForce() = runTest {
-+        shutterSoundPolicy.stub { onBlocking { mustPlayShutterSound() }.doReturn(true) }
-         cameraAvailabilityCallback.onCameraOpened("testCameraId", "testPackageId")
- 
-         assertThat(screenshotSoundPolicy.shouldForceShutterSound()).isTrue()
 diff --git a/packages/SystemUI/src/com/android/systemui/screenshot/ScreenshotSoundController.kt b/packages/SystemUI/src/com/android/systemui/screenshot/ScreenshotSoundController.kt
-index 203c544a..42ccf220 100644
+index d39425006979e505ad11e721a3a520cc5f99ed35..faa1650890a64aefded39137fc1e408e9cbf063d 100644
 --- a/packages/SystemUI/src/com/android/systemui/screenshot/ScreenshotSoundController.kt
 +++ b/packages/SystemUI/src/com/android/systemui/screenshot/ScreenshotSoundController.kt
-@@ -57,6 +57,7 @@ class ScreenshotSoundControllerImpl
+@@ -58,6 +58,7 @@ class ScreenshotSoundControllerImpl
  constructor(
      private val soundProvider: ScreenshotSoundProvider,
      private val soundPolicy: ScreenshotSoundPolicy,
@@ -196,7 +89,7 @@ index 203c544a..42ccf220 100644
      @Application private val coroutineScope: CoroutineScope,
      @Background private val bgDispatcher: CoroutineDispatcher,
  ) : ScreenshotSoundController {
-@@ -82,6 +83,11 @@ constructor(
+@@ -87,6 +88,11 @@ constructor(
                  if (soundPolicy.shouldForceShutterSound()) {
                      forcedShutterSound.await()?.play(MediaActionSound.SHUTTER_CLICK)
                  } else {
@@ -208,60 +101,3 @@ index 203c544a..42ccf220 100644
                      player.await()?.start()
                  }
              } catch (e: IllegalStateException) {
-diff --git a/packages/SystemUI/src/com/android/systemui/screenshot/ScreenshotSoundPolicy.kt b/packages/SystemUI/src/com/android/systemui/screenshot/ScreenshotSoundPolicy.kt
-index 668e3c0c..43420379 100644
---- a/packages/SystemUI/src/com/android/systemui/screenshot/ScreenshotSoundPolicy.kt
-+++ b/packages/SystemUI/src/com/android/systemui/screenshot/ScreenshotSoundPolicy.kt
-@@ -18,10 +18,15 @@ package com.android.systemui.screenshot
- 
- import android.hardware.camera2.CameraManager
- import android.media.MediaActionSound
--import com.android.systemui.Flags.screenshotForceShutterSound
-+import com.android.systemui.dagger.qualifiers.Application
-+import com.android.systemui.dagger.qualifiers.Background
- import com.android.systemui.dagger.qualifiers.Main
- import java.util.concurrent.Executor
- import javax.inject.Inject
-+import kotlinx.coroutines.CoroutineDispatcher
-+import kotlinx.coroutines.CoroutineScope
-+import kotlinx.coroutines.launch
-+import kotlinx.coroutines.withContext
- 
- /** Policy class to determine if a shutter sound should be forced when taking a screenshot. */
- open class ScreenshotSoundPolicy
-@@ -30,11 +35,13 @@ constructor(
-     cameraManager: CameraManager,
-     private val shutterPolicy: MediaShutterSoundPolicy,
-     @Main private val mainExecutor: Executor,
-+    @Background private val bgDispatcher: CoroutineDispatcher,
-+    @Application private val applicationScope: CoroutineScope,
- ) {
-     private var cameraOpen: Boolean = false
- 
-     init {
--        if (screenshotForceShutterSound()) {
-+        applicationScope.launch(bgDispatcher) {
-             cameraManager.registerAvailabilityCallback(
-                 mainExecutor,
-                 object : CameraManager.AvailabilityCallback() {
-@@ -50,13 +57,15 @@ constructor(
-         }
-     }
- 
--    fun shouldForceShutterSound(): Boolean {
--        return screenshotForceShutterSound() && shutterPolicy.mustPlayShutterSound() && cameraOpen
-+    suspend fun shouldForceShutterSound(): Boolean {
-+        return shutterPolicy.mustPlayShutterSound() && cameraOpen
-     }
- }
- 
--class MediaShutterSoundPolicy @Inject constructor() {
--    fun mustPlayShutterSound(): Boolean {
--        return MediaActionSound.mustPlayShutterSound()
-+class MediaShutterSoundPolicy
-+@Inject
-+constructor(@Background private val bgDispatcher: CoroutineDispatcher) {
-+    suspend fun mustPlayShutterSound(): Boolean {
-+        return withContext(bgDispatcher) { MediaActionSound.mustPlayShutterSound() }
-     }
- }

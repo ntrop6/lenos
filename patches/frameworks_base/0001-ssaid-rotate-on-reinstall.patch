@@ -1,8 +1,8 @@
 diff --git a/packages/SettingsProvider/src/com/android/providers/settings/SettingsProvider.java b/packages/SettingsProvider/src/com/android/providers/settings/SettingsProvider.java
-index 1231f563..93d92c14 100644
+index 8ddd1673ea15f14dc5eeca5f0b1ba23da56d226b..1c1754b29dfd4b8c6bffc71ca5626a86a78ee49e 100644
 --- a/packages/SettingsProvider/src/com/android/providers/settings/SettingsProvider.java
 +++ b/packages/SettingsProvider/src/com/android/providers/settings/SettingsProvider.java
-@@ -207,6 +207,16 @@ public class SettingsProvider extends ContentProvider {
+@@ -211,6 +211,16 @@ public class SettingsProvider extends ContentProvider {
      public static final String TABLE_SSAID = "ssaid";
      public static final String TABLE_CONFIG = "config";
  
@@ -19,7 +19,7 @@ index 1231f563..93d92c14 100644
      // Old tables no longer exist.
      private static final String TABLE_FAVORITES = "favorites";
      private static final String TABLE_OLD_FAVORITES = "old_favorites";
-@@ -1829,9 +1839,49 @@ public class SettingsProvider extends ContentProvider {
+@@ -1879,9 +1889,49 @@ public class SettingsProvider extends ContentProvider {
              return mascaradeSsaidSetting(ssaidSettings, setting);
          }
  
@@ -69,7 +69,7 @@ index 1231f563..93d92c14 100644
      private Setting mascaradeSsaidSetting(SettingsState settingsState, Setting ssaidSetting) {
          // SSAID settings are located in a dedicated table for internal bookkeeping
          // but for the world they reside in the secure table, so adjust the key here.
-@@ -3342,6 +3392,39 @@ public class SettingsProvider extends ContentProvider {
+@@ -3468,6 +3518,42 @@ public class SettingsProvider extends ContentProvider {
          }
  
          public Setting generateSsaidLocked(PackageInfo callingPkg, int userId) {
@@ -83,8 +83,11 @@ index 1231f563..93d92c14 100644
 +            final String uid = Integer.toString(callingPkg.applicationInfo.uid);
 +            // Note that ssaid settings are applicable only for the default device, hence pass
 +            // Context.DEVICE_ID_DEFAULT as the deviceId.
-+            final SettingsState ssaidSettings = getSettingsLocked(SETTINGS_TYPE_SSAID, userId,
-+                    Context.DEVICE_ID_DEFAULT);
++            final long ssaidKey = makeKey(SETTINGS_TYPE_SSAID, userId, Context.DEVICE_ID_DEFAULT);
++            final SettingsState ssaidSettings = getOrCreateSettingsStateLocked(ssaidKey);
++            if (ssaidSettings == null) {
++                throw new IllegalStateException("Ssaid settings not accessible");
++            }
 +            final boolean success = ssaidSettings.insertSettingLocked(uid, ssaid, null, true,
 +                callingPkg.packageName);
 +
@@ -109,7 +112,7 @@ index 1231f563..93d92c14 100644
              // Read the user's key from the ssaid table.
              // Note that ssaid settings are applicable only for the default device, hence pass
              // Context.DEVICE_ID_DEFAULT as the deviceId.
-@@ -3389,24 +3472,17 @@ public class SettingsProvider extends ContentProvider {
+@@ -3515,27 +3601,17 @@ public class SettingsProvider extends ContentProvider {
                  m.update(sig);
              }
  
@@ -121,8 +124,11 @@ index 1231f563..93d92c14 100644
 -            final String uid = Integer.toString(callingPkg.applicationInfo.uid);
 -            // Note that ssaid settings are applicable only for the default device, hence pass
 -            // Context.DEVICE_ID_DEFAULT as the deviceId.
--            final SettingsState ssaidSettings = getSettingsLocked(SETTINGS_TYPE_SSAID, userId,
--                    Context.DEVICE_ID_DEFAULT);
+-            final long ssaidKey = makeKey(SETTINGS_TYPE_SSAID, userId, Context.DEVICE_ID_DEFAULT);
+-            final SettingsState ssaidSettings = getOrCreateSettingsStateLocked(ssaidKey);
+-            if (ssaidSettings == null) {
+-                throw new IllegalStateException("Ssaid settings not accessible");
+-            }
 -            final boolean success = ssaidSettings.insertSettingLocked(uid, ssaid, null, true,
 -                callingPkg.packageName);
 -

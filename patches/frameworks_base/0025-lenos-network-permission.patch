@@ -1,16 +1,16 @@
 diff --git a/core/api/current.txt b/core/api/current.txt
-index a1d5522e..2ea491f4 100644
+index 572012ca464337b2c65ed83e68a711811d639e61..a06e66ff817a94502e5c41825abcf1b585379a73 100644
 --- a/core/api/current.txt
 +++ b/core/api/current.txt
-@@ -244,6 +244,7 @@ package android {
+@@ -253,6 +253,7 @@ package android {
      field public static final String NFC = "android.permission.NFC";
      field public static final String NFC_PREFERRED_PAYMENT_INFO = "android.permission.NFC_PREFERRED_PAYMENT_INFO";
      field public static final String NFC_TRANSACTION_EVENT = "android.permission.NFC_TRANSACTION_EVENT";
 +    field public static final String OTHER_SENSORS = "android.permission.OTHER_SENSORS";
+     field @FlaggedApi("com.android.media.mediasession.flags.override_media_session_owner") public static final String OVERRIDE_MEDIA_SESSION_OWNER = "android.permission.OVERRIDE_MEDIA_SESSION_OWNER";
      field public static final String OVERRIDE_WIFI_CONFIG = "android.permission.OVERRIDE_WIFI_CONFIG";
      field public static final String PACKAGE_USAGE_STATS = "android.permission.PACKAGE_USAGE_STATS";
-     field @Deprecated public static final String PERSISTENT_ACTIVITY = "android.permission.PERSISTENT_ACTIVITY";
-@@ -372,7 +373,9 @@ package android {
+@@ -388,7 +389,9 @@ package android {
      field public static final String LOCATION = "android.permission-group.LOCATION";
      field public static final String MICROPHONE = "android.permission-group.MICROPHONE";
      field public static final String NEARBY_DEVICES = "android.permission-group.NEARBY_DEVICES";
@@ -21,11 +21,11 @@ index a1d5522e..2ea491f4 100644
      field public static final String READ_MEDIA_AURAL = "android.permission-group.READ_MEDIA_AURAL";
      field public static final String READ_MEDIA_VISUAL = "android.permission-group.READ_MEDIA_VISUAL";
 diff --git a/core/api/system-current.txt b/core/api/system-current.txt
-index 52034ccd..457537f1 100644
+index 66db41d0e89f14d07be4eccfbae53115a1e2e12a..2596f06043e044ad3ae97c519dd6a8c3b21bd930 100644
 --- a/core/api/system-current.txt
 +++ b/core/api/system-current.txt
-@@ -4737,6 +4737,10 @@ package android.content.pm {
-     field @NonNull public static final android.os.Parcelable.Creator<android.content.pm.ShortcutManager.ShareShortcutInfo> CREATOR;
+@@ -5246,6 +5246,10 @@ package android.content.pm {
+     field @NonNull public static final android.os.Parcelable.Creator<android.content.pm.SignedPackage> CREATOR;
    }
  
 +  public class SpecialRuntimePermAppUtils {
@@ -36,10 +36,10 @@ index 52034ccd..457537f1 100644
      method public int describeContents();
      method public void writeToParcel(android.os.Parcel, int);
 diff --git a/core/java/android/app/ActivityThread.java b/core/java/android/app/ActivityThread.java
-index 6777dbaa..807afe97 100644
+index b7d9f653023e91bc8c9145f0f6bf3014f921503c..268b6b91ed4909d935b91c70ba146f1d68209974 100644
 --- a/core/java/android/app/ActivityThread.java
 +++ b/core/java/android/app/ActivityThread.java
-@@ -101,6 +101,7 @@ import android.content.pm.PermissionInfo;
+@@ -105,6 +105,7 @@ import android.content.pm.PermissionInfo;
  import android.content.pm.ProviderInfo;
  import android.content.pm.ProviderInfoList;
  import android.content.pm.ServiceInfo;
@@ -47,7 +47,7 @@ index 6777dbaa..807afe97 100644
  import android.content.pm.SystemFeaturesCache;
  import android.content.res.AssetManager;
  import android.content.res.CompatibilityInfo;
-@@ -988,6 +989,8 @@ public final class ActivityThread extends ClientTransactionHandler
+@@ -1023,6 +1024,8 @@ public final class ActivityThread extends ClientTransactionHandler
          String processName;
          @UnsupportedAppUsage
          ApplicationInfo appInfo;
@@ -56,7 +56,7 @@ index 6777dbaa..807afe97 100644
          String sdkSandboxClientAppVolumeUuid;
          String sdkSandboxClientAppPackage;
          boolean isSdkInSandbox;
-@@ -1387,6 +1390,7 @@ public final class ActivityThread extends ClientTransactionHandler
+@@ -1423,6 +1426,7 @@ public final class ActivityThread extends ClientTransactionHandler
          @Override
          @RavenwoodThrow(comment = "See ActivityThread_ravenwood for initialization on Ravenwood")
          public final void bindApplication(
@@ -64,7 +64,7 @@ index 6777dbaa..807afe97 100644
                  String processName,
                  ApplicationInfo appInfo,
                  String sdkSandboxClientAppVolumeUuid,
-@@ -1461,6 +1465,9 @@ public final class ActivityThread extends ClientTransactionHandler
+@@ -1511,6 +1515,9 @@ public final class ActivityThread extends ClientTransactionHandler
              AppBindData data = new AppBindData();
              data.processName = processName;
              data.appInfo = appInfo;
@@ -74,7 +74,7 @@ index 6777dbaa..807afe97 100644
              data.sdkSandboxClientAppVolumeUuid = sdkSandboxClientAppVolumeUuid;
              data.sdkSandboxClientAppPackage = sdkSandboxClientAppPackage;
              data.isSdkInSandbox = isSdkInSandbox;
-@@ -7813,6 +7820,21 @@ public final class ActivityThread extends ClientTransactionHandler
+@@ -7972,6 +7979,21 @@ public final class ActivityThread extends ClientTransactionHandler
      @UnsupportedAppUsage
      @RavenwoodThrow(comment = "See ActivityThread_ravenwood for initialization on Ravenwood")
      private void handleBindApplication(AppBindData data) {
@@ -98,7 +98,7 @@ index 6777dbaa..807afe97 100644
          // Register the UI Thread as a sensitive thread to the runtime.
 diff --git a/core/java/android/app/AppBindArgs.java b/core/java/android/app/AppBindArgs.java
 new file mode 100644
-index 00000000..4c89c948
+index 0000000000000000000000000000000000000000..4c89c9485d142d208b455af0c3b7cc0897125300
 --- /dev/null
 +++ b/core/java/android/app/AppBindArgs.java
 @@ -0,0 +1,27 @@
@@ -130,7 +130,7 @@ index 00000000..4c89c948
 +    int FLAGS_ARRAY_LEN = 10;
 +}
 diff --git a/core/java/android/app/DownloadManager.java b/core/java/android/app/DownloadManager.java
-index 45ac2f65..26c525b9 100644
+index 45ac2f652d56a70f6c10a626fe62393a351b3779..26c525b9c7f01b67106c8900dc971b00c1f505b6 100644
 --- a/core/java/android/app/DownloadManager.java
 +++ b/core/java/android/app/DownloadManager.java
 @@ -31,9 +31,11 @@ import android.content.ContentResolver;
@@ -191,7 +191,7 @@ index 45ac2f65..26c525b9 100644
          Request request;
          if (uri != null) {
 diff --git a/core/java/android/app/IApplicationThread.aidl b/core/java/android/app/IApplicationThread.aidl
-index a8c54c75..3bb2075a 100644
+index c3cd2191292caab35940893189304cb20fc7ea5f..d0aeeae3ff3c9474258ec49d188899bc37f86dc4 100644
 --- a/core/java/android/app/IApplicationThread.aidl
 +++ b/core/java/android/app/IApplicationThread.aidl
 @@ -83,7 +83,7 @@ oneway interface IApplicationThread {
@@ -205,7 +205,7 @@ index a8c54c75..3bb2075a 100644
              in ProviderInfoList providerList, in ComponentName testName,
 diff --git a/core/java/android/content/pm/AppPermissionUtils.java b/core/java/android/content/pm/AppPermissionUtils.java
 new file mode 100644
-index 00000000..f53f237a
+index 0000000000000000000000000000000000000000..f53f237ab47431b978074ccd1536a229d9149724
 --- /dev/null
 +++ b/core/java/android/content/pm/AppPermissionUtils.java
 @@ -0,0 +1,33 @@
@@ -244,7 +244,7 @@ index 00000000..f53f237a
 +}
 diff --git a/core/java/android/content/pm/SpecialRuntimePermAppUtils.java b/core/java/android/content/pm/SpecialRuntimePermAppUtils.java
 new file mode 100644
-index 00000000..764de1d3
+index 0000000000000000000000000000000000000000..764de1d3de46865f8c1bbbb7a47afd8ba9f4a938
 --- /dev/null
 +++ b/core/java/android/content/pm/SpecialRuntimePermAppUtils.java
 @@ -0,0 +1,38 @@
@@ -288,7 +288,7 @@ index 00000000..764de1d3
 +}
 diff --git a/core/java/android/content/pm/SrtPermissions.java b/core/java/android/content/pm/SrtPermissions.java
 new file mode 100644
-index 00000000..db21ae9e
+index 0000000000000000000000000000000000000000..db21ae9ea1d0b8a5c4b2ba6eda338d0fdf9b0242
 --- /dev/null
 +++ b/core/java/android/content/pm/SrtPermissions.java
 @@ -0,0 +1,48 @@
@@ -341,7 +341,7 @@ index 00000000..db21ae9e
 +    }
 +}
 diff --git a/core/java/android/permission/PermissionManager.java b/core/java/android/permission/PermissionManager.java
-index e45a740b..3a168964 100644
+index 619955e31826ec63f645ff7591e7c75ae0aa8a78..3eca978aa84f796ef76277120129207cc03a6308 100644
 --- a/core/java/android/permission/PermissionManager.java
 +++ b/core/java/android/permission/PermissionManager.java
 @@ -54,6 +54,7 @@ import android.compat.annotation.EnabledAfter;
@@ -352,7 +352,7 @@ index e45a740b..3a168964 100644
  import android.content.pm.IPackageManager;
  import android.content.pm.PackageManager;
  import android.content.pm.ParceledListSlice;
-@@ -1726,12 +1727,22 @@ public final class PermissionManager {
+@@ -1761,12 +1762,22 @@ public final class PermissionManager {
                      + permission);
              return PackageManager.PERMISSION_DENIED;
          }
@@ -376,7 +376,7 @@ index e45a740b..3a168964 100644
      }
  
      private static int getPermissionRequestStateUncached(String packageName, String permission,
-@@ -1980,12 +1991,24 @@ public final class PermissionManager {
+@@ -2015,12 +2026,24 @@ public final class PermissionManager {
      /* @hide */
      private static int checkPackageNamePermissionUncached(
              String permName, String pkgName, String persistentDeviceId, @UserIdInt int userId) {
@@ -403,11 +403,11 @@ index e45a740b..3a168964 100644
  
      /* @hide */
 diff --git a/core/res/AndroidManifest.xml b/core/res/AndroidManifest.xml
-index 769c3d31..bc05cb2b 100644
+index 721e530887225553f7f5465c02eef8a511df5103..95cd379f403bb089fd16228706fa4c017136e29e 100644
 --- a/core/res/AndroidManifest.xml
 +++ b/core/res/AndroidManifest.xml
-@@ -1944,6 +1944,18 @@
-                 android:protectionLevel="dangerous|instant" />
+@@ -2057,6 +2057,18 @@
+                 android:permissionFlags="allowedInPrivateComputeCore" />
      <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
  
 +    <permission-group android:name="android.permission-group.OTHER_SENSORS"
@@ -425,7 +425,7 @@ index 769c3d31..bc05cb2b 100644
      <!-- ====================================================================== -->
      <!-- REMOVED PERMISSIONS                                                    -->
      <!-- ====================================================================== -->
-@@ -2206,13 +2218,21 @@
+@@ -2330,13 +2342,21 @@
      <!-- ======================================= -->
      <eat-comment />
  
@@ -449,10 +449,10 @@ index 769c3d31..bc05cb2b 100644
      <!-- Allows applications to access information about networks.
           <p>Protection level: normal
 diff --git a/core/res/res/values/strings.xml b/core/res/res/values/strings.xml
-index f9abbcd1..46cd8be8 100644
+index 6363a988231cf050a85565b55d628b35c281d223..b5e5c91156678e4b7a5f50a272892683d94e81e7 100644
 --- a/core/res/res/values/strings.xml
 +++ b/core/res/res/values/strings.xml
-@@ -1055,6 +1055,16 @@
+@@ -1071,6 +1071,16 @@
      <!-- Description of a category of application permissions, listed so the user can choose whether they want to allow the application to do this. [CHAR LIMIT=NONE]-->
      <string name="permgroupdesc_nearby_devices">discover and connect to nearby devices</string>
  
@@ -469,7 +469,7 @@ index f9abbcd1..46cd8be8 100644
      <!-- Title of a category of application permissions, listed so the user can choose whether they want to allow the application to do this. -->
      <string name="permgrouplab_calllog">Call logs</string>
      <!-- Description of a category of application permissions, listed so the user can choose whether they want to allow the application to do this. -->
-@@ -1520,6 +1530,13 @@
+@@ -1536,6 +1546,13 @@
      <!-- Description of the background body sensors permission, listed so the user can decide whether to allow the application to access data from body sensors in the background. [CHAR LIMIT=NONE] -->
      <string name="permdesc_bodySensors_background" product="default">Allows the app to access body sensor data, such as heart rate, temperature, and blood oxygen percentage, while the app is in the background.</string>
  
@@ -484,18 +484,18 @@ index f9abbcd1..46cd8be8 100644
      <string name="permlab_readCalendar">Read calendar events and details</string>
      <!-- Description of an application permission, listed so the user can choose whether they want to allow the application to do this. -->
 diff --git a/services/core/java/com/android/server/am/ActivityManagerService.java b/services/core/java/com/android/server/am/ActivityManagerService.java
-index 49b2efa1..9a80d302 100644
+index b17a31eda418a4d25b5806b442c5a7d2b63a924a..344187eec60606466dc3b4b4a5470329809fcc91 100644
 --- a/services/core/java/com/android/server/am/ActivityManagerService.java
 +++ b/services/core/java/com/android/server/am/ActivityManagerService.java
-@@ -468,6 +468,7 @@ import com.android.server.contentcapture.ContentCaptureManagerInternal;
- import com.android.server.crashrecovery.CrashRecoveryAdaptor;
+@@ -524,6 +524,7 @@ import com.android.server.compat.PlatformCompat;
+ import com.android.server.contentcapture.ContentCaptureManagerInternal;
  import com.android.server.crashrecovery.CrashRecoveryHelper;
  import com.android.server.criticalevents.CriticalEventLog;
 +import com.android.server.ext.PackageManagerHooks;
  import com.android.server.firewall.IntentFirewall;
  import com.android.server.graphics.fonts.FontManagerInternal;
  import com.android.server.job.JobSchedulerInternal;
-@@ -4831,7 +4832,12 @@ public class ActivityManagerService extends IActivityManager.Stub
+@@ -5448,7 +5449,12 @@ public class ActivityManagerService extends IActivityManager.Stub
                      instrumentationWatcher = instr2.mWatcher;
                      instrumentationUiConnection = instr2.mUiAutomationConnection;
                  }
@@ -509,10 +509,10 @@ index 49b2efa1..9a80d302 100644
                          appInfo,
                          app.sdkSandboxClientAppVolumeUuid,
 diff --git a/services/core/java/com/android/server/am/NativeApplicationThreadWrapper.java b/services/core/java/com/android/server/am/NativeApplicationThreadWrapper.java
-index 1c77e115..d9e0cdec 100644
+index 2bbff4f6943e64fe7dd5c72d597831fd3e9e90d0..a2982ebb5ed873f44d430b6f2a19096bc5281c78 100644
 --- a/services/core/java/com/android/server/am/NativeApplicationThreadWrapper.java
 +++ b/services/core/java/com/android/server/am/NativeApplicationThreadWrapper.java
-@@ -232,6 +232,7 @@ public class NativeApplicationThreadWrapper extends IApplicationThread.Stub {
+@@ -246,6 +246,7 @@ public class NativeApplicationThreadWrapper implements IApplicationThread {
  
      @Override
      public final void bindApplication(
@@ -522,7 +522,7 @@ index 1c77e115..d9e0cdec 100644
              String sdkSandboxClientAppVolumeUuid,
 diff --git a/services/core/java/com/android/server/ext/PackageManagerHooks.java b/services/core/java/com/android/server/ext/PackageManagerHooks.java
 new file mode 100644
-index 00000000..96569120
+index 0000000000000000000000000000000000000000..965691208160b13b296164c97272a16a4e4c0883
 --- /dev/null
 +++ b/services/core/java/com/android/server/ext/PackageManagerHooks.java
 @@ -0,0 +1,78 @@
@@ -605,10 +605,10 @@ index 00000000..96569120
 +    }
 +}
 diff --git a/services/core/java/com/android/server/pm/InstallPackageHelper.java b/services/core/java/com/android/server/pm/InstallPackageHelper.java
-index f3c62ebc..84db8516 100644
+index 415aa862a3bab456e36bb9b9dc02d9ff3288b373..98ce8f896810725435461132c762c74f47e98c45 100644
 --- a/services/core/java/com/android/server/pm/InstallPackageHelper.java
 +++ b/services/core/java/com/android/server/pm/InstallPackageHelper.java
-@@ -761,6 +761,8 @@ final class InstallPackageHelper {
+@@ -815,6 +815,8 @@ final class InstallPackageHelper {
                          permissionParamsBuilder.setAllowlistedRestrictedPermissions(
                                  new ArrayList<>(pkgSetting.getPkg().getRequestedPermissions()));
                      }
@@ -617,7 +617,7 @@ index f3c62ebc..84db8516 100644
                      mPm.mPermissionManager.onPackageInstalled(pkgSetting.getPkg(),
                              Process.INVALID_UID /* previousAppId */,
                              permissionParamsBuilder.build(), userId);
-@@ -2718,16 +2720,24 @@ final class InstallPackageHelper {
+@@ -2847,16 +2849,24 @@ final class InstallPackageHelper {
                      }
                  }
  
@@ -642,7 +642,7 @@ index f3c62ebc..84db8516 100644
                  }
  
                  // TODO(b/169721400): generalize Incremental States and create a Callback object
-@@ -2748,9 +2758,6 @@ final class InstallPackageHelper {
+@@ -2877,9 +2887,6 @@ final class InstallPackageHelper {
  
                  mPm.mSettings.writeKernelMappingLPr(ps);
  
@@ -653,7 +653,7 @@ index f3c62ebc..84db8516 100644
                          & PackageManager.INSTALL_GRANT_ALL_REQUESTED_PERMISSIONS) != 0;
                  if (grantRequestedPermissions) {
 diff --git a/services/core/java/com/android/server/pm/permission/PermissionManagerServiceInternal.java b/services/core/java/com/android/server/pm/permission/PermissionManagerServiceInternal.java
-index bdcc66bf..ba4f84dd 100644
+index bdcc66bf2533be2597520525bc40fb31c15d66fa..ba4f84dda8e8b4ff9ac4edd12bf1505bb2408ed1 100644
 --- a/services/core/java/com/android/server/pm/permission/PermissionManagerServiceInternal.java
 +++ b/services/core/java/com/android/server/pm/permission/PermissionManagerServiceInternal.java
 @@ -25,6 +25,7 @@ import android.content.pm.PackageInstaller.SessionParams;
@@ -739,7 +739,7 @@ index bdcc66bf..ba4f84dd 100644
      }
 diff --git a/services/core/java/com/android/server/pm/permission/SpecialRuntimePermUtils.java b/services/core/java/com/android/server/pm/permission/SpecialRuntimePermUtils.java
 new file mode 100644
-index 00000000..c40ed1b7
+index 0000000000000000000000000000000000000000..c40ed1b7accbad35105c245fd2bc5f22f9294980
 --- /dev/null
 +++ b/services/core/java/com/android/server/pm/permission/SpecialRuntimePermUtils.java
 @@ -0,0 +1,138 @@
@@ -882,10 +882,10 @@ index 00000000..c40ed1b7
 +    private SpecialRuntimePermUtils() {}
 +}
 diff --git a/services/permission/java/com/android/server/permission/access/permission/AppIdPermissionPolicy.kt b/services/permission/java/com/android/server/permission/access/permission/AppIdPermissionPolicy.kt
-index e61cb9d7..482442cf 100644
+index 8ba08f95f56494dffcd7ba7889a8e58d28084a88..82b8ffc9a248688817ec62d1357f3fa7fcaba0d4 100644
 --- a/services/permission/java/com/android/server/permission/access/permission/AppIdPermissionPolicy.kt
 +++ b/services/permission/java/com/android/server/permission/access/permission/AppIdPermissionPolicy.kt
-@@ -45,6 +45,7 @@ import com.android.server.permission.access.util.hasBits
+@@ -49,6 +49,7 @@ import com.android.server.permission.access.util.hasBits
  import com.android.server.permission.access.util.isInternal
  import com.android.server.pm.KnownPackages
  import com.android.server.pm.parsing.PackageInfoUtils
@@ -893,7 +893,7 @@ index e61cb9d7..482442cf 100644
  import com.android.server.pm.pkg.AndroidPackage
  import com.android.server.pm.pkg.PackageState
  import libcore.util.EmptyArray
-@@ -296,6 +297,14 @@ class AppIdPermissionPolicy : SchemePolicy() {
+@@ -311,6 +312,14 @@ class AppIdPermissionPolicy : SchemePolicy() {
              if (oldFlags.hasAnyBit(SYSTEM_OR_POLICY_FIXED_MASK)) {
                  return@forEach
              }
@@ -908,7 +908,7 @@ index e61cb9d7..482442cf 100644
              var newFlags = oldFlags
              val isSystemOrInstalled =
                  packageState.isSystem || packageState.getUserStateOrDefault(userId).isInstalled
-@@ -319,6 +328,22 @@ class AppIdPermissionPolicy : SchemePolicy() {
+@@ -334,6 +343,22 @@ class AppIdPermissionPolicy : SchemePolicy() {
          }
      }
  
@@ -931,7 +931,7 @@ index e61cb9d7..482442cf 100644
      private fun MutateStateScope.adoptPermissions(
          packageState: PackageState,
          changedPermissionNames: MutableIndexedSet<String>,
-@@ -1114,7 +1139,7 @@ class AppIdPermissionPolicy : SchemePolicy() {
+@@ -1191,7 +1216,7 @@ class AppIdPermissionPolicy : SchemePolicy() {
                      packageState ->
                      targetSdkVersion.coerceAtMost(packageState.androidPackage!!.targetSdkVersion)
                  }
@@ -940,7 +940,7 @@ index e61cb9d7..482442cf 100644
                  if (permission.isRuntimeOnly) {
                      // Different from the old implementation, which simply skips a runtime-only
                      // permission, we now only allow holding on to the restriction related flags,
-@@ -1259,6 +1284,13 @@ class AppIdPermissionPolicy : SchemePolicy() {
+@@ -1336,6 +1361,13 @@ class AppIdPermissionPolicy : SchemePolicy() {
                  } else {
                      newFlags andInv PermissionFlags.SOFT_RESTRICTED
                  }
@@ -954,7 +954,7 @@ index e61cb9d7..482442cf 100644
              setPermissionFlags(appId, userId, permissionName, newFlags)
          } else {
              Slog.e(
-@@ -1309,6 +1341,9 @@ class AppIdPermissionPolicy : SchemePolicy() {
+@@ -1386,6 +1418,9 @@ class AppIdPermissionPolicy : SchemePolicy() {
                      }
                      newFlags = newFlags or (sourceFlags and PermissionFlags.MASK_RUNTIME)
                  }
@@ -965,10 +965,10 @@ index e61cb9d7..482442cf 100644
              if (
                  targetSdkVersion >= Build.VERSION_CODES.M &&
 diff --git a/services/permission/java/com/android/server/permission/access/permission/PermissionService.kt b/services/permission/java/com/android/server/permission/access/permission/PermissionService.kt
-index 95cd6277..b6232feb 100644
+index be35a31613f7e148c08aaaf27f84a207f1cf650d..55dbe91a4f04a2bb2c2f2159cbc1bd79e6469a0e 100644
 --- a/services/permission/java/com/android/server/permission/access/permission/PermissionService.kt
 +++ b/services/permission/java/com/android/server/permission/access/permission/PermissionService.kt
-@@ -97,6 +97,8 @@ import com.android.server.pm.permission.LegacyPermissionState
+@@ -103,6 +103,8 @@ import com.android.server.pm.permission.LegacyPermissionState
  import com.android.server.pm.permission.Permission as LegacyPermission2
  import com.android.server.pm.permission.PermissionManagerServiceInterface
  import com.android.server.pm.permission.PermissionManagerServiceInternal
@@ -976,8 +976,8 @@ index 95cd6277..b6232feb 100644
 +import com.android.server.pm.permission.SpecialRuntimePermUtils.isSpecialRuntimePermission
  import com.android.server.pm.pkg.AndroidPackage
  import com.android.server.pm.pkg.PackageState
- import java.io.FileDescriptor
-@@ -1013,7 +1015,8 @@ class PermissionService(private val service: AccessCheckingService) :
+ import com.android.server.privatecompute.PrivateComputeStatsLogUtil
+@@ -1044,7 +1046,8 @@ class PermissionService(private val service: AccessCheckingService) :
                  }
              }
              permission.isRuntime -> {
@@ -987,7 +987,7 @@ index 95cd6277..b6232feb 100644
                      // If a permission review is required for legacy apps we represent
                      // their permissions as always granted
                      return
-@@ -2507,7 +2510,30 @@ class PermissionService(private val service: AccessCheckingService) :
+@@ -2547,7 +2550,30 @@ class PermissionService(private val service: AccessCheckingService) :
                  params.allowlistedRestrictedPermissions,
                  userId,
              )

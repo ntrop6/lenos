@@ -1,6 +1,6 @@
 diff --git a/core/java/android/ext/settings/BoolSetting.java b/core/java/android/ext/settings/BoolSetting.java
 new file mode 100644
-index 00000000..006f404c
+index 0000000000000000000000000000000000000000..006f404c7d5d9d43e501ca255f656fa1d1ea1994
 --- /dev/null
 +++ b/core/java/android/ext/settings/BoolSetting.java
 @@ -0,0 +1,88 @@
@@ -94,7 +94,7 @@ index 00000000..006f404c
 +}
 diff --git a/core/java/android/ext/settings/BoolSysProperty.java b/core/java/android/ext/settings/BoolSysProperty.java
 new file mode 100644
-index 00000000..eb0e41e0
+index 0000000000000000000000000000000000000000..eb0e41e0ad778747349a180c17536e252d2be364
 --- /dev/null
 +++ b/core/java/android/ext/settings/BoolSysProperty.java
 @@ -0,0 +1,48 @@
@@ -148,7 +148,7 @@ index 00000000..eb0e41e0
 +}
 diff --git a/core/java/android/ext/settings/ExtSettings.java b/core/java/android/ext/settings/ExtSettings.java
 new file mode 100644
-index 00000000..20f5653b
+index 0000000000000000000000000000000000000000..20f5653bdc2347ebcfaf48d363faf3825ce4e3dc
 --- /dev/null
 +++ b/core/java/android/ext/settings/ExtSettings.java
 @@ -0,0 +1,141 @@
@@ -295,7 +295,7 @@ index 00000000..20f5653b
 +}
 diff --git a/core/java/android/ext/settings/GnssSettings.java b/core/java/android/ext/settings/GnssSettings.java
 new file mode 100644
-index 00000000..2c751137
+index 0000000000000000000000000000000000000000..2c7511376aea3830886fe6314ac2dbbf7e8f6e36
 --- /dev/null
 +++ b/core/java/android/ext/settings/GnssSettings.java
 @@ -0,0 +1,72 @@
@@ -373,7 +373,7 @@ index 00000000..2c751137
 +}
 diff --git a/core/java/android/ext/settings/IntSetting.java b/core/java/android/ext/settings/IntSetting.java
 new file mode 100644
-index 00000000..b027ba4b
+index 0000000000000000000000000000000000000000..b027ba4b2e5541e0d2ff454e886ab7d9580db279
 --- /dev/null
 +++ b/core/java/android/ext/settings/IntSetting.java
 @@ -0,0 +1,123 @@
@@ -502,7 +502,7 @@ index 00000000..b027ba4b
 +}
 diff --git a/core/java/android/ext/settings/IntSysProperty.java b/core/java/android/ext/settings/IntSysProperty.java
 new file mode 100644
-index 00000000..ce1ccb6b
+index 0000000000000000000000000000000000000000..ce1ccb6b2001fb6dea7f1082d31661e6e9f6249d
 --- /dev/null
 +++ b/core/java/android/ext/settings/IntSysProperty.java
 @@ -0,0 +1,56 @@
@@ -564,7 +564,7 @@ index 00000000..ce1ccb6b
 +}
 diff --git a/core/java/android/ext/settings/Setting.java b/core/java/android/ext/settings/Setting.java
 new file mode 100644
-index 00000000..17c8a121
+index 0000000000000000000000000000000000000000..17c8a12184d4ab90bb9e3b03d1d2bc0a058aad3c
 --- /dev/null
 +++ b/core/java/android/ext/settings/Setting.java
 @@ -0,0 +1,191 @@
@@ -761,7 +761,7 @@ index 00000000..17c8a121
 +}
 diff --git a/core/java/android/ext/settings/StringSetting.java b/core/java/android/ext/settings/StringSetting.java
 new file mode 100644
-index 00000000..3554396d
+index 0000000000000000000000000000000000000000..3554396d4934fcaf8b1e0263ca60d65d9d59717d
 --- /dev/null
 +++ b/core/java/android/ext/settings/StringSetting.java
 @@ -0,0 +1,84 @@
@@ -851,7 +851,7 @@ index 00000000..3554396d
 +}
 diff --git a/core/java/android/ext/settings/StringSysProperty.java b/core/java/android/ext/settings/StringSysProperty.java
 new file mode 100644
-index 00000000..773f4bc2
+index 0000000000000000000000000000000000000000..773f4bc29e2a67618c48020eae721058d8f9ee53
 --- /dev/null
 +++ b/core/java/android/ext/settings/StringSysProperty.java
 @@ -0,0 +1,49 @@
@@ -905,10 +905,10 @@ index 00000000..773f4bc2
 +    }
 +}
 diff --git a/core/java/android/provider/Settings.java b/core/java/android/provider/Settings.java
-index 36e2193c..08628fe7 100644
+index 090c41d92bc77f745be3e42bd9ecbeff34b6450c..c5b10eb8f6c4e80f0e147395215253691f7260d3 100644
 --- a/core/java/android/provider/Settings.java
 +++ b/core/java/android/provider/Settings.java
-@@ -7237,6 +7237,34 @@ public final class Settings {
+@@ -7408,6 +7408,34 @@ public final class Settings {
       * or by calling the "put" methods that this class contains.
       */
      public static final class Secure extends NameValueTable {
@@ -943,7 +943,7 @@ index 36e2193c..08628fe7 100644
          // NOTE: If you add new settings here, be sure to add them to
          // com.android.providers.settings.SettingsProtoDumpUtil#dumpProtoSecureSettingsLocked.
  
-@@ -13902,6 +13930,52 @@ public final class Settings {
+@@ -14336,6 +14364,52 @@ public final class Settings {
       * explicitly modify through the system UI or specialized APIs for those values.
       */
      public static final class Global extends NameValueTable {
@@ -998,7 +998,7 @@ index 36e2193c..08628fe7 100644
  
 diff --git a/core/res/res/values/config_ext.xml b/core/res/res/values/config_ext.xml
 new file mode 100644
-index 00000000..98254be6
+index 0000000000000000000000000000000000000000..98254be6046fa0d68546e7659ec7b8e7cf86034b
 --- /dev/null
 +++ b/core/res/res/values/config_ext.xml
 @@ -0,0 +1,16 @@

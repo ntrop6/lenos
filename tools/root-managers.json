@@ -11,29 +11,39 @@
     "note": "Static x86_64 boot-image patcher. It only rewrites the init_boot ramdisk and injects the selected profile payload."
   },
   "profiles": {
-    "resukisu": {
-      "display_name": "ReSukiSU 4.1.0 (pinned legacy release)",
-      "source_commit": "beaaea0eb895dc41e7b9bf5e3f39e57aa9635bab",
+    "bakasu": {
+      "display_name": "BakaSU 4.2.0-rc3 (A17, embedded LKM)",
+      "source_commit": "239e1e8871b8fcd51a6e5b3002e0ba522fdd99fb",
       "manager": {
-        "name": "ReSukiSU_v4.1.0_35055-arm64-v8a-release.apk",
-        "url": "https://github.com/cctv18/ReSukiSU_CI/releases/download/ReSukiSU_31256803207/ReSukiSU_v4.1.0_35055-arm64-v8a-release.apk",
-        "sha256": "78862d9adcca1c1281e0df26680e9cb7d7cb6ebee7cb5994b2ffbde9e0ab377a",
+        "name": "ReSukiSU_v4.2.0-rc3_35171-arm64-v8a-release.apk",
+        "url": "https://github.com/Baka-SU/BakaSU/releases/download/v4.2.0-rc3/ReSukiSU_v4.2.0-rc3_35171-arm64-v8a-release.apk",
+        "sha256": "25657bc449439687608fffa04b4b586de90fc405e3dc6217bd997fc71ba0a0a1",
         "cert_size": 887,
         "cert_sha256": "d3469712b6214462764a1d8d3e5cbe1d6819a0b629791b9f4101867821f1df64"
       },
       "lkm": {
-        "name": "lkm-all.zip",
-        "url": "https://github.com/cctv18/ReSukiSU_CI/releases/download/ReSukiSU_31256803207/lkm-all.zip",
-        "sha256": "9cf2129821b17d3f56103e16f05f4de39d29bb380ace19d37433a7a160182a2b",
-        "member": "android15-6.6_kernelsu.ko",
-        "member_sha256": "8937c94461a3da8d39bb86f968d491fb46a08602bff4132d6ab4ff8acef026cc"
+        "name": "android15-6.6_kernelsu.ko",
+        "sha256": "4241d4334d22b5824023c848086f803973b8af44f28032572bd1146cd938501d",
+        "member_sha256": "4241d4334d22b5824023c848086f803973b8af44f28032572bd1146cd938501d",
+        "embedded": {
+          "asset": "manager",
+          "member": "lib/arm64-v8a/libksud.so",
+          "sha256": "c80b0cb7a5b240ea442a3963f2f0cfabde0b1cd197056772793064766ae9263a",
+          "offset": 920170,
+          "compression": "raw-deflate"
+        }
       },
       "init": {
-        "name": "ksuinit.zip",
-        "url": "https://github.com/cctv18/ReSukiSU_CI/releases/download/ReSukiSU_31256803207/ksuinit.zip",
-        "sha256": "df3d37e6c7c04763ae353162e5f0c670c3860e4df6162a331586328f82ac5e90",
-        "member": "aarch64-unknown-linux-musl/release/ksuinit",
-        "member_sha256": "4d028821a04c42a9f23f7823d18c1e5b43b258db834d7a3e72208d8031f65509"
+        "name": "ksuinit",
+        "sha256": "761afc0cac6ad839685493246cb352fa70a51ac2898daad70d1e88bf394b6dde",
+        "member_sha256": "761afc0cac6ad839685493246cb352fa70a51ac2898daad70d1e88bf394b6dde",
+        "embedded": {
+          "asset": "manager",
+          "member": "lib/arm64-v8a/libksud.so",
+          "sha256": "c80b0cb7a5b240ea442a3963f2f0cfabde0b1cd197056772793064766ae9263a",
+          "offset": 2405158,
+          "compression": "raw-deflate"
+        }
       }
     },
     "kernelsu": {

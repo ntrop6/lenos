@@ -1,6 +1,6 @@
 diff --git a/services/core/java/com/android/server/policy/keyguard/AutoReboot.java b/services/core/java/com/android/server/policy/keyguard/AutoReboot.java
 new file mode 100644
-index 00000000..7bbff53d
+index 0000000000000000000000000000000000000000..7bbff53d39f516bd06aaabbbd7fdb351abe66f54
 --- /dev/null
 +++ b/services/core/java/com/android/server/policy/keyguard/AutoReboot.java
 @@ -0,0 +1,56 @@
@@ -60,32 +60,38 @@ index 00000000..7bbff53d
 +        Slog.d(TAG, "timeoutSeconds: " + timeoutSeconds);
 +    }
 +}
-diff --git a/services/core/java/com/android/server/policy/keyguard/KeyguardStateMonitor.java b/services/core/java/com/android/server/policy/keyguard/KeyguardStateMonitor.java
-index c0aa8aef..f456884e 100644
---- a/services/core/java/com/android/server/policy/keyguard/KeyguardStateMonitor.java
-+++ b/services/core/java/com/android/server/policy/keyguard/KeyguardStateMonitor.java
-@@ -47,10 +47,12 @@ public class KeyguardStateMonitor extends IKeyguardStateCallback.Stub {
+diff --git a/services/core/java/com/android/server/policy/keyguard/KeyguardServiceDelegate.java b/services/core/java/com/android/server/policy/keyguard/KeyguardServiceDelegate.java
+index 2d25ee154c6dcbd4782123483c84f594c271fc8b..9589f79e933d20c59ed5059f34eecbe4b420353e 100644
+--- a/services/core/java/com/android/server/policy/keyguard/KeyguardServiceDelegate.java
++++ b/services/core/java/com/android/server/policy/keyguard/KeyguardServiceDelegate.java
+@@ -86,6 +86,9 @@ public class KeyguardServiceDelegate {
+     @Nullable
+     private IKeyguardService mKeyguardService;
  
-     private int mCurrentUserId;
- 
++    @NonNull
 +    private final Context mContext;
++
+     @NonNull
      private final LockPatternUtils mLockPatternUtils;
-     private final StateCallback mCallback;
  
-     public KeyguardStateMonitor(Context context, IKeyguardService service, StateCallback callback) {
+@@ -208,6 +211,7 @@ public class KeyguardServiceDelegate {
+     }
+ 
+     public KeyguardServiceDelegate(@NonNull Context context, @NonNull StateCallback callback) {
 +        mContext = context;
-         mLockPatternUtils = new LockPatternUtils(context);
-         mCurrentUserId = ActivityManager.getCurrentUser();
          mCallback = callback;
-@@ -88,6 +90,12 @@ public class KeyguardStateMonitor extends IKeyguardStateCallback.Stub {
+         mLockPatternUtils = new LockPatternUtils(context);
+         mActivityManagerInternal = LocalServices.getService(ActivityManagerInternal.class);
+@@ -216,6 +220,13 @@ public class KeyguardServiceDelegate {
  
-         mIsShowing = showing;
- 
+     public void onShowingStateChanged(boolean showing) {
+         mKeyguardReportedState.showing = showing;
++
 +        // lenOS: drive the GrapheneOS-derived auto-reboot timer owned by init.
 +        // Every keyguard visibility change for the current user is forwarded;
 +        // init arms the timer when the device gets locked and cancels it when
 +        // the device is unlocked.
-+        AutoReboot.onKeyguardShowingStateChanged(mContext, showing, userId);
++        AutoReboot.onKeyguardShowingStateChanged(mContext, showing, mKeyguardState.userId);
 +
          mCallback.onShowingChanged();
      }

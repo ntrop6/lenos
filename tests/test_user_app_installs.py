@@ -12,11 +12,10 @@ The device-management restriction is a normal platform feature, so the port is
 the Settings UI plus a small restriction helper — the framework already
 enforces it in ``PackageInstallerService``/``InstallPackageHelper``.
 
-A16 adaptations are documented in the patch: ``SettingsEnums.PAGE_UNKNOWN``
-instead of GrapheneOS's ``METRICS_CATEGORY_UNKNOWN`` (not defined on A16),
-strings in a new ``strings_lenos_users.xml`` instead of extending the lenOS
-ext-strings file, and the helper trimmed to the install path (GrapheneOS's
-private-space inheritance is a separate feature).
+The port keeps GrapheneOS's ``Instrumentable.METRICS_CATEGORY_UNKNOWN`` (A17
+defines it), puts the strings in a new ``strings_lenos_users.xml`` instead of
+extending the lenOS ext-strings file, and trims the helper to the install path
+(GrapheneOS's private-space inheritance is a separate feature).
 """
 from __future__ import annotations
 
@@ -91,9 +90,13 @@ class TestUserAppInstalls(LenosPatchTest):
             'name="user_app_install_enabled_first_party_sources_desc"',
             'name="user_app_install_disabled_desc"')
 
-    def test_a16_metrics_delta(self):
-        # GrapheneOS's METRICS_CATEGORY_UNKNOWN does not exist on A16.
-        self.assert_contains(self.SCREEN, "return SettingsEnums.PAGE_UNKNOWN;")
+    def test_metrics_category(self):
+        # A17 has Instrumentable.METRICS_CATEGORY_UNKNOWN, so the port uses
+        # GrapheneOS's value instead of an A16 compatibility stand-in.
+        self.assert_contains(
+            self.SCREEN,
+            "return Instrumentable.METRICS_CATEGORY_UNKNOWN;",
+            "Instrumentable.METRICS_CATEGORY_UNKNOWN))")
 
     def test_balanced(self):
         self.assert_balanced(self.SCREEN)

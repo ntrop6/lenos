@@ -1,20 +1,26 @@
 diff --git a/res/values/strings.xml b/res/values/strings.xml
-index ccc591f..1ee16a1 100644
+index b57c340f7e909b2dab9887ea539c9894120963ee..b305230c85c73d0eb3f2ce388da728cb5cf8e5f8 100644
 --- a/res/values/strings.xml
 +++ b/res/values/strings.xml
-@@ -14943,2 +14943,7 @@
+@@ -15382,6 +15382,13 @@
      <string name="safety_center_app_security_search_terms"></string>
+     <!-- Safety Center device unlock subpage summary [CHAR LIMIT=NONE] -->
+     <string name="safety_center_device_unlock_summary"></string>
++
 +    <!-- lenOS experimental global native-debugging block (partial #23) -->
 +    <string name="native_debugging_block_title">Block native debugging</string>
 +    <string name="native_debugging_block_summary">Stop newly started user apps from being traced by same-UID processes.</string>
 +    <string name="native_debugging_block_note">This is a global experimental approximation of GrapheneOS per-app native-debugging control. It clears the kernel dumpable bit for user apps that are not debuggable or profileable. System apps are exempt.</string>
 +    <string name="native_debugging_block_limitations">Changing this setting affects newly started app processes only; reboot or force-stop an app for it to take effect. It is not a substitute for SELinux, verified boot or a non-debuggable build, and it does not add a per-app denial prompt.</string>
++
      <!-- Safety Center account security subpage summary [CHAR LIMIT=NONE] -->
+     <string name="safety_center_account_security_summary"></string>
+     <!-- Safety Center account security source search terms [CHAR LIMIT=NONE] -->
 diff --git a/res/xml/more_security_privacy_settings.xml b/res/xml/more_security_privacy_settings.xml
-index 0068872..a555724 100644
+index 76dcef403667b75dd1a9aed42aec96af5ada9608..887ef0893ba9d8e29a1952f8262b2873541b6b2c 100644
 --- a/res/xml/more_security_privacy_settings.xml
 +++ b/res/xml/more_security_privacy_settings.xml
-@@ -196,4 +196,11 @@
+@@ -244,6 +244,13 @@
              android:targetClass="com.android.settings.Settings$IccLockSettingsActivity" />
  
      </Preference>
@@ -26,9 +32,11 @@ index 0068872..a555724 100644
 +        android:fragment="com.android.settings.security.NativeDebuggingBlockSettings" />
 +
  
+     <Preference
+         android:order="255"
 diff --git a/res/xml/native_debugging_block.xml b/res/xml/native_debugging_block.xml
 new file mode 100644
-index 0000000..6fe8877
+index 0000000000000000000000000000000000000000..6fe8877c667784736a7cba59d80e301306746b9c
 --- /dev/null
 +++ b/res/xml/native_debugging_block.xml
 @@ -0,0 +1,19 @@
@@ -53,7 +61,7 @@ index 0000000..6fe8877
 +</PreferenceScreen>
 diff --git a/src/com/android/settings/security/NativeDebuggingBlockSettings.java b/src/com/android/settings/security/NativeDebuggingBlockSettings.java
 new file mode 100644
-index 0000000..716c96a
+index 0000000000000000000000000000000000000000..716c96a2265cd89a6ddefd83d8c4f0ccfe49dfed
 --- /dev/null
 +++ b/src/com/android/settings/security/NativeDebuggingBlockSettings.java
 @@ -0,0 +1,60 @@

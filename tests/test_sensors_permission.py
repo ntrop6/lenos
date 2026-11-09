@@ -159,7 +159,6 @@ class TestSensorsPermissionNative(LenosPatchTest):
 
     SENSOR = "libs/sensor/Sensor.cpp"
     SERVICE = "services/sensorservice/SensorService.cpp"
-    AIDL = "libs/binder/aidl/android/content/pm/IPackageManagerNative.aidl"
 
     def test_permissionless_sensors_require_other_sensors(self):
         text = self.text(self.SENSOR)
@@ -194,14 +193,23 @@ class TestSensorsPermissionNative(LenosPatchTest):
             'String16("android.permission.OTHER_SENSORS"),',
             "callingUid, opPackageName);")
 
+    def test_syntax(self):
+        self.assert_balanced(self.SERVICE)
+        self.assert_balanced(self.SENSOR)
+
+
+class TestSensorsPermissionAidl(LenosPatchTest):
+    """A17 moved IPackageManagerNative.aidl from frameworks/native to frameworks/base."""
+
+    PROJECT = "frameworks/base"
+    PATCHES = ["0029-lenos-native-permission-aidl.patch"]
+
+    AIDL = "native/android/aidl/android/content/pm/IPackageManagerNative.aidl"
+
     def test_aidl_method(self):
         self.assert_contains(
             self.AIDL,
             "oneway void onDeniedSpecialRuntimePermissionOp(in String permissionName, int uid,")
-
-    def test_syntax(self):
-        self.assert_balanced(self.SERVICE)
-        self.assert_balanced(self.SENSOR)
 
 
 class TestSensorsPermissionUiMapping(LenosPatchTest):

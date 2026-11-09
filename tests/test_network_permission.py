@@ -246,7 +246,8 @@ class TestNetworkPermissionConnectivity(LenosPatchTest):
                       text)
         self.assertIn("// INsdManager#connect() enforces INTERNET permission", text)
         self.assertIn("mService = createStubbedINsdServiceConnector();", text)
-        # The stub must satisfy the A16 connector interface: no A17-only methods.
+        # The stub must satisfy the A17 INsdServiceConnector interface,
+        # including the methods added since A16.
         self.assert_contains(
             self.NSD,
             "static class NsdServiceConnectorStub implements INsdServiceConnector {",
@@ -254,12 +255,11 @@ class TestNetworkPermissionConnectivity(LenosPatchTest):
             "callback.onDiscoverServicesFailed(listenerKey, FAILURE_INTERNAL_ERROR);",
             "callback.onResolveServiceFailed(listenerKey, FAILURE_INTERNAL_ERROR);",
             "callback.onServiceInfoCallbackRegistrationFailed(listenerKey, FAILURE_INTERNAL_ERROR);",
+            "@Override public void registerServiceInfoCallbackWithRequest(int listenerKey,",
+            "@Override public void injectOffloadEngineResponse(NsdServiceInfo serviceInfo,",
+            "@Override public void checkPermissionForService(String serviceName, String serviceType,",
+            "resultReceiver.send(SERVICE_PERMISSION_DENIED, null);",
             "@Override public android.os.IBinder asBinder() { return null; }")
-        self.assert_not_contains(
-            self.NSD,
-            "registerServiceInfoCallbackWithRequest",
-            "injectOffloadEngineResponse",
-            "checkPermissionForService")
 
     def test_java_syntax(self):
         self.assert_java_syntax(self.CM)

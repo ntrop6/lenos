@@ -50,7 +50,7 @@ PRODUCT_COPY_FILES += \
 # SettingsProvider defaults or a documented toggle instead.
 PRODUCT_PRODUCT_PROPERTIES += \
     ro.lenos.version=1.0.0 \
-    ro.lenos.base=lineage-23.2 \
+    ro.lenos.base=lineage-24.0 \
     ro.lenos.dns=dns.quad9.net \
     # Auto-reboot-to-BFU backend: init timer (system/core/0001), armed from
     # the keyguard showing-state in frameworks/base (0003). The timeout lives

@@ -7,6 +7,7 @@ Root is deliberately a post-build transform:
 * the normal LineageOS build stays rootless;
 * this tool extracts init_boot from the already signed base OTA;
 * a pinned x86_64 patcher injects the pinned manager's LKM and ksuinit;
+* BakaSU payloads are read from the signed manager APK's embedded ksud asset;
 * avbroot checks the resulting ramdisk;
 * the caller re-signs the complete OTA with the user's AVB/OTA keys.
 
@@ -27,6 +28,7 @@ import tempfile
 import urllib.error
 import urllib.request
 import zipfile
+import zlib
 from pathlib import Path
 from typing import Any
 
@@ -38,6 +40,8 @@ BOARD_SIZE = re.compile(
     r"^\s*BOARD_INIT_BOOT_IMAGE_PARTITION_SIZE\s*:?=\s*(0x[0-9a-fA-F]+|[0-9]+)\s*$"
 )
 MIN_AVBROOT = (3, 33, 0)
+ROOT_MODES = frozenset({"bakasu", "kernelsu"})
+MAX_EMBEDDED_PAYLOAD = 32 * 1024 * 1024
 
 
 class RootError(RuntimeError):
@@ -92,6 +96,68 @@ def asset_filename(asset: dict[str, Any]) -> str:
     return name
 
 
+def validate_payload_asset(
+    asset: Any, label: str, *, manager: bool = False
+) -> dict[str, Any]:
+    if not isinstance(asset, dict):
+        raise RootError(f"{label} is missing")
+    require_hex(asset.get("sha256"), f"{label}.sha256")
+    if not isinstance(asset.get("name"), str) or not asset["name"]:
+        raise RootError(f"{label} has no name")
+    asset_filename(asset)
+    if manager:
+        url = asset.get("url")
+        if not isinstance(url, str) or not url.startswith("https://"):
+            raise RootError(f"{label} has no HTTPS URL")
+        require_hex(asset.get("cert_sha256"), f"{label}.cert_sha256")
+        cert_size = asset.get("cert_size")
+        if (
+            not isinstance(cert_size, int)
+            or isinstance(cert_size, bool)
+            or cert_size <= 0
+        ):
+            raise RootError(f"{label} has no certificate size")
+        return asset
+
+    require_hex(asset.get("member_sha256"), f"{label}.member_sha256")
+    embedded = asset.get("embedded")
+    if embedded is not None:
+        if not isinstance(embedded, dict):
+            raise RootError(f"{label}.embedded is malformed")
+        if embedded.get("asset") != "manager":
+            raise RootError(f"{label}.embedded must come from the manager")
+        member = embedded.get("member")
+        if (
+            not isinstance(member, str)
+            or not member
+            or Path(member).is_absolute()
+            or ".." in Path(member).parts
+        ):
+            raise RootError(f"{label}.embedded.member is missing or unsafe")
+        require_hex(embedded.get("sha256"), f"{label}.embedded.sha256")
+        offset = embedded.get("offset")
+        if (
+            not isinstance(offset, int)
+            or isinstance(offset, bool)
+            or offset < 0
+        ):
+            raise RootError(f"{label}.embedded.offset is invalid")
+        if embedded.get("compression") not in ("raw-deflate", "deflate"):
+            raise RootError(f"{label}.embedded.compression is unsupported")
+        if asset["sha256"].lower() != asset["member_sha256"].lower():
+            raise RootError(
+                f"{label}.sha256 must equal member_sha256 for an embedded payload"
+            )
+    else:
+        url = asset.get("url")
+        if not isinstance(url, str) or not url.startswith("https://"):
+            raise RootError(f"{label} has no HTTPS URL")
+    member = asset.get("member")
+    if member is not None and (not isinstance(member, str) or not member):
+        raise RootError(f"{label} has an invalid member")
+    return asset
+
+
 def load_profiles(path: Path, mode: str) -> tuple[dict[str, Any], dict[str, Any]]:
     data = load_json(path)
     if data.get("schema") != 1:
@@ -118,27 +184,9 @@ def load_profiles(path: Path, mode: str) -> tuple[dict[str, Any], dict[str, Any]
     profile = profiles[mode]
     if not isinstance(profile, dict):
         raise RootError(f"root profile {mode!r} is malformed")
-    for key in ("manager", "lkm", "init"):
-        asset = profile.get(key)
-        if not isinstance(asset, dict):
-            raise RootError(f"root profile {mode!r} has no {key} asset")
-        require_hex(asset.get("sha256"), f"{mode}.{key}.sha256")
-        if not isinstance(asset.get("url"), str):
-            raise RootError(f"root profile {mode!r} {key} has no URL")
-        if not isinstance(asset.get("name"), str):
-            raise RootError(f"root profile {mode!r} {key} has no name")
-        asset_filename(asset)
-        member = asset.get("member")
-        if member is not None and (not isinstance(member, str) or not member):
-            raise RootError(f"root profile {mode!r} {key} has an invalid member")
-        if key == "manager":
-            require_hex(asset.get("cert_sha256"), f"{mode}.manager.cert_sha256")
-            if not isinstance(asset.get("cert_size"), int):
-                raise RootError(f"root profile {mode!r} manager has no cert size")
-        else:
-            require_hex(
-                asset.get("member_sha256"), f"{mode}.{key}.member_sha256"
-            )
+    validate_payload_asset(profile.get("manager"), f"{mode}.manager", manager=True)
+    validate_payload_asset(profile.get("lkm"), f"{mode}.lkm")
+    validate_payload_asset(profile.get("init"), f"{mode}.init")
     return data, profile
 
 
@@ -200,6 +248,60 @@ def extract_member(
     if actual != expected.lower():
         raise RootError(
             f"member hash mismatch for {member}: {actual} != {expected.lower()}"
+        )
+    write_atomic(destination, payload, 0o755 if executable else 0o644)
+    return destination
+
+
+def extract_embedded_asset(
+    manager: Path,
+    asset: dict[str, Any],
+    destination: Path,
+    *,
+    executable: bool = False,
+) -> Path:
+    """Extract a raw-DEFLATE payload embedded in the manager's ksud asset."""
+    embedded = asset.get("embedded")
+    if not isinstance(embedded, dict):
+        raise RootError(f"{asset.get('name', 'payload')} is not embedded")
+    member = embedded.get("member")
+    if not isinstance(member, str) or not member:
+        raise RootError("embedded asset member is missing")
+    if not manager.is_file():
+        raise RootError(f"missing manager APK: {manager}")
+    try:
+        with zipfile.ZipFile(manager) as zf:
+            try:
+                blob = zf.read(member)
+            except KeyError as exc:
+                raise RootError(f"{manager.name} does not contain {member}") from exc
+    except (OSError, zipfile.BadZipFile) as exc:
+        raise RootError(f"cannot read {manager.name}: {exc}") from exc
+    actual = hashlib.sha256(blob).hexdigest()
+    expected = require_hex(embedded.get("sha256"), "embedded archive sha256")
+    if actual != expected:
+        raise RootError(
+            f"embedded archive hash mismatch for {member}: {actual} != {expected}"
+        )
+    offset = embedded["offset"]
+    if offset >= len(blob):
+        raise RootError(f"embedded payload offset {offset} is outside {member}")
+    decompressor = zlib.decompressobj(-15)
+    try:
+        payload = decompressor.decompress(
+            blob[offset:], MAX_EMBEDDED_PAYLOAD + 1
+        )
+    except zlib.error as exc:
+        raise RootError(f"cannot inflate embedded payload at offset {offset}: {exc}") from exc
+    if len(payload) > MAX_EMBEDDED_PAYLOAD:
+        raise RootError("embedded payload exceeds the size limit")
+    if not decompressor.eof:
+        raise RootError("embedded payload is truncated or exceeds the size limit")
+    actual = hashlib.sha256(payload).hexdigest()
+    expected = require_hex(asset.get("member_sha256"), "embedded payload sha256")
+    if actual != expected:
+        raise RootError(
+            f"embedded payload hash mismatch: {actual} != {expected}"
         )
     write_atomic(destination, payload, 0o755 if executable else 0o644)
     return destination
@@ -322,7 +424,7 @@ def inspect_ramdisk(
     mode: str,
     state: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
-    if mode not in {"stock", "resukisu", "kernelsu"}:
+    if mode not in {"stock", *ROOT_MODES}:
         raise RootError(f"unsupported image mode: {mode}")
     with tempfile.TemporaryDirectory(prefix="lenos-root-ramdisk-") as temporary:
         temp = Path(temporary)
@@ -484,7 +586,7 @@ def state_path(state_dir: Path) -> Path:
 
 def command_prepare(args: argparse.Namespace) -> int:
     mode = args.mode
-    if mode not in {"resukisu", "kernelsu"}:
+    if mode not in ROOT_MODES:
         raise RootError(f"root mode {mode!r} cannot be prepared")
     base_ota = Path(args.base_ota).expanduser()
     if not base_ota.is_file() or base_ota.stat().st_size == 0:
@@ -512,6 +614,9 @@ def command_prepare(args: argparse.Namespace) -> int:
     lkm_hint = " ".join(
         str(lkm_asset.get(key, "")) for key in ("member", "name", "url")
     )
+    embedded_lkm = lkm_asset.get("embedded")
+    if isinstance(embedded_lkm, dict):
+        lkm_hint += " " + str(embedded_lkm.get("member", ""))
     if kmi not in lkm_hint:
         raise RootError(f"{mode} LKM is not pinned for KMI {kmi}")
     patcher = download(
@@ -525,42 +630,55 @@ def command_prepare(args: argparse.Namespace) -> int:
         cache_dir / asset_filename(manager_asset),
         manager_asset["sha256"],
     )
-    lkm_archive = download(
-        lkm_asset["url"],
-        cache_dir / asset_filename(lkm_asset),
-        lkm_asset["sha256"],
-    )
-    init_archive = download(
-        init_asset["url"],
-        cache_dir / asset_filename(init_asset),
-        init_asset["sha256"],
-    )
     manager_size, manager_cert = verify_manager(manager, manager_asset)
 
     work = Path(tempfile.mkdtemp(prefix=".prepare.", dir=cache_dir))
     work.chmod(0o700)
     try:
-        lkm = (
-            extract_member(
-                lkm_archive,
-                lkm_asset["member"],
-                work / "kernelsu.ko",
-                lkm_asset["member_sha256"],
+        if isinstance(lkm_asset.get("embedded"), dict):
+            lkm = extract_embedded_asset(
+                manager, lkm_asset, work / "kernelsu.ko"
             )
-            if lkm_asset.get("member")
-            else lkm_archive
-        )
-        ksuinit = (
-            extract_member(
-                init_archive,
-                init_asset["member"],
+        else:
+            lkm_archive = download(
+                lkm_asset["url"],
+                cache_dir / asset_filename(lkm_asset),
+                lkm_asset["sha256"],
+            )
+            lkm = (
+                extract_member(
+                    lkm_archive,
+                    lkm_asset["member"],
+                    work / "kernelsu.ko",
+                    lkm_asset["member_sha256"],
+                )
+                if lkm_asset.get("member")
+                else lkm_archive
+            )
+        if isinstance(init_asset.get("embedded"), dict):
+            ksuinit = extract_embedded_asset(
+                manager,
+                init_asset,
                 work / "ksuinit",
-                init_asset["member_sha256"],
                 executable=True,
             )
-            if init_asset.get("member")
-            else init_archive
-        )
+        else:
+            init_archive = download(
+                init_asset["url"],
+                cache_dir / asset_filename(init_asset),
+                init_asset["sha256"],
+            )
+            ksuinit = (
+                extract_member(
+                    init_archive,
+                    init_asset["member"],
+                    work / "ksuinit",
+                    init_asset["member_sha256"],
+                    executable=True,
+                )
+                if init_asset.get("member")
+                else init_archive
+            )
         if not lkm.is_file() or not ksuinit.is_file():
             raise RootError("could not resolve the LKM or ksuinit payload")
         lkm_hash = sha256_file(lkm)
@@ -798,7 +916,7 @@ def make_parser() -> argparse.ArgumentParser:
     sub = parser.add_subparsers(dest="command", required=True)
 
     prepare = sub.add_parser("prepare", help="patch init_boot from a signed base OTA")
-    prepare.add_argument("--mode", required=True, choices=("resukisu", "kernelsu"))
+    prepare.add_argument("--mode", required=True, choices=("bakasu", "kernelsu"))
     prepare.add_argument("--base-ota", required=True)
     prepare.add_argument("--state-dir", required=True)
     prepare.add_argument("--cache-dir", required=True)
@@ -810,21 +928,21 @@ def make_parser() -> argparse.ArgumentParser:
     source = sub.add_parser(
         "check-source", help="check the base OTA and init_boot against root state"
     )
-    source.add_argument("--mode", required=True, choices=("resukisu", "kernelsu"))
+    source.add_argument("--mode", required=True, choices=("bakasu", "kernelsu"))
     source.add_argument("--state-dir", required=True)
     source.add_argument("--base-ota", required=True)
     source.add_argument("--avbroot", required=True)
     source.set_defaults(func=command_check_source)
 
     verify = sub.add_parser("verify-image", help="verify a stock or patched init_boot")
-    verify.add_argument("--mode", required=True, choices=("stock", "resukisu", "kernelsu"))
+    verify.add_argument("--mode", required=True, choices=("stock", "bakasu", "kernelsu"))
     verify.add_argument("--image", required=True)
     verify.add_argument("--state-dir", default="")
     verify.add_argument("--avbroot", required=True)
     verify.set_defaults(func=command_verify_image)
 
     status = sub.add_parser("status", help="print and check prepared root state")
-    status.add_argument("--mode", required=True, choices=("resukisu", "kernelsu"))
+    status.add_argument("--mode", required=True, choices=("bakasu", "kernelsu"))
     status.add_argument("--state-dir", required=True)
     status.add_argument("--avbroot", default="")
     status.add_argument("--profiles", default=str(DEFAULT_PROFILES))

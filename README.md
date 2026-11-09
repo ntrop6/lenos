@@ -1,6 +1,6 @@
 # lenOS
 
-A personal LineageOS 23.2 build for the Nothing Phone (3a) and (3a) Pro
+A personal LineageOS 24.0 build for the Nothing Phone (3a) and (3a) Pro
 (`asteroids`).
 
 This repo is not a ROM distribution. It is the patch set and small apps that
@@ -27,15 +27,15 @@ The full list, including what does not work, is in
 
 ## Root and verified boot
 
-The default image is rootless: no `su`, ReSukiSU, KernelSU, or Magisk is
+The default image is rootless: no `su`, BakaSU, KernelSU, or Magisk is
 included. Root is an explicit post-build option:
 
 ```bash
-LENOS_ROOT=resukisu ./lenos-1.0-shizuku.sh root-prepare
-LENOS_ROOT=resukisu ./lenos-1.0-shizuku.sh package
+LENOS_ROOT=bakasu ./lenos-1.0-shizuku.sh root-prepare
+LENOS_ROOT=bakasu ./lenos-1.0-shizuku.sh package
 ```
 
-`resukisu` is the preferred profile and `kernelsu` is the fallback. The build
+`bakasu` is the preferred profile and `kernelsu` is the fallback. The build
 itself stays rootless. The post-build step verifies the base OTA against your
 configured OTA/AVB keys, patches `init_boot`, re-signs the OS AVB partitions with
 your key, and keeps the root manager as a separate APK. The default rootless
@@ -50,9 +50,9 @@ is in [`docs/flash-and-lock.md`](docs/flash-and-lock.md).
 
 ## Build
 
-You need a LineageOS 23.2 tree for `asteroids`, a working Android build
+You need a LineageOS 24.0 tree for `asteroids`, a working Android build
 environment, and your own signing setup. The patches were developed against the
-`6.6/lineage-23.2` device trees in the
+`6.6/lineage-24.0` device trees in the
 [NullDebris manifest](https://github.com/NullDebris/manifest). A tree that has
 drifted may need patch updates; the patch tool is strict and stops rather than
 applies with fuzz.

@@ -1,8 +1,8 @@
 diff --git a/core/java/android/provider/Settings.java b/core/java/android/provider/Settings.java
-index 36e2193c..8643bbc1 100644
+index c5b10eb8f6c4e80f0e147395215253691f7260d3..2974f4199e5c15dc0e67b016a4f057e2e881f637 100644
 --- a/core/java/android/provider/Settings.java
 +++ b/core/java/android/provider/Settings.java
-@@ -13371,6 +13371,18 @@ public final class Settings {
+@@ -13752,6 +13752,18 @@ public final class Settings {
           *
           * @hide
           */
@@ -22,10 +22,10 @@ index 36e2193c..8643bbc1 100644
                  "clipboard_show_access_notifications";
  
 diff --git a/services/core/java/com/android/server/clipboard/ClipboardService.java b/services/core/java/com/android/server/clipboard/ClipboardService.java
-index fe037070..e265c8f7 100644
+index b003ed500ea336f442201bcc9596c53ba60430d1..f4bda2fec5c490d3f87a9dedc85e00ad1513eec4 100644
 --- a/services/core/java/com/android/server/clipboard/ClipboardService.java
 +++ b/services/core/java/com/android/server/clipboard/ClipboardService.java
-@@ -62,7 +62,8 @@ import android.content.Context;
+@@ -64,7 +64,8 @@ import android.content.Context;
  import android.content.IClipboard;
  import android.content.IOnPrimaryClipChangedListener;
  import android.content.Intent;
@@ -34,7 +34,7 @@ index fe037070..e265c8f7 100644
  import android.content.pm.PackageManager;
  import android.content.pm.PackageManagerInternal;
  import android.content.pm.UserInfo;
-@@ -177,6 +178,15 @@ public class ClipboardService extends SystemService {
+@@ -184,6 +185,15 @@ public class ClipboardService extends SystemService {
      private final Consumer<ClipData> mClipboardMonitor;
      private final Handler mWorkerHandler;
  
@@ -50,7 +50,7 @@ index fe037070..e265c8f7 100644
      @GuardedBy("mLock")
      // Maps (userId, deviceId) to Clipboard.
      private final SparseArrayMap<Integer, Clipboard> mClipboards = new SparseArrayMap<>();
-@@ -252,6 +262,8 @@ public class ClipboardService extends SystemService {
+@@ -262,6 +272,8 @@ public class ClipboardService extends SystemService {
          publishBinderService(Context.CLIPBOARD_SERVICE, new ClipboardImpl());
          LocalServices.addService(ClipboardManagerInternal.class, new ClipboardInternalImpl());
          registerVirtualDeviceListener();
@@ -59,7 +59,7 @@ index fe037070..e265c8f7 100644
      }
  
      private void registerVirtualDeviceListener() {
-@@ -278,6 +290,40 @@ public class ClipboardService extends SystemService {
+@@ -288,6 +300,40 @@ public class ClipboardService extends SystemService {
          }
      }
  

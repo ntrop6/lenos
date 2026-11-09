@@ -10,11 +10,10 @@ system_server when the device is locked:
   ``KeyguardServiceDelegate.onShowingStateChanged``, which runs on a binder
   thread when the keyguard service reports ``showing``.
 
-Android 16 has no showing-state callback into system_server: SystemUI tells it
-through ``IActivityTaskManager.setLockScreenShown``, so the port runs the same
-three calls on the ``setLockScreenShown`` binder thread — gated on the
-false→true transition and placed after the global lock is released, matching
-where GrapheneOS's callback runs (binder thread, no WMS lock held).
+system_server runs the same three calls on the ``setLockScreenShown`` binder
+thread — gated on the false→true transition and placed after the global lock
+is released. This is equivalent to where GrapheneOS's callback runs (binder
+thread, no WMS lock held).
 """
 from __future__ import annotations
 

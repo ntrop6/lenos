@@ -9,7 +9,7 @@ connections — which defeats the point of the fresh MAC.
 
 GrapheneOS fixed this in 2021 ("prevent DHCP (IPv4) from reusing state across
 connections to the same network when full MAC randomization is enabled") and
-still ships the patch on branch 17, so LineageOS 23.2 (which lacks it) gets the
+still ships the patch on branch 17, so LineageOS 24.0 (which lacks it) gets the
 port here:
 
 * when the lease from the memory store has not expired, the client checks the

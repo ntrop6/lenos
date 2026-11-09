@@ -1,8 +1,10 @@
 diff --git a/res/values/strings.xml b/res/values/strings.xml
-index ccc591f..17399be 100644
+index c967273e7db18879dae8ffc51a588b7b71a19671..189e557252ad80cafa37c76baaa1130fb2b2e4b8 100644
 --- a/res/values/strings.xml
 +++ b/res/values/strings.xml
-@@ -14941,2 +14941,8 @@
+@@ -15372,6 +15372,12 @@
+     <string name="safety_center_app_security_summary"></string>
+     <!-- Safety Center app security subpage footer text [CHAR LIMIT=NONE] -->
      <string name="safety_center_app_security_footer"></string>
 +    <!-- lenOS clipboard privacy -->
 +    <string name="clipboard_privacy_title">Clipboard privacy</string>
@@ -11,11 +13,15 @@ index ccc591f..17399be 100644
 +    <string name="clipboard_clear_on_screen_off_summary">Removes copied text, images and URIs from the clipboard when the screen turns off. The clipboard is wiped before the device is locked.</string>
 +
      <!-- Safety Center app security source search terms [CHAR LIMIT=NONE] -->
+     <string name="safety_center_app_security_search_terms"></string>
+     <!-- Safety Center device unlock subpage summary [CHAR LIMIT=NONE] -->
 diff --git a/res/xml/more_security_privacy_settings.xml b/res/xml/more_security_privacy_settings.xml
-index 0068872..688e26f 100644
+index 06f9ca3e6f40eab1724c452dd3bdc93360231b19..b3ed1282f8631a4c113e09b05226e4e144bed0f8 100644
 --- a/res/xml/more_security_privacy_settings.xml
 +++ b/res/xml/more_security_privacy_settings.xml
-@@ -174,2 +174,9 @@
+@@ -213,6 +213,13 @@
+         android:summary="@string/summary_placeholder"
+         android:fragment="com.android.settings.enterprise.EnterprisePrivacySettings"
          settings:controller="com.android.settings.enterprise.FinancedPrivacyPreferenceController"/>
 +    <Preference
 +        android:order="245"
@@ -25,9 +31,11 @@ index 0068872..688e26f 100644
 +        android:fragment="com.android.settings.security.ClipboardPrivacySettings" />
 +
  
+     <Preference
+         android:order="244"
 diff --git a/src/com/android/settings/security/ClipboardPrivacySettings.java b/src/com/android/settings/security/ClipboardPrivacySettings.java
 new file mode 100644
-index 0000000..63a4b9e
+index 0000000000000000000000000000000000000000..63a4b9ed77b54e91ea86f2f1584608248e773854
 --- /dev/null
 +++ b/src/com/android/settings/security/ClipboardPrivacySettings.java
 @@ -0,0 +1,64 @@

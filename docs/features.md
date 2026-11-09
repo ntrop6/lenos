@@ -1,7 +1,7 @@
 # Features
 
 A working list of what the default series changes, with the limits that matter.
-Base: LineageOS 23.2 (`asteroids` = Nothing Phone (3a) / (3a) Pro).
+Base: LineageOS 24.0 (`asteroids` = Nothing Phone (3a) / (3a) Pro).
 
 All features below are **source-complete**: patches, resources and tests are in
 this repository. None of it has been verified on a running device yet. Until a
@@ -48,13 +48,13 @@ their content until the user explicitly allows it.
 | Feature | Where | Notes |
 |---|---|---|
 | Up to 32 users/profiles | `device_nothing_asteroids/0007` | GrapheneOS parity: `config_multiuserMaximumUsers` raised 4 → 32 in the vendor overlay (the framework raw default is 1; the overlay is what ships). Each profile is its own encryption domain, so more profiles support stronger per-identity separation; the limit is a ceiling, not a default |
-| Per-user app installation policy | `packages_apps_Settings/0003` (GrapheneOS port) | the owner can set, per user, whether that user may install and update apps: **enabled**, **first-party sources only** (unknown sources blocked), or **disabled** — GrapheneOS's `UserAppsInstallSettings` screen behind a new "App installs and updates" row in user details. It uses the standard `DISALLOW_INSTALL_APPS` / `DISALLOW_INSTALL_UNKNOWN_SOURCES` restrictions, which A16's framework already enforces in `PackageInstallerService`/`InstallPackageHelper`; the guest's choice is written to the guest-default bundle. No framework change; the helper's private-space inheritance half (a separate GrapheneOS feature) is not ported |
+| Per-user app installation policy | `packages_apps_Settings/0003` (GrapheneOS port) | the owner can set, per user, whether that user may install and update apps: **enabled**, **first-party sources only** (unknown sources blocked), or **disabled** — GrapheneOS's `UserAppsInstallSettings` screen behind a new "App installs and updates" row in user details. It uses the standard `DISALLOW_INSTALL_APPS` / `DISALLOW_INSTALL_UNKNOWN_SOURCES` restrictions, which A17's framework already enforces in `PackageInstallerService`/`InstallPackageHelper`; the guest's choice is written to the guest-default bundle. No framework change; the helper's private-space inheritance half (a separate GrapheneOS feature) is not ported |
 
 ## Network
 
 | Feature | Where | Notes |
 |---|---|---|
-| Network (INTERNET) permission | `frameworks_base/0025` + `packages_modules_Connectivity/0002` + `packages_modules_Permission/0002` (GrapheneOS port) | `android.permission.INTERNET` becomes a real runtime permission (GrapheneOS "special runtime permissions"), presented as the "Network" group in app info with an on/off toggle and granted automatically on install — an app *update* never re-grants a revoked one. Revoking gives the app no network: sockets are blocked at the kernel level (netd per-UID BPF map, AOSP machinery already shipped and unconditional on Android 16) *and* the app is put into "internet compat" mode — the OS pretends there is no network (32 `ConnectivityManager` APIs answer none/empty, NSD gets a stubbed connector, `DownloadManager` returns nothing) while the app's own INTERNET self-checks are spoofed as granted, so legacy apps degrade to "offline" instead of crashing. System apps never get compat mode (GrapheneOS behavior: real enforcement only). Auto-revoke/hibernation never touches this permission |
+| Network (INTERNET) permission | `frameworks_base/0025` + `packages_modules_Connectivity/0002` + `packages_modules_Permission/0002` (GrapheneOS port) | `android.permission.INTERNET` becomes a real runtime permission (GrapheneOS "special runtime permissions"), presented as the "Network" group in app info with an on/off toggle and granted automatically on install — an app *update* never re-grants a revoked one. Revoking gives the app no network: sockets are blocked at the kernel level (netd per-UID BPF map, AOSP machinery already shipped and unconditional on Android 17) *and* the app is put into "internet compat" mode — the OS pretends there is no network (32 `ConnectivityManager` APIs answer none/empty, NSD gets a stubbed connector, `DownloadManager` returns nothing) while the app's own INTERNET self-checks are spoofed as granted, so legacy apps degrade to "offline" instead of crashing. System apps never get compat mode (GrapheneOS behavior: real enforcement only). Auto-revoke/hibernation never touches this permission |
 | Wi-Fi MAC randomization (per connection) | `packages_modules_Wifi/0001` (GrapheneOS port) | new networks default to `RANDOMIZATION_ALWAYS` (per-connection, non-persistent MACs); a per-network strategy the user picks explicitly still wins |
 | Strict Private DNS (DoT, Quad9) | first-boot default | breaks networks that block DoT or need captive-portal DNS; user-changeable |
 | NTP without Google | first-boot default + frameworks RRO | `pool.ntp.org` is a central pool; SNTP is unauthenticated either way |
@@ -84,7 +84,7 @@ their content until the user explicitly allows it.
 | Credential limits (GrapheneOS values) | `frameworks_base/0009` | the fingerprint sensor locks out permanently after 5 failed attempts (AOSP 20; the 30 s timed lockout is unchanged) and the maximum supported password length is 128 characters (AOSP 64) |
 | Lock-screen notification content hidden | `frameworks_base/0012` | GrapheneOS default: content stays hidden on the lock screen until the user allows private notifications (see first-boot defaults) |
 | FBE filename padding | `system_extras/0001` (GrapheneOS port) | every encryption policy created by this build pads filenames to 32 bytes instead of AOSP's 16 (GrapheneOS commit "pad filenames to 32 bytes instead of 16 or 4 bytes"), hiding filename lengths better. The pre-R 4-byte compatibility branch is dropped (`PRODUCT_SHIPPING_API_LEVEL := 35` makes it unreachable); `vold` picks the flags up through `libfscrypt`. Only applies to policies created after flashing (see limits) |
-| Memory hygiene on lock | `frameworks_base/0024` (GrapheneOS port) | when the keyguard starts showing, both SystemUI and system_server run a full compacting GC (`System.gc(); System.runFinalization(); System.gc();`), releasing memory that is no longer reachable and reducing how long sensitive data (lock credentials, derived keys) sits in the heap — the complement to the auto-reboot timer. SystemUI runs it in `handleShowInner`; A16 has no showing-state callback into system_server, so it runs on the `setLockScreenShown` binder thread right after the lock transition (documented adaptation) |
+| Memory hygiene on lock | `frameworks_base/0024` (GrapheneOS port) | when the keyguard starts showing, both SystemUI and system_server run a full compacting GC (`System.gc(); System.runFinalization(); System.gc();`), releasing memory that is no longer reachable and reducing how long sensitive data (lock credentials, derived keys) sits in the heap — the complement to the auto-reboot timer. SystemUI runs it in `handleShowInner`; system_server runs it on the transition-gated `setLockScreenShown` binder thread right after the lock transition and outside the global lock |
 | Lock-screen end session hidden | `frameworks_base/0028` (GrapheneOS port) | the lock screen never offers the "End session" (logout) button: GrapheneOS short-circuits `KeyguardIndicationController.updateLockScreenLogoutView()` with `if (false && …)`, because anyone holding the locked device could otherwise terminate the session and close every app without credentials. The action stays available from the power menu, where the lock-screen restrictions apply. GrapheneOS's A17 DevicePolicyManager logout split (`isPolicyManagerLogoutEnabled`) is an A17-only refactor and is not ported |
 
 ## Framework infrastructure
@@ -115,13 +115,13 @@ their content until the user explicitly allows it.
 
 | Feature | Where | Notes |
 |---|---|---|
-| Uncompressed APEXes | `vendor/lenos/config/lenos.mk` | GrapheneOS parity: pre-installed APEXes are built uncompressed (`PRODUCT_COMPRESSED_APEX := false`). AOSP/LineageOS 23.2 defaults to compressed APEXes (`build/make/core/product_config.mk`: `_default_compressed_apex := true`); the lenOS product fragment is inherited after `updatable_apex.mk`/`generic_system.mk`, so `core/soong_config.mk` exports `CompressedApex=false` to Soong and the system property `apexd.config.compressed_apex=false` ships with the build. Cost: a few MiB on the system partition; gain: no APEX decompression in early boot |
+| Uncompressed APEXes | `vendor/lenos/config/lenos.mk` | GrapheneOS parity: pre-installed APEXes are built uncompressed (`PRODUCT_COMPRESSED_APEX := false`). AOSP/LineageOS 24.0 defaults to compressed APEXes (`build/make/core/product_config.mk`: `_default_compressed_apex := true`); the lenOS product fragment is inherited after `updatable_apex.mk`/`generic_system.mk`, so `core/soong_config.mk` exports `CompressedApex=false` to Soong and the system property `apexd.config.compressed_apex=false` ships with the build. Cost: a few MiB on the system partition; gain: no APEX decompression in early boot |
 
 ## Privacy indicators
 
 | Feature | Where | Notes |
 |---|---|---|
-| Location privacy indicator | `frameworks_base/0027` + `vendor/lenos/release/` (GrapheneOS port) | the status-bar privacy chip now covers location, not only camera and microphone: SystemUI's `AppOpsPrivacyItemMonitor` watches `OP_COARSE_LOCATION` in addition to `OP_FINE_LOCATION`, so an app granted only approximate location lights the indicator, and the coarse op maps to the location privacy type like the fine one. Stock LineageOS 23.2 never shows it because AOSP's `bp4a` release config leaves `android.location.flags.location_indicators_enabled` disabled; lenOS turns the released AOSP code on with its own release-config value set (merged into the platform's `bp4a` config, `READ_ONLY` — no AOSP or LineageOS file is patched). Display rules match camera/microphone: system-app and background accesses are tracked but not shown; no user-facing toggle, matching GrapheneOS |
+| Location privacy indicator | `frameworks_base/0027` (GrapheneOS port) | the status-bar privacy chip now covers location, not only camera and microphone: SystemUI's `AppOpsPrivacyItemMonitor` watches `OP_COARSE_LOCATION` in addition to `OP_FINE_LOCATION`, so an app granted only approximate location lights the indicator, and the coarse op maps to the location privacy type like the fine one. Android 17's release config already enables `android.location.flags.location_indicators_enabled` (`cp1a`, inherited by the `cp2a` config LineageOS 24.0 selects), so no release-config plumbing is needed. Display rules match camera/microphone: system-app and background accesses are tracked but not shown; no user-facing toggle, matching GrapheneOS |
 
 ## Apps and UI
 
@@ -240,8 +240,8 @@ same as provisioning the bootloader key or supporting a locked bootloader.
   (which ships it off). The keypad relayouts on every setup, which can
   disorient screen-reader/accessibility users; switch it off in Settings →
   Security → Screen lock settings, or the SIM lock screen for SIM PIN/PUK.
-  The secondary-credential scramble setting is dormant: Android 16's
-  LineageOS base has a single credential domain.
+  The secondary-credential scramble setting is dormant: LineageOS 24.0's
+  base still has a single credential domain.
 * **Five bad fingerprint reads lock the sensor out permanently** (until the
   device is unlocked with the PIN/password) — GrapheneOS's value; AOSP allows
   20. Dry or move the finger rather than retrying if reads keep failing.
@@ -260,7 +260,7 @@ same as provisioning the bootloader key or supporting a locked bootloader.
   no longer trusts Chunghwa Telecom (HiPKI Root CA - G1, ePKI Root CA) and
   NetLock Arany (Class Gold), matching GrapheneOS and Google's 2025
   root-store distrust. User-installed CAs, app-pinned trust and non-TLS
-  uses are unaffected. The AOSP snapshot pinned by LineageOS 23.2 still
+  uses are unaffected. The AOSP snapshot pinned by LineageOS 24.0 still
   ships these roots, so if that revision ever changes the patchkit hard-fails
   until the removal is re-verified (by design).
 * **FBE filename padding applies to new encryption policies only** — the

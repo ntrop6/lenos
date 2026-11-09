@@ -1,8 +1,8 @@
 diff --git a/core/java/android/hardware/usb/IUsbManager.aidl b/core/java/android/hardware/usb/IUsbManager.aidl
-index badcc34c..37a54a37 100644
+index 31c4bb9a846b8671514f7b3d8cf11b30a08d65ac..9cbb5ae7022bfc92f786edf4830b3a06b11f3fcb 100644
 --- a/core/java/android/hardware/usb/IUsbManager.aidl
 +++ b/core/java/android/hardware/usb/IUsbManager.aidl
-@@ -201,6 +201,13 @@ interface IUsbManager
+@@ -218,6 +218,13 @@ interface IUsbManager
      /* Gets the list of USB ports. */
      @EnforcePermission("MANAGE_USB")
      List<ParcelableUsbPort> getPorts();
@@ -17,10 +17,10 @@ index badcc34c..37a54a37 100644
      /* Gets the status of the specified USB port. */
      UsbPortStatus getPortStatus(in String portId);
 diff --git a/core/java/android/hardware/usb/UsbManager.java b/core/java/android/hardware/usb/UsbManager.java
-index 9193dfb3..a5ec2243 100644
+index b13fc1aec6e4f1087789c2ddbdae889a5d440a0c..c67328a163e94fccab5bfec5cac1e7ab43415214 100644
 --- a/core/java/android/hardware/usb/UsbManager.java
 +++ b/core/java/android/hardware/usb/UsbManager.java
-@@ -1745,6 +1745,37 @@ public class UsbManager {
+@@ -2015,6 +2015,37 @@ public class UsbManager {
          return setUsbDataSignal(getPorts(), !enable, /* revertOnFailure= */ true);
      }
  
@@ -60,7 +60,7 @@ index 9193dfb3..a5ec2243 100644
          List<UsbPort> changedPorts = new ArrayList<>();
 diff --git a/core/java/android/hardware/usb/UsbPortSecurity.java b/core/java/android/hardware/usb/UsbPortSecurity.java
 new file mode 100644
-index 00000000..1b7964fc
+index 0000000000000000000000000000000000000000..1b7964fcf4c711f8e827ab1a299c3207e27bef4e
 --- /dev/null
 +++ b/core/java/android/hardware/usb/UsbPortSecurity.java
 @@ -0,0 +1,89 @@
@@ -155,7 +155,7 @@ index 00000000..1b7964fc
 +}
 diff --git a/services/usb/java/com/android/server/usb/UsbPortSecurityController.java b/services/usb/java/com/android/server/usb/UsbPortSecurityController.java
 new file mode 100644
-index 00000000..d5257451
+index 0000000000000000000000000000000000000000..d52574512b5186577cb2bb3a41463b07e19cbbb5
 --- /dev/null
 +++ b/services/usb/java/com/android/server/usb/UsbPortSecurityController.java
 @@ -0,0 +1,154 @@
@@ -314,10 +314,10 @@ index 00000000..d5257451
 +    }
 +}
 diff --git a/services/usb/java/com/android/server/usb/UsbService.java b/services/usb/java/com/android/server/usb/UsbService.java
-index 8a724d25..d053e802 100644
+index ce7ae67f7508013c34f73144613525f70d79cbe7..390c59e7ec87e9a552cf0b7ff413b632d796eea2 100644
 --- a/services/usb/java/com/android/server/usb/UsbService.java
 +++ b/services/usb/java/com/android/server/usb/UsbService.java
-@@ -54,6 +54,7 @@ import android.hardware.usb.UsbDevice;
+@@ -59,6 +59,7 @@ import android.hardware.usb.UsbDevice;
  import android.hardware.usb.UsbManager;
  import android.hardware.usb.UsbOperationInternal;
  import android.hardware.usb.UsbPort;
@@ -325,15 +325,15 @@ index 8a724d25..d053e802 100644
  import android.hardware.usb.UsbPortStatus;
  import android.os.Binder;
  import android.os.Bundle;
-@@ -163,6 +164,7 @@ public class UsbService extends IUsbManager.Stub {
+@@ -171,6 +172,7 @@ public class UsbService extends IUsbManager.Stub {
      private UsbDeviceManager mDeviceManager;
      private UsbHostManager mHostManager;
      private UsbPortManager mPortManager;
 +    private UsbPortSecurityController mPortSecurity;
      private Usb4Manager mUsb4Manager;
+     private UsbAuthManager mAuthManager;
      private final UsbAlsaManager mAlsaManager;
-     private KeyguardManager.KeyguardLockedStateListener mKeyguardLockedStateListener;
-@@ -223,6 +225,9 @@ public class UsbService extends IUsbManager.Stub {
+@@ -246,6 +248,9 @@ public class UsbService extends IUsbManager.Stub {
          if (mHostManager != null || mDeviceManager != null) {
              mPortManager = new UsbPortManager(context);
          }
@@ -343,9 +343,9 @@ index 8a724d25..d053e802 100644
  
          onSwitchUser(UserHandle.USER_SYSTEM);
  
-@@ -258,6 +263,9 @@ public class UsbService extends IUsbManager.Stub {
-                       IUsbOperationInternalProvider usbOperationInternalProvider) {
+@@ -296,6 +301,9 @@ public class UsbService extends IUsbManager.Stub {
          mContext = context;
+         mDevicePolicyManagerInternal = LocalServices.getService(DevicePolicyManagerInternal.class);
          mPortManager = usbPortManager;
 +        if (mPortManager != null) {
 +            mPortSecurity = new UsbPortSecurityController(context, mPortManager);
@@ -353,19 +353,19 @@ index 8a724d25..d053e802 100644
          mAlsaManager = usbAlsaManager;
          mUserManager = userManager;
          mSettingsManager = usbSettingsManager;
-@@ -293,6 +301,9 @@ public class UsbService extends IUsbManager.Stub {
-         if (mUsb4Manager != null) {
-             mUsb4Manager.onUpdateScreenLockedState(locked);
+@@ -334,6 +342,9 @@ public class UsbService extends IUsbManager.Stub {
+         if (mAuthManager != null) {
+             mAuthManager.onUpdateScreenLockedState(locked);
          }
 +        if (mPortSecurity != null) {
 +            mPortSecurity.onScreenLockChange(locked);
 +        }
      }
  
-     /**
-@@ -348,8 +359,12 @@ public class UsbService extends IUsbManager.Stub {
-         if (mPortManager != null) {
-             mPortManager.systemReady();
+     private void setUsbDataSignal(boolean enabled) {
+@@ -414,8 +425,12 @@ public class UsbService extends IUsbManager.Stub {
+         if (mAuthManager != null) {
+             mAuthManager.systemReady();
          }
 +        if (mPortSecurity != null) {
 +            mPortSecurity.systemReady();
@@ -374,10 +374,10 @@ index 8a724d25..d053e802 100644
 -        if (com.android.server.usb.flags.Flags.enableUsb4()
 +        if (mPortSecurity != null
 +                || com.android.server.usb.flags.Flags.enableUsb4()
-                 || com.android.server.usb.flags.Flags.enableUsbAuthorization()) {
+                 || com.android.server.usb.flags.Flags.enableUsb4Tbt()
+                 || com.android.server.usb.flags.Flags.enableUsbHostAuthorization()) {
              registerForKeyguardCallbacks();
-         }
-@@ -374,6 +389,9 @@ public class UsbService extends IUsbManager.Stub {
+@@ -441,6 +456,9 @@ public class UsbService extends IUsbManager.Stub {
          if (mDeviceManager != null) {
              mDeviceManager.onUnlockUser(user);
          }
@@ -387,7 +387,7 @@ index 8a724d25..d053e802 100644
      }
  
      /* Returns a list of all currently attached USB devices (host mdoe) */
-@@ -977,6 +995,21 @@ public class UsbService extends IUsbManager.Stub {
+@@ -1084,6 +1102,21 @@ public class UsbService extends IUsbManager.Stub {
          }
      }
  
@@ -409,7 +409,7 @@ index 8a724d25..d053e802 100644
      @Override
      public UsbPortStatus getPortStatus(String portId) {
          Objects.requireNonNull(portId, "portId must not be null");
-@@ -1098,6 +1131,17 @@ public class UsbService extends IUsbManager.Stub {
+@@ -1205,6 +1238,17 @@ public class UsbService extends IUsbManager.Stub {
                  + operationId);
          mContext.enforceCallingOrSelfPermission(android.Manifest.permission.MANAGE_USB, null);
  

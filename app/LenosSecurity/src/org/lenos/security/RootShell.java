@@ -8,7 +8,7 @@ import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 
 /**
- * Best-effort ReSukiSU / KernelSU / Magisk su. Secrets go on stdin only,
+ * Best-effort BakaSU / KernelSU / Magisk su. Secrets go on stdin only,
  * never on argv (argv is visible to other processes via /proc).
  */
 final class RootShell {

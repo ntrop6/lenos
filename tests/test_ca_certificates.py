@@ -9,8 +9,7 @@ Feature contract (GrapheneOS-faithful port, commit ``14ad6bb`` of
   following Google's 2025 Chrome root-store distrust announcement.
 * The files are plain members of the ``Android.bp`` ``files/*`` glob, so the
   removal is a pure file deletion: no build-file or index edits are needed.
-* The pinned AOSP revision (``android-16.0.0_r4``, what the LineageOS 23.2
-  manifest checks out) still ships all three files, so this patch is a real
+* The lineOS 24.0 tree still ships all three files, so this patch is a real
   behavior change, not upstream drift catching up.
 """
 from __future__ import annotations
