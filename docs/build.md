@@ -128,15 +128,19 @@ rootless build, from the exact signed base OTA:
 
 ```bash
 LENOS_SOURCE=$HOME/lineage LENOS_ROOT=bakasu \
+  LENOS_ROOT_LKM=/path/to/kernelsu.ko \
   ~/lenos-patches/lenos-1.0-shizuku.sh root-prepare
 LENOS_SOURCE=$HOME/lineage LENOS_ROOT=bakasu \
   ~/lenos-patches/lenos-1.0-shizuku.sh package
 ```
 
-Use `LENOS_ROOT=kernelsu` for the fallback. `root-prepare` needs avbroot 3.33.0
-or newer, network access for the pinned assets, and the `asteroids` device tree.
-It verifies the base OTA against your configured OTA/AVB keys, does not modify
-the source tree, and does not include a root manager in the system image.
+Use `LENOS_ROOT=kernelsu` for the fallback. The LKM must be built against the
+kernel this tree produces (`LENOS_ROOT_LKM`); the pinned GKI module is only
+accepted with `LENOS_ALLOW_UNVALIDATED_LKM=1`. `root-prepare` needs avbroot
+3.33.0 or newer, network access for the pinned assets, and the `asteroids`
+device tree. It verifies the base OTA against your configured OTA/AVB keys, does
+not modify the source tree, and does not include a root manager in the system
+image.
 Packaging re-signs `init_boot` and the OS AVB partitions, then verifies the final
 OTA and its init_boot ramdisk.
 

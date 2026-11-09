@@ -31,12 +31,15 @@ The default image is rootless: no `su`, BakaSU, KernelSU, or Magisk is
 included. Root is an explicit post-build option:
 
 ```bash
-LENOS_ROOT=bakasu ./lenos-1.0-shizuku.sh root-prepare
+LENOS_ROOT=bakasu LENOS_ROOT_LKM=/path/to/kernelsu.ko \
+  ./lenos-1.0-shizuku.sh root-prepare
 LENOS_ROOT=bakasu ./lenos-1.0-shizuku.sh package
 ```
 
-`bakasu` is the preferred profile and `kernelsu` is the fallback. The build
-itself stays rootless. The post-build step verifies the base OTA against your
+`bakasu` is the preferred profile and `kernelsu` is the fallback. The kernel
+module must be built against this tree's kernel; the pinned GKI module is only
+accepted with an explicit `LENOS_ALLOW_UNVALIDATED_LKM=1`. The build itself
+stays rootless. The post-build step verifies the base OTA against your
 configured OTA/AVB keys, patches `init_boot`, re-signs the OS AVB partitions with
 your key, and keeps the root manager as a separate APK. The default rootless
 packaging path verifies that the final `init_boot` is stock, so a pre-rooted base
