@@ -157,6 +157,23 @@ class TestProductMakefile(ProductConfigTestCase):
 
 
 class TestRuntimeOverlays(ProductConfigTestCase):
+    def test_all_shipped_xml_parses(self):
+        # XML comments may not contain "--"; aapt2/Expat reject the whole
+        # file. This catches separator comments such as
+        # "<!-- Radios ---- -->" before the build does.
+        parsed = 0
+        for root_dir in (
+            VENDOR / "config",
+            VENDOR / "rro",
+            VENDOR / "app",
+            VENDOR / "experimental",
+        ):
+            for path in sorted(root_dir.rglob("*.xml")):
+                with self.subTest(path=str(path.relative_to(VENDOR))):
+                    ET.parse(path)
+                    parsed += 1
+        self.assertGreater(parsed, 0)
+
     def test_androidbp_declares_static_product_overlays(self):
         for overlay in RROS:
             body = self.text(f"rro/{overlay}/Android.bp")

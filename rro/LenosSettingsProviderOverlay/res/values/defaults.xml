@@ -13,7 +13,7 @@
      frameworks/base/packages/SettingsProvider/res/values/defaults.xml.
 -->
 <resources>
-    <!-- Radios and scanning ------------------------------------------ -->
+    <!-- Radios and scanning ========================================== -->
     <!-- Bluetooth off until the user turns it on. -->
     <bool name="def_bluetooth_on">false</bool>
     <!-- No wakeup scanning / "open networks available" notifications while
@@ -27,7 +27,7 @@
     <!-- No QR-scanner shortcut on the secure lock screen. -->
     <bool name="def_lock_screen_show_qr_code_scanner">false</bool>
 
-    <!-- Connectivity privacy ----------------------------------------- -->
+    <!-- Connectivity privacy ========================================= -->
     <!-- Strict DNS-over-TLS to Quad9 (Settings.Global.PRIVATE_DNS_MODE/
          PRIVATE_DNS_SPECIFIER). No local-network plaintext DNS by default. -->
     <!-- Wi-Fi privacy defaults (per-connection MAC randomization, DHCP hostname
@@ -39,7 +39,7 @@
     <!-- Captive portal: prompt (0 = ignore, 1 = prompt, 2 = avoid). -->
     <integer name="def_lenos_captive_portal_mode">1</integer>
 
-    <!-- Lock and data protection -------------------------------------- -->
+    <!-- Lock and data protection ====================================== -->
     <!-- The auto-reboot-to-BFU timer is owned by init (see
          system/core/init/property_service.cpp) and configured through
          Settings.Global."settings_reboot_after_timeout" (18 hours by
