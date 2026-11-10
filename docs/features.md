@@ -127,7 +127,7 @@ their content until the user explicitly allows it.
 
 | Item | Status |
 |---|---|
-| Minimal app set | AudioFX off (`TARGET_EXCLUDES_AUDIOFX`), MP3/Music app (`Twelve`) kept for now. `LENOS_STRIP_PACKAGES` remains wired through `vendor_lineage/0001`, but LineageOS 24.0 no longer ships `Gallery2` (or another app this product drops), so the default list is empty |
+| Bundled apps | AudioFX off (`TARGET_EXCLUDES_AUDIOFX`), MP3/Music app (`Twelve`) kept for now. `LENOS_STRIP_PACKAGES` remains wired through `vendor_lineage/0001`, but LineageOS 24.0 no longer ships `Gallery2` (or another app this product drops), so the default list is empty |
 | Jelly browser | **kept** for 1.0; Cromite/WebView replacement is still under investigation (see limits) |
 | `LenosSecurity` app | ships with: auto-BFU timer (init backend), PIN-scramble switch (writes the same `Settings.Secure` key SystemUI reads), duress PIN/password UI (framework service), status card. The old global Wi-Fi hostname toggle was dropped in the GrapheneOS-faithful redo — that control is per network in Wi-Fi settings, and the app no longer needs `NETWORK_SETTINGS` |
 | Call recording | **LineageOS baseline, kept** — the in-call screen records voice calls with no region/carrier gate and no recording tone; `CallRecording` writes through MediaStore to `Recordings/Call recordings`, and the privileged Dialer's privapp allowlist grants `CAPTURE_AUDIO_OUTPUT` for the `VOICE_CALL` audio source. GrapheneOS's extra auto-recording-by-contact subsystem (preferences store, contact modes, stale-contact cleanup) is a larger Dialer fork and stays out of 1.0 |
