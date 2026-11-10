@@ -88,4 +88,4 @@ fi
 
 printf '\nNOTE: this script made no changes. Behavioral checks that need a\n'
 printf 'cable, a lock transition, a trace attempt or a boot cycle are in\n'
-printf 'docs/verification.md and must be run with a recovery plan.\n'
+printf 'experimental/docs/verification.md and must be run with a recovery plan.\n'
