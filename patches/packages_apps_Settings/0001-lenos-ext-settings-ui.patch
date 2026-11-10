@@ -1530,7 +1530,7 @@ index 0000000000000000000000000000000000000000..830a2166b9b81f1182fde6fe2c9979da
 +import com.android.settings.overlay.FeatureFactory;
 +
 +/**
-+ * Ported from GrapheneOS (which parameterizes this by LockDomain). The Android 16
++ * Ported from GrapheneOS (which parameterizes this by LockDomain). The Android 17
 + * LineageOS base has a single credential domain, so the keyguard PIN always uses
 + * ExtSettings.SCRAMBLE_LOCKSCREEN_PIN_LAYOUT_PRIMARY here.
 + */

@@ -206,8 +206,8 @@ signed manager APK when the pinned profile is explicitly allowed; otherwise
 pass a locally built module with `LENOS_ROOT_LKM`. In `kernelsu` mode both are
 KernelSU's pinned files (same explicit-allow rule).
 
-The extraction and the pinned host patcher were exercised on a synthetic
-Android 16 boot image: the patched ramdisk contains the pinned `ksuinit` as
+The extraction and the pinned host patcher were exercised on a synthetic GKI
+`init_boot` image: the patched ramdisk contains the pinned `ksuinit` as
 executable `init`, the original init as `init.real`, and the pinned
 `kernelsu.ko`, and the helper's ramdisk verifier accepts the result. That
 proves the payloads are accepted by the patcher and verifier; it does not
