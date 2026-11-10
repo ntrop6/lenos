@@ -93,20 +93,20 @@ are:
 
 ### #25 — screenshot sound
 
-* The GrapheneOS diff is applied to the same two SystemUI classes and their existing
-  `multivalentTests`. The `screenshotRemoveNonforcedSound` aconfig flag remains in place (it is a
-  separate GrapheneOS feature that removes the non-forced sound on devices where it should not
-  exist); only the `screenshotForceShutterSound` gate around registration and playback is removed.
+* Android 17 already removed the `screenshotForceShutterSound` gate from `ScreenshotSoundPolicy`
+  and moved `registerAvailabilityCallback` into an application-scoped coroutine. The lenOS patch
+  therefore changes only `ScreenshotSoundController` and its existing `multivalentTests`; the
+  policy classes are copied into the test sandbox unchanged to pin that baseline.
+* The `screenshotRemoveNonforcedSound` aconfig flag remains in place. It is a separate GrapheneOS
+  feature that removes the non-forced sound on devices where it should not exist.
 * The forced-shutter path is unchanged: `MediaActionSound.mustPlayShutterSound()` still forces the
   sound when the camera is open, even if sound effects are disabled.
 * **lenOS deviation:** GrapheneOS branch 17 checks `SOUND_EFFECTS_ENABLED` before evaluating the
   forced path, which can silence a legally required shutter sound when touch sounds are off. lenOS
   evaluates `shouldForceShutterSound()` first and gates only the non-forced player. The test
   `screenshotSoundForced_ignoresSoundEffectsSetting` pins that behavior.
-* The GrapheneOS implementation moved `registerAvailabilityCallback` into an application-scoped
-  coroutine and made `shouldForceShutterSound()` suspend. That is a required consequence of
-  removing the aconfig guard: the callback must exist on every build, not only on builds where the
-  flag was compiled in.
+* `shouldForceShutterSound()` is suspend and the callback is registered unconditionally because
+  the callback must exist on every build, not only on builds where the old flag was compiled in.
 
 ### #22 — USB-C data-line control
 

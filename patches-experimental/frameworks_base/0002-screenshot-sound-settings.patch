@@ -1,5 +1,5 @@
 diff --git a/packages/SystemUI/multivalentTests/src/com/android/systemui/screenshot/ScreenshotSoundControllerTest.kt b/packages/SystemUI/multivalentTests/src/com/android/systemui/screenshot/ScreenshotSoundControllerTest.kt
-index 01f1ace1ecb10bd47b6404a9136d329cd3948900..935e208feb2ad484b5e3ce31abda08168663076c 100644
+index 01f1ace1ecb10bd47b6404a9136d329cd3948900..d9346027c6024e7790b1a9235ce68515a136a25f 100644
 --- a/packages/SystemUI/multivalentTests/src/com/android/systemui/screenshot/ScreenshotSoundControllerTest.kt
 +++ b/packages/SystemUI/multivalentTests/src/com/android/systemui/screenshot/ScreenshotSoundControllerTest.kt
 @@ -20,10 +20,12 @@ import android.media.MediaActionSound
@@ -49,23 +49,30 @@ index 01f1ace1ecb10bd47b6404a9136d329cd3948900..935e208feb2ad484b5e3ce31abda0816
      @Test
      @DisableFlags(FLAG_SCREENSHOT_REMOVE_NONFORCED_SOUND)
      fun playCameraSound_illegalStateException_doesNotThrow() =
-@@ -139,9 +156,11 @@ class ScreenshotSoundControllerTest : SysuiTestCase() {
+@@ -139,17 +156,25 @@ class ScreenshotSoundControllerTest : SysuiTestCase() {
          }
  
      @Test
 -    fun screenshotSoundForced_usesShutterSound() = runTest {
 -        soundPolicy.stub { onBlocking { shouldForceShutterSound() }.doReturn(true) }
 -        val controller = createController()
-+    fun screenshotSoundForced_ignoresSoundEffectsSetting() {
++    fun screenshotSoundForced_ignoresSoundEffectsSetting() =
 +        scope.runTest {
 +            fakeSystemSettingsRepo.setInt(Settings.System.SOUND_EFFECTS_ENABLED, 0)
 +            soundPolicy.stub { onBlocking { shouldForceShutterSound() }.doReturn(true) }
 +            val controller = createController()
  
-         controller.playScreenshotSound()
-         advanceUntilIdle()
-@@ -151,5 +170,11 @@ class ScreenshotSoundControllerTest : SysuiTestCase() {
-     }
+-        controller.playScreenshotSound()
+-        advanceUntilIdle()
++            controller.playScreenshotSound()
++            advanceUntilIdle()
+ 
+-        verify(mediaPlayer, never()).start()
+-        verify(mediaActionSound).play(MediaActionSound.SHUTTER_CLICK)
+-    }
++            verify(mediaPlayer, never()).start()
++            verify(mediaActionSound).play(MediaActionSound.SHUTTER_CLICK)
++        }
  
      private fun createController() =
 -        ScreenshotSoundControllerImpl(soundProvider, soundPolicy, scope, bgDispatcher)
@@ -78,24 +85,38 @@ index 01f1ace1ecb10bd47b6404a9136d329cd3948900..935e208feb2ad484b5e3ce31abda0816
 +        )
  }
 diff --git a/packages/SystemUI/src/com/android/systemui/screenshot/ScreenshotSoundController.kt b/packages/SystemUI/src/com/android/systemui/screenshot/ScreenshotSoundController.kt
-index d39425006979e505ad11e721a3a520cc5f99ed35..faa1650890a64aefded39137fc1e408e9cbf063d 100644
+index d39425006979e505ad11e721a3a520cc5f99ed35..d22f5e48b09cc242494ec91e1fe8673a4263d5bb 100644
 --- a/packages/SystemUI/src/com/android/systemui/screenshot/ScreenshotSoundController.kt
 +++ b/packages/SystemUI/src/com/android/systemui/screenshot/ScreenshotSoundController.kt
-@@ -58,6 +58,7 @@ class ScreenshotSoundControllerImpl
+@@ -18,12 +18,14 @@ package com.android.systemui.screenshot
+ 
+ import android.media.MediaActionSound
+ import android.media.MediaPlayer
++import android.provider.Settings
+ import android.util.Log
+ import com.android.app.tracing.coroutines.asyncTraced as async
+ import com.android.app.tracing.coroutines.launchTraced as launch
+ import com.android.systemui.Flags.screenshotRemoveNonforcedSound
+ import com.android.systemui.dagger.qualifiers.Application
+ import com.android.systemui.dagger.qualifiers.Background
++import com.android.systemui.shared.settings.data.repository.SystemSettingsRepository
+ import javax.inject.Inject
+ import kotlin.time.Duration.Companion.seconds
+ import kotlinx.coroutines.CoroutineDispatcher
+@@ -58,6 +60,7 @@ class ScreenshotSoundControllerImpl
  constructor(
      private val soundProvider: ScreenshotSoundProvider,
      private val soundPolicy: ScreenshotSoundPolicy,
-+    private val systemSettings: com.android.systemui.shared.settings.data.repository.SystemSettingsRepository,
++    private val systemSettings: SystemSettingsRepository,
      @Application private val coroutineScope: CoroutineScope,
      @Background private val bgDispatcher: CoroutineDispatcher,
  ) : ScreenshotSoundController {
-@@ -87,6 +88,11 @@ constructor(
+@@ -87,6 +90,10 @@ constructor(
                  if (soundPolicy.shouldForceShutterSound()) {
                      forcedShutterSound.await()?.play(MediaActionSound.SHUTTER_CLICK)
                  } else {
 +                    if (systemSettings.getInt(
-+                                    android.provider.Settings.System.SOUND_EFFECTS_ENABLED,
-+                                    0) != 1) {
++                            Settings.System.SOUND_EFFECTS_ENABLED, 0) != 1) {
 +                        return@withContext
 +                    }
                      player.await()?.start()

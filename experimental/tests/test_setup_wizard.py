@@ -9,15 +9,15 @@ from __future__ import annotations
 
 import unittest
 
-from harness import PATCH_ROOT, VENDOR, LenosPatchTest, patch_paths
+from harness import PATCH_ROOT, LenosPatchTest, patch_paths
 
 PATCH = "0001-bootloader-unlocked-warning.patch"
 ALIAS = "packages_apps_SetupWizard"
-WELCOME = "src/org/lineageos/setupwizard/WelcomeActivity.java"
-LAYOUT = "res/layout/welcome_activity.xml"
-STRINGS = "res/values/strings.xml"
-COLORS = "res/values/colors.xml"
-DRAWABLE = "res/drawable/bootloader_warning_background.xml"
+WELCOME = "app/src/main/java/org/lineageos/setupwizard/WelcomeActivity.kt"
+LAYOUT = "app/src/main/res/layout/welcome_activity.xml"
+STRINGS = "app/src/main/res/values/strings.xml"
+COLORS = "app/src/main/res/values/colors.xml"
+DRAWABLE = "app/src/main/res/drawable/bootloader_warning_background.xml"
 
 
 class TestSetupWizardBootloaderWarning(LenosPatchTest):
@@ -34,9 +34,11 @@ class TestSetupWizardBootloaderWarning(LenosPatchTest):
     def test_warning_is_conditional_on_verified_boot_state(self):
         self.assert_contains(
             WELCOME,
+            "import android.os.SystemProperties",
             'SystemProperties.get("ro.boot.verifiedbootstate", "green")',
-            '!"green".equals(',
-            "bootloaderWarning.setVisibility(View.VISIBLE)",
+            '!= "green"',
+            "findViewById(R.id.bootloader_warning)",
+            "bootloaderWarning.visibility = View.VISIBLE",
         )
 
     def test_warning_copy_does_not_encourage_relocking_blindly(self):
@@ -52,6 +54,7 @@ class TestSetupWizardBootloaderWarning(LenosPatchTest):
         self.assert_contains(
             LAYOUT,
             'android:id="@+id/bootloader_warning"',
+            'android:layout_marginBottom="16dp"',
             'android:visibility="gone"',
             'android:background="@drawable/bootloader_warning_background"',
         )
@@ -74,8 +77,8 @@ class TestSetupWizardBootloaderWarning(LenosPatchTest):
         for rel in (LAYOUT, STRINGS, COLORS, DRAWABLE):
             self.assert_xml(rel)
 
-    def test_java_still_parses(self):
-        self.assert_java_syntax(WELCOME)
+    def test_kotlin_source_is_balanced(self):
+        self.assert_balanced(WELCOME)
 
 
 if __name__ == "__main__":

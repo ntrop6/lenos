@@ -65,7 +65,7 @@ index f5f1c1165cc1256c9bd9a262a0d261d5c97360c2..050dcd69f8ab96705231f26303beccdd
 +                android:id="@+id/bootloader_warning"
 +                android:layout_width="match_parent"
 +                android:layout_height="wrap_content"
-+                android:layout_marginBottom="@dimen/welcome_content_container_padding_bottom"
++                android:layout_marginBottom="16dp"
 +                android:background="@drawable/bootloader_warning_background"
 +                android:padding="16dp"
 +                android:textColor="@color/bootloader_warning_text"

@@ -1253,13 +1253,14 @@ Current experimental batches:
   fs-verity and same-versionCode cases. Debuggable-only recovery properties
   are retained. GrapheneOS's original-package exception for Vanadium/PDF
   viewer is not ported (lenOS ships neither).
-* **#25 — screenshot sound.** `frameworks_base/0002` removes the
-  `screenshotForceShutterSound` aconfig guard from the non-forced screenshot
-  sound and gates it on `Settings.System.SOUND_EFFECTS_ENABLED`; the forced
-  shutter path is unchanged. lenOS evaluates the forced path first so a
-  mandatory shutter sound is not silenced by the touch-sounds setting (a
-  deliberate deviation from GrapheneOS branch 17's early return; see the
-  experimental provenance doc).
+* **#25 — screenshot sound.** Android 17 already removed the
+  `screenshotForceShutterSound` aconfig guard from `ScreenshotSoundPolicy`.
+  `frameworks_base/0002` gates the non-forced screenshot sound on
+  `Settings.System.SOUND_EFFECTS_ENABLED`; the forced shutter path is
+  unchanged. lenOS evaluates the forced path first so a mandatory shutter
+  sound is not silenced by the touch-sounds setting (a deliberate deviation
+  from GrapheneOS branch 17's early return; see the experimental provenance
+  doc).
 * **#22 — USB-C data-line control.** `frameworks_base/0003` +
   `packages_apps_Settings/0002` implement the portable OS-side subset with
   AOSP's per-port `enableUsbData` HAL operation. Modes, keyguard transitions,

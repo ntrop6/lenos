@@ -1,16 +1,20 @@
 """Screenshot sound follows the system sound-effects setting (Tier 2 #25).
 
-GrapheneOS removes the `screenshotForceShutterSound` aconfig gate around the
-non-forced screenshot sound and gates it on `Settings.System.SOUND_EFFECTS_ENABLED`
-instead. lenOS evaluates the forced-shutter path first so a mandatory shutter
-sound is never suppressed by the touch-sounds setting; the non-forced path is
-the only one gated.
+GrapheneOS branch 17 gates the non-forced screenshot sound on
+``Settings.System.SOUND_EFFECTS_ENABLED``. lenOS deliberately evaluates the
+forced-shutter path first so a mandatory shutter sound is never suppressed by
+the touch-sounds setting; only the non-forced player is gated.
+
+Android 17 already removed the ``screenshotForceShutterSound`` aconfig gate
+from ``ScreenshotSoundPolicy``, so the lenOS patch only changes the controller
+and its test. The policy files are copied into the sandbox unchanged to keep
+the properties documented here pinned against the pinned tree.
 """
 from __future__ import annotations
 
 import unittest
 
-from harness import PATCH_ROOT, VENDOR, LenosPatchTest, patch_paths
+from harness import PATCH_ROOT, LenosPatchTest, patch_paths
 
 PATCH = "0002-screenshot-sound-settings.patch"
 ALIAS = "frameworks_base"
@@ -22,18 +26,19 @@ CONTROLLER_TEST = ("packages/SystemUI/multivalentTests/src/com/android/systemui/
                    "screenshot/ScreenshotSoundControllerTest.kt")
 POLICY_TEST = ("packages/SystemUI/multivalentTests/src/com/android/systemui/"
                "screenshot/ScreenshotSoundPolicyTest.kt")
+PATCHED_FILES = [CONTROLLER, CONTROLLER_TEST]
 
 
 class TestScreenshotSound(LenosPatchTest):
     PROJECT = "frameworks/base"
     PATCHES = [PATCH]
+    EXTRA_FILES = [POLICY, POLICY_TEST]
 
-    def test_patch_is_limited_to_the_screenshot_sound_classes_and_their_tests(self):
+    def test_patch_is_limited_to_the_controller_and_its_test(self):
         patch = PATCH_ROOT / ALIAS / PATCH
-        self.assertEqual(
-            sorted(patch_paths(patch)),
-            sorted([CONTROLLER, POLICY, CONTROLLER_TEST, POLICY_TEST]),
-        )
+        self.assertEqual(sorted(patch_paths(patch)), sorted(PATCHED_FILES))
+        self.assertNotIn(POLICY, patch_paths(patch))
+        self.assertNotIn(POLICY_TEST, patch_paths(patch))
 
     def test_existing_tests_are_updated_to_the_new_constructor(self):
         self.assert_contains(
@@ -41,7 +46,7 @@ class TestScreenshotSound(LenosPatchTest):
             "FakeSystemSettingsRepository",
             "fakeSystemSettingsRepo.setInt(Settings.System.SOUND_EFFECTS_ENABLED, 1)",
             "fakeSystemSettingsRepo.setInt(Settings.System.SOUND_EFFECTS_ENABLED, 0)",
-            "soundEffectsDisabled_noSoundPlays",
+            "playCameraSound_soundEffectsDisabled_noSoundPlays",
             "screenshotSoundForced_ignoresSoundEffectsSetting",
             "ScreenshotSoundControllerImpl(",
             "fakeSystemSettingsRepo,",
@@ -97,7 +102,9 @@ class TestScreenshotSound(LenosPatchTest):
         )
         self.assert_contains(
             CONTROLLER,
-            "private val systemSettings: com.android.systemui.shared.settings.data.repository.SystemSettingsRepository",
+            "import com.android.systemui.shared.settings.data.repository."
+            "SystemSettingsRepository",
+            "private val systemSettings: SystemSettingsRepository,",
         )
         self.assert_balanced(POLICY)
         self.assert_balanced(CONTROLLER)

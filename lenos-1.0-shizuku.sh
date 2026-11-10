@@ -29,7 +29,6 @@ set -euo pipefail
 umask 077
 
 readonly LENOS_VERSION="1.0.0-shizuku"
-readonly CODENAME="shizuku"
 
 err()  { printf '[lenOS %s] ERROR: %s\n' "$LENOS_VERSION" "$*" >&2; }
 die()  { err "$*"; exit 1; }
