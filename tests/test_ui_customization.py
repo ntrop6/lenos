@@ -1,12 +1,12 @@
-"""Local-only visual customization (LenosParts + SystemUI theme overlays).
+"""Local-only visual customization (Settings panel + SystemUI overlays).
 
 Feature contract (see docs/axion-ui.md):
 
-* The personalization layer is a local dashboard and preinstalled resource
-  overlays. It has no INTERNET permission, no account, no telemetry and no
-  Google/GMS/Play Integrity code path.
-* Theme packs are mutable SystemUI overlays. LenosParts enables exactly one
-  pack (or none) through OverlayManager.
+* The personalization layer is a local panel inside Settings and
+  preinstalled resource overlays. It has no network code, account, telemetry
+  or Google/GMS/Play Integrity code path.
+* Theme packs are mutable SystemUI overlays. The lenOS Settings panel enables
+  exactly one pack (or none) through OverlayManager.
 * Notification corner radius and grouped-notification dividers are separate
   mutable SystemUI overlays, independent of the theme packs.
 * The status bar clock size is a separate mutable SystemUI overlay choice.
@@ -25,9 +25,8 @@ from __future__ import annotations
 import re
 import unittest
 import xml.etree.ElementTree as ET
-from pathlib import Path
 
-from harness import VENDOR, java_syntax_errors
+from harness import VENDOR, LenosPatchTest
 
 ANDROID_NS = "{http://schemas.android.com/apk/res/android}"
 
@@ -97,54 +96,66 @@ def parse_xml(rel: str) -> ET.Element:
     return ET.parse(VENDOR / rel).getroot()
 
 
-class TestLenosPartsApp(unittest.TestCase):
-    MANIFEST = "app/LenosParts/AndroidManifest.xml"
+class SettingsPanelTest(LenosPatchTest):
+    """Apply the Settings series and assert on the merged lenOS panel."""
 
-    def test_manifest_is_minimal_and_local(self):
-        root = parse_xml(self.MANIFEST)
+    PROJECT = "packages/apps/Settings"
+    PATCHES = [
+        "0001-lenos-ext-settings-ui.patch",
+        "0002-lenos-disable-user-apps.patch",
+        "0003-lenos-user-app-installs.patch",
+        "0004-lenos-panel.patch",
+    ]
+    PANEL = "src/com/android/settings/lenos/LenosSettingsFragment.java"
+    DURESS = "src/com/android/settings/lenos/LenosDuressFragment.java"
+    BRIDGE = "src/com/android/settings/lenos/LenosLockBridge.java"
+    MANIFEST = "AndroidManifest.xml"
+    TOP_LEVEL = "res/xml/top_level_settings.xml"
+    PANEL_XML = "res/xml/lenos_settings.xml"
+    STRINGS = "res/values/strings_lenos.xml"
+    LAYOUT = "res/layout/lenos_duress_fragment.xml"
+    ICON = "res/drawable/ic_lenos_settings.xml"
+
+
+class TestSettingsPanel(SettingsPanelTest):
+    def test_manifest_grants_the_narrow_permissions(self):
+        root = ET.fromstring(self.text(self.MANIFEST))
         permissions = {
             node.get(f"{ANDROID_NS}name")
             for node in root.findall("uses-permission")
         }
-        self.assertEqual(
-            permissions,
-            {
-                "android.permission.CHANGE_OVERLAY_PACKAGES",
-                "android.permission.WRITE_SECURE_SETTINGS",
-                "com.android.launcher3.permission.GRID_CONTROL",
-            },
-            "LenosParts must keep its privileged permission set minimal",
-        )
-        for banned in BANNED_APP_TEXT:
-            self.assertNotIn(banned.lower(),
-                             (VENDOR / self.MANIFEST).read_text().lower())
+        for required in (
+            "android.permission.CHANGE_OVERLAY_PACKAGES",
+            "android.permission.WRITE_SECURE_SETTINGS",
+            "android.permission.ACCESS_KEYGUARD_SECURE_STORAGE",
+            "com.android.launcher3.permission.GRID_CONTROL",
+        ):
+            self.assertIn(required, permissions)
+        self.assertNotIn("android.permission.BIND_WALLPAPER", permissions,
+                         "the broad wallpaper permission is not needed")
 
-        application = root.find("application")
-        self.assertIsNotNone(application)
+    def test_top_level_entry_opens_the_panel(self):
+        root = ET.fromstring(self.text(self.TOP_LEVEL))
+        entries = [
+            node for node in root.iter()
+            if node.get(f"{ANDROID_NS}key") == "top_level_lenos"
+        ]
+        self.assertEqual(len(entries), 1)
+        entry = entries[0]
         self.assertEqual(
-            application.get(f"{ANDROID_NS}allowBackup"), "false")
-        activity = application.find("activity")
-        self.assertIsNotNone(activity)
-        self.assertEqual(activity.get(f"{ANDROID_NS}exported"), "true")
-        actions = {
-            node.get(f"{ANDROID_NS}name")
-            for node in activity.findall("intent-filter/action")
-        }
-        self.assertIn("android.intent.action.MAIN", actions)
+            entry.get(f"{ANDROID_NS}fragment"),
+            "com.android.settings.lenos.LenosSettingsFragment")
+        self.assertEqual(entry.get(f"{ANDROID_NS}title"),
+                         "@string/lenos_settings_title")
 
-    def test_build_uses_platform_apis_and_no_network_dependency(self):
-        body = (VENDOR / "app/LenosParts/Android.bp").read_text()
-        self.assertIn('name: "LenosParts"', body)
-        self.assertIn("platform_apis: true", body)
-        self.assertIn("privileged: true", body)
-        self.assertIn('certificate: "platform"', body)
-        for banned in ("static_libs", "jni_libs", "sdk_version"):
-            self.assertNotIn(banned, body)
-        self.assertNotIn("INTERNET", body)
+    def test_panel_resources_are_well_formed(self):
+        for rel in (self.TOP_LEVEL, self.PANEL_XML, self.STRINGS,
+                    self.LAYOUT, self.ICON):
+            with self.subTest(resource=rel):
+                self.assert_xml(rel)
 
     def test_source_uses_local_overlays_and_settings_only(self):
-        source = VENDOR / "app/LenosParts/src/org/lenos/parts/MainActivity.java"
-        body = source.read_text()
+        body = self.text(self.PANEL)
         for needle in (
             "OverlayManager",
             "Process.myUserHandle()",
@@ -168,11 +179,12 @@ class TestLenosPartsApp(unittest.TestCase):
             "org.lenos.clock.compact",
             "org.lenos.clock.large",
             "org.lenos.clock.xlarge",
-            "applyQsLayout(",
-            "applyNotifyCorners(",
+            "configureQuickSettingsPreferences(",
+            "configureNotificationPreferences(",
+            "configureClockPreference(",
+            "applyOverlayChoice(",
             "applyNotifyDividers(",
-            "applyClockSize(",
-            "refreshClockSize(",
+            "refreshClockPreference(",
             "openLockScreenSettings(",
             "Settings.ACTION_LOCKSCREEN_SETTINGS",
             "Settings.ACTION_SECURITY_SETTINGS",
@@ -183,7 +195,6 @@ class TestLenosPartsApp(unittest.TestCase):
             "Intent.ACTION_APPLICATION_PREFERENCES",
             "Settings.ACTION_HOME_SETTINGS",
             "com.android.launcher3.grid_control",
-            "GRID_CONTROL",
             "applyMonetSeed(",
             "restoreMonetSeed(",
             "backupMonetValue(",
@@ -205,20 +216,42 @@ class TestLenosPartsApp(unittest.TestCase):
             self.assertIn(needle, body)
         for banned in BANNED_JAVA:
             self.assertNotIn(banned, body)
+        self.assertNotIn("LenosParts", body)
+        self.assertNotIn("LenosSecurity", body)
+
+    def test_duress_ui_stays_inside_settings(self):
+        duress = self.text(self.DURESS)
+        bridge = self.text(self.BRIDGE)
+        for needle in (
+            "extends Fragment",
+            "FLAG_SECURE",
+            "setDuress(",
+            "hasDuress(",
+            "deleteDuress(",
+            "zeroize(",
+        ):
+            self.assertIn(needle, duress)
+        for needle in (
+            "LockPatternUtils",
+            "LockscreenCredential",
+            "setDuressCredentials",
+            "hasDuressCredentials",
+            "deleteDuressCredentials",
+        ):
+            self.assertIn(needle, bridge)
+        for banned in BANNED_JAVA:
+            self.assertNotIn(banned, duress)
+            self.assertNotIn(banned, bridge)
 
     def test_java_parses(self):
-        self.assertEqual(
-            java_syntax_errors(
-                VENDOR / "app/LenosParts/src/org/lenos/parts/MainActivity.java"),
-            0,
-        )
+        for rel in (self.PANEL, self.DURESS, self.BRIDGE):
+            with self.subTest(source=rel):
+                self.assert_java_syntax(rel)
 
 
-class TestMonetSeeding(unittest.TestCase):
-    SOURCE = VENDOR / "app/LenosParts/src/org/lenos/parts/MainActivity.java"
-
+class TestMonetSeeding(SettingsPanelTest):
     def test_seed_and_style_arrays_are_aligned(self):
-        body = self.SOURCE.read_text()
+        body = self.text(self.PANEL)
         seeds_match = re.search(r"THEME_SEEDS = \{(.*?)\};", body, re.S)
         styles_match = re.search(r"THEME_STYLES = \{(.*?)\};", body, re.S)
         self.assertIsNotNone(seeds_match)
@@ -229,8 +262,8 @@ class TestMonetSeeding(unittest.TestCase):
         self.assertEqual(
             styles, ["VIBRANT", "TONAL_SPOT", "MONOCHROMATIC"])
 
-    def test_stock_restores_only_values_the_app_wrote(self):
-        body = self.SOURCE.read_text()
+    def test_stock_restores_only_values_the_panel_wrote(self):
+        body = self.text(self.PANEL)
         self.assertIn("restoreMonetSeed(", body)
         self.assertIn("restoreMonetValue(", body)
         self.assertIn("owned.equals(current)", body,
@@ -509,27 +542,26 @@ class TestNotificationOverlays(unittest.TestCase):
         self.assertEqual(values, {"notification_divider_color": "#00000000"})
 
 
-class TestNotificationControls(unittest.TestCase):
-    SOURCE = VENDOR / "app/LenosParts/src/org/lenos/parts/MainActivity.java"
-
+class TestNotificationControls(SettingsPanelTest):
     def test_corners_and_dividers_have_independent_controls(self):
-        body = self.SOURCE.read_text()
+        body = self.text(self.PANEL)
         for needle in (
+            "NOTIFY_CORNER_VALUES",
             "NOTIFY_CORNER_PACKAGES",
             "org.lenos.notify.corners.round",
             "org.lenos.notify.corners.compact",
             "org.lenos.notify.corners.square",
             "NOTIFY_DIVIDERS_PACKAGE",
             "org.lenos.notify.dividers.hidden",
-            "applyNotifyCorners(",
+            "configureNotificationPreferences(",
+            "refreshNotificationPreferences(",
+            "applyOverlayChoice(",
             "applyNotifyDividers(",
-            "refreshNotifySelection(",
-            "suppressNotify",
         ):
             self.assertIn(needle, body)
 
     def test_notification_controls_do_not_write_theme_pack_resources(self):
-        body = self.SOURCE.read_text()
+        body = self.text(self.PANEL)
         # Radius choices are separate overlays; the theme-pack selector must
         # not also set the notification radii.
         self.assertNotIn("notification_corner_radius", body)
@@ -587,26 +619,27 @@ class TestClockOverlays(unittest.TestCase):
                 )
 
 
-class TestStatusBarControls(unittest.TestCase):
-    SOURCE = VENDOR / "app/LenosParts/src/org/lenos/parts/MainActivity.java"
-
+class TestStatusBarControls(SettingsPanelTest):
     def test_clock_size_is_a_separate_overlay_choice(self):
-        body = self.SOURCE.read_text()
+        body = self.text(self.PANEL)
         for needle in (
-            "CLOCK_SIZE_LABELS",
-            "CLOCK_SIZE_PACKAGES",
-            "System default (14 sp)",
+            "CLOCK_VALUES",
+            "CLOCK_PACKAGES",
             "org.lenos.clock.compact",
             "org.lenos.clock.large",
             "org.lenos.clock.xlarge",
-            "applyClockSize(",
-            "refreshClockSize(",
-            "suppressClock",
+            "configureClockPreference(",
+            "refreshClockPreference(",
+            "applyOverlayChoice(",
         ):
             self.assertIn(needle, body)
+        strings = self.text(self.STRINGS)
+        self.assertIn("System default (14 sp)", strings)
+        self.assertIn("Compact (12 sp)", strings)
+        self.assertIn("Extra large (18 sp)", strings)
 
     def test_stock_clock_and_battery_settings_are_not_duplicated(self):
-        body = self.SOURCE.read_text()
+        body = self.text(self.PANEL)
         for key in (
             "clock_seconds",
             "lockscreen_use_double_line_clock",
@@ -620,7 +653,7 @@ class TestStatusBarControls(unittest.TestCase):
         self.assertNotIn("LineageSettings", body)
 
     def test_lock_screen_shortcut_uses_the_stock_intent(self):
-        body = self.SOURCE.read_text()
+        body = self.text(self.PANEL)
         for needle in (
             "Settings.ACTION_LOCKSCREEN_SETTINGS",
             "Settings.ACTION_SECURITY_SETTINGS",
@@ -629,35 +662,33 @@ class TestStatusBarControls(unittest.TestCase):
             self.assertIn(needle, body)
 
 
-class TestMotionControls(unittest.TestCase):
-    SOURCE = VENDOR / "app/LenosParts/src/org/lenos/parts/MainActivity.java"
-
+class TestMotionControls(SettingsPanelTest):
     def test_surfaces_have_independent_controls(self):
-        body = self.SOURCE.read_text()
+        body = self.text(self.PANEL)
         for needle in (
-            'motionSpinner("System animations"',
-            'motionSpinner("Transition animations"',
-            'motionSpinner("Window animations"',
+            "configureMotionPreference(KEY_MOTION_ANIMATOR",
+            "configureMotionPreference(KEY_MOTION_TRANSITION",
+            "configureMotionPreference(KEY_MOTION_WINDOW",
             "Settings.Global.ANIMATOR_DURATION_SCALE",
             "Settings.Global.TRANSITION_ANIMATION_SCALE",
             "Settings.Global.WINDOW_ANIMATION_SCALE",
-            "applyMotion(key, MOTION_VALUES[position])",
+            "applyMotion(settingKey, scale",
             "resetMotion(",
+            'return "System animations";',
+            'return "Transition animations";',
+            'return "Window animations";',
         ):
             self.assertIn(needle, body)
 
     def test_no_master_preset_rewrites_all_surfaces(self):
-        body = self.SOURCE.read_text()
-        self.assertNotIn("applyMotion(MOTION_VALUES[position])", body,
+        body = self.text(self.PANEL)
+        self.assertNotIn("applyMotion(MOTION_VALUES", body,
                          "the old master preset must not overwrite every scale")
 
 
-class TestLauncherIntegration(unittest.TestCase):
-    SOURCE = VENDOR / "app/LenosParts/src/org/lenos/parts/MainActivity.java"
-    MANIFEST = "app/LenosParts/AndroidManifest.xml"
-
+class TestLauncherIntegration(SettingsPanelTest):
     def test_grid_control_permission_is_narrow_and_signature_scoped(self):
-        root = parse_xml(self.MANIFEST)
+        root = ET.fromstring(self.text(self.MANIFEST))
         permissions = {
             node.get(f"{ANDROID_NS}name")
             for node in root.findall("uses-permission")
@@ -666,19 +697,9 @@ class TestLauncherIntegration(unittest.TestCase):
             "com.android.launcher3.permission.GRID_CONTROL", permissions)
         self.assertNotIn("android.permission.BIND_WALLPAPER", permissions,
                          "the broad wallpaper permission is not needed")
-        allowlist = parse_xml(
-            "config/privapp-permissions-org.lenos.parts.xml")
-        node = allowlist.find("privapp-permissions")
-        allowlisted = {
-            child.get("name") for child in node.findall("permission")
-        }
-        self.assertNotIn(
-            "com.android.launcher3.permission.GRID_CONTROL", allowlisted,
-            "GRID_CONTROL is signature-scoped, not a privileged permission",
-        )
 
     def test_grid_provider_uses_the_documented_contract(self):
-        body = self.SOURCE.read_text()
+        body = self.text(self.PANEL)
         for needle in (
             "com.android.launcher3.grid_control",
             '"/list_options"',
@@ -698,7 +719,7 @@ class TestLauncherIntegration(unittest.TestCase):
         self.assertNotIn("ACCESS_LAUNCHER_DATA", body)
 
     def test_shape_and_themed_icon_contract(self):
-        body = self.SOURCE.read_text()
+        body = self.text(self.PANEL)
         for needle in (
             '"/shape_options"',
             '"/shape"',
@@ -713,7 +734,7 @@ class TestLauncherIntegration(unittest.TestCase):
             self.assertIn(needle, body)
 
     def test_launcher_settings_intent_has_a_stock_fallback(self):
-        body = self.SOURCE.read_text()
+        body = self.text(self.PANEL)
         for needle in (
             "Intent.ACTION_APPLICATION_PREFERENCES",
             "setPackage(LAUNCHER_PACKAGE)",
@@ -724,7 +745,7 @@ class TestLauncherIntegration(unittest.TestCase):
             self.assertIn(needle, body)
 
     def test_launcher_calls_do_not_block_the_ui_thread(self):
-        body = self.SOURCE.read_text()
+        body = self.text(self.PANEL)
         for needle in (
             "lenos-launcher-grid-query",
             "lenos-launcher-grid-apply",
@@ -733,9 +754,9 @@ class TestLauncherIntegration(unittest.TestCase):
             "lenos-launcher-themed-query",
             "lenos-launcher-themed-apply",
             "runOnUiThread(",
-            "launcherGridRequest",
-            "launcherShapeRequest",
-            "launcherThemedRequest",
+            "LauncherGridRequest",
+            "LauncherShapeRequest",
+            "LauncherThemedRequest",
         ):
             self.assertIn(needle, body)
 
@@ -743,33 +764,30 @@ class TestLauncherIntegration(unittest.TestCase):
 class TestProductWiring(unittest.TestCase):
     def test_personalization_is_shipped(self):
         body = (VENDOR / "config/lenos.mk").read_text()
-        for needle in ("LenosParts", *THEMES, *FRAMEWORK_THEMES,
-                       *QS_OVERLAYS, *NOTIFY_CORNER_OVERLAYS,
+        for needle in (*THEMES, *FRAMEWORK_THEMES, *QS_OVERLAYS,
+                       *NOTIFY_CORNER_OVERLAYS,
                        NOTIFY_DIVIDERS_OVERLAY, *CLOCK_OVERLAYS):
             self.assertIn(needle, body)
+        self.assertIn("merged lenOS panel", body)
+        self.assertNotIn("LenosParts", body)
+        self.assertNotIn("LenosSecurity", body)
 
-    def test_privapp_allowlist_is_scoped_to_the_app(self):
-        root = parse_xml(
-            "config/privapp-permissions-org.lenos.parts.xml")
-        node = root.find("privapp-permissions")
-        self.assertIsNotNone(node)
-        self.assertEqual(node.get("package"), "org.lenos.parts")
-        permissions = {
-            child.get("name") for child in node.findall("permission")
-        }
-        self.assertEqual(
-            permissions,
-            {
-                "android.permission.CHANGE_OVERLAY_PACKAGES",
-                "android.permission.WRITE_SECURE_SETTINGS",
-            },
-        )
+    def test_standalone_apps_and_allowlists_are_gone(self):
+        for rel in (
+            "app/LenosParts",
+            "app/LenosSecurity",
+            "config/privapp-permissions-org.lenos.parts.xml",
+            "config/privapp-permissions-org.lenos.security.xml",
+        ):
+            self.assertFalse((VENDOR / rel).exists(), rel)
 
     def test_docs_describe_the_local_only_boundary(self):
         doc = (VENDOR / "docs/axion-ui.md").read_text()
         self.assertIn("local-only", doc.lower())
-        self.assertIn("LenosParts", doc)
-        self.assertIn("Theme Store", doc, "the excluded online store must be explicit")
+        self.assertIn("lenOS Settings panel", doc)
+        self.assertNotIn("LenosParts", doc)
+        self.assertIn("Theme Store", doc,
+                      "the excluded online store must be explicit")
         features = (VENDOR / "docs/features.md").read_text()
         self.assertIn("personalization", features.lower())
 

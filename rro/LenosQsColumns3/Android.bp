@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0
 //
 // Mutable SystemUI overlay for the Quick Settings columns choice.
-// Installed on the product partition and toggled by LenosParts.
+// Installed on the product partition and toggled by the lenOS Settings panel.
 //
 runtime_resource_overlay {
     name: "LenosQsColumns3",

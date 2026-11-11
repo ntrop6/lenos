@@ -2,8 +2,8 @@
 
 Feature contract (see docs/features.md):
 * ``LENOS_STRIP_PACKAGES`` lets the product makefile drop bundled apps.
-* LineageOS 24.0 no longer ships Gallery2, so lenOS's default list is empty;
-  the hook stays wired and tested for future policy changes.
+* The lenOS product strips Updater, Jelly, Etar, Twelve, Recorder and
+  Glimpse; AudioFX uses LineageOS' existing TARGET_EXCLUDES_AUDIOFX switch.
 * Dropping is done by filtering the app lists where they are declared, so the
   mechanism works with the build system's product-inheritance model (product
   makefiles cannot filter inherited PRODUCT_PACKAGES values).
@@ -42,6 +42,21 @@ class TestAppSet(LenosPatchTest):
             "Camelot \\",
             "Twelve)",
         )
+
+    def test_updater_is_filtered_and_its_init_script_is_guarded(self):
+        self.assert_contains(
+            self.COMMON,
+            "LineageSettingsProvider \\",
+            "Updater)",
+            "ifeq ($(filter Updater,$(LENOS_STRIP_PACKAGES)),)",
+            "endif",
+        )
+        # A stripped Updater must not leave an ownerless init.rc copy behind.
+        body = self.text(self.COMMON)
+        copy_at = body.index("init.lineage-updater.rc:")
+        guard_at = body.index(
+            "ifeq ($(filter Updater,$(LENOS_STRIP_PACKAGES)),)")
+        self.assertLess(guard_at, copy_at)
 
     def test_app_names_are_preserved_for_products_that_keep_them(self):
         # The filter must not delete the names, only skip them at build time:

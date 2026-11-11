@@ -3,7 +3,7 @@
      SPDX-FileCopyrightText: 2026 lenOS
      SPDX-License-Identifier: Apache-2.0
 
-     Mutable (not static) overlay: LenosParts enables exactly one theme pack
+     Mutable (not static) overlay: The lenOS Settings panel enables exactly one theme pack
      through OverlayManager.
 -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"

@@ -1,5 +1,5 @@
 diff --git a/config/common.mk b/config/common.mk
-index 3f9b089e90a5a4e63ac21b9ee5a8a0d9230c93ba..652150a68ee204575c12336599b6fe83dba40eba 100644
+index 3f9b089..facc0df 100644
 --- a/config/common.mk
 +++ b/config/common.mk
 @@ -141,10 +141,13 @@ PRODUCT_PACKAGES += \
@@ -18,8 +18,26 @@ index 3f9b089e90a5a4e63ac21b9ee5a8a0d9230c93ba..652150a68ee204575c12336599b6fe83
  endif
  
  ifeq ($(PRODUCT_IS_AUTOMOTIVE),)
+@@ -153,12 +156,15 @@ PRODUCT_PACKAGES += \
+     LineageSetupWizard
+ endif
+ 
+-PRODUCT_PACKAGES += \
++PRODUCT_PACKAGES += $(filter-out $(LENOS_STRIP_PACKAGES), \
+     LineageSettingsProvider \
+-    Updater
++    Updater)
+ 
++# lenOS: the updater's init script has no owner when the app is stripped.
++ifeq ($(filter Updater,$(LENOS_STRIP_PACKAGES)),)
+ PRODUCT_COPY_FILES += \
+     vendor/lineage/prebuilt/common/etc/init/init.lineage-updater.rc:$(TARGET_COPY_OUT_SYSTEM_EXT)/etc/init/init.lineage-updater.rc
++endif
+ 
+ # Config
+ PRODUCT_PACKAGES += \
 diff --git a/config/common_mobile.mk b/config/common_mobile.mk
-index 83ad397c671e35c8271d67f424997e9a121d232c..7c9b6b3a72350674885f97dc2e2a940623e5739e 100644
+index 83ad397..7c9b6b3 100644
 --- a/config/common_mobile.mk
 +++ b/config/common_mobile.mk
 @@ -14,12 +14,13 @@ PRODUCT_PRODUCT_PROPERTIES += \
@@ -39,7 +57,7 @@ index 83ad397c671e35c8271d67f424997e9a121d232c..7c9b6b3a72350674885f97dc2e2a9406
  ifeq ($(PRODUCT_TYPE), go)
  PRODUCT_PACKAGES += \
 diff --git a/config/common_mobile_full.mk b/config/common_mobile_full.mk
-index 4de1d42f5e8884617184531a143e0774b1a70206..a346ccf9597f95df45941b9c5eab4f2606719625 100644
+index 4de1d42..a346ccf 100644
 --- a/config/common_mobile_full.mk
 +++ b/config/common_mobile_full.mk
 @@ -7,13 +7,14 @@ PRODUCT_SIZE := full

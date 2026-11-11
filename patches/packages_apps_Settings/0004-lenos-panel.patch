@@ -1,0 +1,2489 @@
+diff --git a/AndroidManifest.xml b/AndroidManifest.xml
+index e45bc1b..9a341d4 100644
+--- a/AndroidManifest.xml
++++ b/AndroidManifest.xml
+@@ -144,6 +144,11 @@
+     <uses-permission android:name="android.permission.RESTART_TELEPHONY_PROCESS" />
+     <uses-permission android:name="android.permission.MANAGE_ENHANCED_CONFIRMATION_STATES" />
+     <uses-permission android:name="android.permission.ACCESS_KEYGUARD_SECURE_STORAGE" />
++    <!-- lenOS panel: mutable preinstalled theme/QS/notification overlays and
++         Launcher3's signature-scoped grid-control provider. Settings is
++         platform-signed, so both signature permissions are granted. -->
++    <uses-permission android:name="android.permission.CHANGE_OVERLAY_PACKAGES" />
++    <uses-permission android:name="com.android.launcher3.permission.GRID_CONTROL" />
+     <uses-permission android:name="android.permission.MANAGE_NETWORK_POLICY" />
+     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+     <uses-permission android:name="android.permission.GET_BACKGROUND_INSTALLED_PACKAGES" />
+diff --git a/res/drawable/ic_lenos_settings.xml b/res/drawable/ic_lenos_settings.xml
+new file mode 100644
+index 0000000..c986065
+--- /dev/null
++++ b/res/drawable/ic_lenos_settings.xml
+@@ -0,0 +1,15 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!--
++  SPDX-FileCopyrightText: 2026 lenOS
++  SPDX-License-Identifier: Apache-2.0
++-->
++<vector xmlns:android="http://schemas.android.com/apk/res/android"
++    android:width="24dp"
++    android:height="24dp"
++    android:viewportWidth="24"
++    android:viewportHeight="24"
++    android:tint="?android:attr/colorControlNormal">
++    <path
++        android:fillColor="@android:color/white"
++        android:pathData="M3,17v2h6v-2H3zM3,5v2h10V5H3zM13,21v-2h8v-2h-8v-2h-2v6h2zM7,9v2H3v2h4v2h2V9H7zM21,13v-2H11v2h10zM15,9h2V7h4V5h-4V3h-2v6z" />
++</vector>
+diff --git a/res/layout/lenos_duress_fragment.xml b/res/layout/lenos_duress_fragment.xml
+new file mode 100644
+index 0000000..12b5022
+--- /dev/null
++++ b/res/layout/lenos_duress_fragment.xml
+@@ -0,0 +1,152 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!--
++  SPDX-FileCopyrightText: 2026 lenOS
++  SPDX-License-Identifier: Apache-2.0
++
++  Duress credential screen. It lives inside Settings and deliberately keeps
++  all secrets in memory: the fields are not persistent preferences.
++-->
++<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
++    android:layout_width="match_parent"
++    android:layout_height="match_parent"
++    android:fillViewport="true"
++    android:importantForAutofill="no"
++    android:clipToPadding="false">
++
++    <LinearLayout
++        android:layout_width="match_parent"
++        android:layout_height="wrap_content"
++        android:orientation="vertical"
++        android:paddingStart="24dp"
++        android:paddingTop="24dp"
++        android:paddingEnd="24dp"
++        android:paddingBottom="32dp">
++
++        <TextView
++            android:layout_width="match_parent"
++            android:layout_height="wrap_content"
++            android:text="@string/lenos_duress_warning"
++            android:textAppearance="?android:attr/textAppearanceSmall"
++            android:textColor="?attr/colorError" />
++
++        <TextView
++            android:id="@+id/lenos_duress_status"
++            android:layout_width="match_parent"
++            android:layout_height="wrap_content"
++            android:layout_marginTop="16dp"
++            android:text="@string/lenos_duress_check_hint"
++            android:textAppearance="?android:attr/textAppearanceSmall" />
++
++        <com.google.android.material.textfield.TextInputLayout
++            android:id="@+id/lenos_owner_pin_layout"
++            android:layout_width="match_parent"
++            android:layout_height="wrap_content"
++            android:layout_marginTop="16dp"
++            android:hint="@string/lenos_duress_owner_pin"
++            android:importantForAutofill="no">
++
++            <com.google.android.material.textfield.TextInputEditText
++                android:id="@+id/lenos_owner_pin"
++                android:layout_width="match_parent"
++                android:layout_height="wrap_content"
++                android:freezesText="false"
++                android:inputType="numberPassword"
++                android:maxLines="1"
++                android:saveEnabled="false" />
++        </com.google.android.material.textfield.TextInputLayout>
++
++        <com.google.android.material.button.MaterialButton
++            android:id="@+id/lenos_duress_check"
++            android:layout_width="match_parent"
++            android:layout_height="wrap_content"
++            android:layout_marginTop="8dp"
++            android:text="@string/lenos_duress_check" />
++
++        <com.google.android.material.textfield.TextInputLayout
++            android:id="@+id/lenos_duress_pin_layout"
++            android:layout_width="match_parent"
++            android:layout_height="wrap_content"
++            android:layout_marginTop="16dp"
++            android:hint="@string/lenos_duress_pin"
++            android:importantForAutofill="no">
++
++            <com.google.android.material.textfield.TextInputEditText
++                android:id="@+id/lenos_duress_pin"
++                android:layout_width="match_parent"
++                android:layout_height="wrap_content"
++                android:freezesText="false"
++                android:inputType="numberPassword"
++                android:maxLines="1"
++                android:saveEnabled="false" />
++        </com.google.android.material.textfield.TextInputLayout>
++
++        <com.google.android.material.textfield.TextInputLayout
++            android:id="@+id/lenos_duress_pin_confirm_layout"
++            android:layout_width="match_parent"
++            android:layout_height="wrap_content"
++            android:layout_marginTop="8dp"
++            android:hint="@string/lenos_duress_pin_confirm"
++            android:importantForAutofill="no">
++
++            <com.google.android.material.textfield.TextInputEditText
++                android:id="@+id/lenos_duress_pin_confirm"
++                android:layout_width="match_parent"
++                android:layout_height="wrap_content"
++                android:freezesText="false"
++                android:inputType="numberPassword"
++                android:maxLines="1"
++                android:saveEnabled="false" />
++        </com.google.android.material.textfield.TextInputLayout>
++
++        <com.google.android.material.textfield.TextInputLayout
++            android:id="@+id/lenos_duress_password_layout"
++            android:layout_width="match_parent"
++            android:layout_height="wrap_content"
++            android:layout_marginTop="8dp"
++            android:hint="@string/lenos_duress_password"
++            android:importantForAutofill="no">
++
++            <com.google.android.material.textfield.TextInputEditText
++                android:id="@+id/lenos_duress_password"
++                android:layout_width="match_parent"
++                android:layout_height="wrap_content"
++                android:freezesText="false"
++                android:inputType="textPassword"
++                android:maxLines="1"
++                android:saveEnabled="false" />
++        </com.google.android.material.textfield.TextInputLayout>
++
++        <com.google.android.material.textfield.TextInputLayout
++            android:id="@+id/lenos_duress_password_confirm_layout"
++            android:layout_width="match_parent"
++            android:layout_height="wrap_content"
++            android:layout_marginTop="8dp"
++            android:hint="@string/lenos_duress_password_confirm"
++            android:importantForAutofill="no">
++
++            <com.google.android.material.textfield.TextInputEditText
++                android:id="@+id/lenos_duress_password_confirm"
++                android:layout_width="match_parent"
++                android:layout_height="wrap_content"
++                android:freezesText="false"
++                android:inputType="textPassword"
++                android:maxLines="1"
++                android:saveEnabled="false" />
++        </com.google.android.material.textfield.TextInputLayout>
++
++        <com.google.android.material.button.MaterialButton
++            android:id="@+id/lenos_duress_save"
++            android:layout_width="match_parent"
++            android:layout_height="wrap_content"
++            android:layout_marginTop="16dp"
++            android:text="@string/lenos_duress_save" />
++
++        <com.google.android.material.button.MaterialButton
++            android:id="@+id/lenos_duress_delete"
++            style="?attr/materialButtonOutlinedStyle"
++            android:layout_width="match_parent"
++            android:layout_height="wrap_content"
++            android:layout_marginTop="8dp"
++            android:text="@string/lenos_duress_delete" />
++    </LinearLayout>
++</ScrollView>
+diff --git a/res/values/strings_lenos.xml b/res/values/strings_lenos.xml
+new file mode 100644
+index 0000000..4eba471
+--- /dev/null
++++ b/res/values/strings_lenos.xml
+@@ -0,0 +1,272 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!--
++  SPDX-FileCopyrightText: 2026 lenOS
++  SPDX-License-Identifier: Apache-2.0
++-->
++<resources>
++    <string name="lenos_settings_title">lenOS</string>
++    <string name="lenos_settings_summary">Personalization and security, all on-device</string>
++
++    <string name="lenos_appearance_title">Appearance</string>
++    <string name="lenos_theme_title">Theme pack</string>
++    <string name="lenos_theme_summary">Stock or a preinstalled accent pack. Nothing is downloaded.</string>
++    <string name="lenos_qs_title">Quick Settings layout</string>
++    <string name="lenos_qs_columns_title">Tiles per row</string>
++    <string name="lenos_qs_rows_title">Rows in the expanded grid</string>
++    <string name="lenos_notifications_title">Notifications</string>
++    <string name="lenos_notify_corners_title">Notification corners</string>
++    <string name="lenos_notify_dividers_title">Hide dividers</string>
++    <string name="lenos_notify_dividers_summary">Make the lines between grouped notifications transparent.</string>
++    <string name="lenos_clock_title">Status bar clock</string>
++    <string name="lenos_clock_size_title">Clock text size</string>
++    <string name="lenos_clock_summary">Position, seconds, AM/PM, battery and network controls stay in the stock status bar panel.</string>
++    <string name="lenos_status_bar_settings_title">Open status bar settings</string>
++    <string name="lenos_lock_screen_settings_title">Open lock screen settings</string>
++
++    <string name="lenos_motion_title">Motion</string>
++    <string name="lenos_motion_animator_title">System animations</string>
++    <string name="lenos_motion_transition_title">Transition animations</string>
++    <string name="lenos_motion_window_title">Window animations</string>
++    <string name="lenos_motion_reset_title">Reset all animation scales</string>
++    <string name="lenos_motion_reset_summary">Set system, transition and window animations back to 1.0x.</string>
++
++    <string name="lenos_launcher_title">Launcher</string>
++    <string name="lenos_launcher_grid_title">Home screen grid</string>
++    <string name="lenos_launcher_shape_title">Icon shape</string>
++    <string name="lenos_launcher_themed_title">Themed icons</string>
++    <string name="lenos_launcher_settings_title">Open launcher settings</string>
++    <string name="lenos_launcher_settings_summary">Notification dots and the remaining Home options.</string>
++    <string name="lenos_launcher_reading">Reading launcher options\u2026</string>
++    <string name="lenos_launcher_unavailable">This launcher build does not expose this control to lenOS. Use the launcher settings below.</string>
++
++    <string name="lenos_security_title">Security</string>
++    <string name="lenos_bfu_title">Automatic BFU reboot</string>
++    <string name="lenos_bfu_summary">Reboot after the phone stays locked (before first unlock).</string>
++    <string name="lenos_scramble_title">Scramble PIN layout</string>
++    <string name="lenos_scramble_summary">Randomize the lock-screen PIN pad. On by default.</string>
++    <string name="lenos_duress_title">Duress PIN and password</string>
++    <string name="lenos_duress_summary">Wipe credentials that destroy storage keys when entered at a lock prompt.</string>
++    <string name="lenos_security_status_title">Security backend</string>
++    <string name="lenos_security_status_summary">Auto-BFU: %1$s\nDuress: %2$s\nScreen lock: %3$s</string>
++    <string name="lenos_security_lock_set">set</string>
++    <string name="lenos_security_lock_unset">not set</string>
++    <string name="lenos_security_lock_unknown">unavailable</string>
++
++    <string name="lenos_privacy_title">Privacy defaults</string>
++    <string name="lenos_wifi_privacy_title">Wi-Fi MAC and DHCP hostname</string>
++    <string name="lenos_wifi_privacy_summary">Per-network privacy controls in Wi-Fi settings.</string>
++    <string name="lenos_app_network_title">Per-app network access</string>
++    <string name="lenos_app_network_summary">Restrict an app\'s background network in its data usage screen.</string>
++    <string name="lenos_bootloader_title">Bootloader</string>
++    <string name="lenos_bootloader_summary">Do not relock the bootloader while using a custom AVB key.</string>
++
++    <string name="lenos_about_category">About</string>
++    <string name="lenos_about_title">About this build</string>
++    <string name="lenos_about_summary">Local-only customization: no Theme Store, no account, no telemetry and no network code. Version %1$s.</string>
++
++    <string-array name="lenos_theme_entries">
++        <item>@string/lenos_theme_stock</item>
++        <item>@string/lenos_theme_ember</item>
++        <item>@string/lenos_theme_mint</item>
++        <item>@string/lenos_theme_mono</item>
++    </string-array>
++    <string-array name="lenos_theme_values">
++        <item>stock</item>
++        <item>ember</item>
++        <item>mint</item>
++        <item>mono</item>
++    </string-array>
++    <string name="lenos_theme_stock">Stock (LineageOS defaults)</string>
++    <string name="lenos_theme_ember">Ember \u2014 warm amber accents</string>
++    <string name="lenos_theme_mint">Mint \u2014 cool green accents</string>
++    <string name="lenos_theme_mono">Mono \u2014 neutral graphite accents</string>
++
++    <string-array name="lenos_qs_columns_entries">
++        <item>@string/lenos_qs_columns_default</item>
++        <item>@string/lenos_qs_columns_3</item>
++        <item>@string/lenos_qs_columns_5</item>
++    </string-array>
++    <string-array name="lenos_qs_columns_values">
++        <item>default</item>
++        <item>3</item>
++        <item>5</item>
++    </string-array>
++    <string name="lenos_qs_columns_default">4 columns (default)</string>
++    <string name="lenos_qs_columns_3">3 columns</string>
++    <string name="lenos_qs_columns_5">5 columns</string>
++    <string-array name="lenos_qs_rows_entries">
++        <item>@string/lenos_qs_rows_default</item>
++        <item>@string/lenos_qs_rows_3</item>
++        <item>@string/lenos_qs_rows_5</item>
++    </string-array>
++    <string-array name="lenos_qs_rows_values">
++        <item>default</item>
++        <item>3</item>
++        <item>5</item>
++    </string-array>
++    <string name="lenos_qs_rows_default">4 rows (default)</string>
++    <string name="lenos_qs_rows_3">3 rows</string>
++    <string name="lenos_qs_rows_5">5 rows</string>
++
++    <string-array name="lenos_notify_corners_entries">
++        <item>@string/lenos_notify_corners_default</item>
++        <item>@string/lenos_notify_corners_round</item>
++        <item>@string/lenos_notify_corners_compact</item>
++        <item>@string/lenos_notify_corners_square</item>
++    </string-array>
++    <string-array name="lenos_notify_corners_values">
++        <item>default</item>
++        <item>round</item>
++        <item>compact</item>
++        <item>square</item>
++    </string-array>
++    <string name="lenos_notify_corners_default">System default (28 dp)</string>
++    <string name="lenos_notify_corners_round">Round (24 dp)</string>
++    <string name="lenos_notify_corners_compact">Compact (16 dp)</string>
++    <string name="lenos_notify_corners_square">Square (6 dp)</string>
++
++    <string-array name="lenos_clock_size_entries">
++        <item>@string/lenos_clock_size_default</item>
++        <item>@string/lenos_clock_size_compact</item>
++        <item>@string/lenos_clock_size_large</item>
++        <item>@string/lenos_clock_size_xlarge</item>
++    </string-array>
++    <string-array name="lenos_clock_size_values">
++        <item>default</item>
++        <item>compact</item>
++        <item>large</item>
++        <item>xlarge</item>
++    </string-array>
++    <string name="lenos_clock_size_default">System default (14 sp)</string>
++    <string name="lenos_clock_size_compact">Compact (12 sp)</string>
++    <string name="lenos_clock_size_large">Large (16 sp)</string>
++    <string name="lenos_clock_size_xlarge">Extra large (18 sp)</string>
++
++    <string-array name="lenos_motion_entries">
++        <item>@string/lenos_motion_default</item>
++        <item>@string/lenos_motion_relaxed</item>
++        <item>@string/lenos_motion_fast</item>
++        <item>@string/lenos_motion_very_fast</item>
++        <item>@string/lenos_motion_off</item>
++    </string-array>
++    <string-array name="lenos_motion_values">
++        <item>1.0</item>
++        <item>1.25</item>
++        <item>0.75</item>
++        <item>0.5</item>
++        <item>0.0</item>
++    </string-array>
++    <string name="lenos_motion_default">System default (1.0x)</string>
++    <string name="lenos_motion_relaxed">Relaxed (1.25x)</string>
++    <string name="lenos_motion_fast">Fast (0.75x)</string>
++    <string name="lenos_motion_very_fast">Very fast (0.5x)</string>
++    <string name="lenos_motion_off">Off (0x)</string>
++
++    <string-array name="lenos_bfu_entries">
++        <item>@string/lenos_bfu_off</item>
++        <item>@string/lenos_bfu_10m</item>
++        <item>@string/lenos_bfu_30m</item>
++        <item>@string/lenos_bfu_1h</item>
++        <item>@string/lenos_bfu_2h</item>
++        <item>@string/lenos_bfu_4h</item>
++        <item>@string/lenos_bfu_8h</item>
++        <item>@string/lenos_bfu_12h</item>
++        <item>@string/lenos_bfu_18h</item>
++        <item>@string/lenos_bfu_1d</item>
++        <item>@string/lenos_bfu_36h</item>
++        <item>@string/lenos_bfu_2d</item>
++        <item>@string/lenos_bfu_3d</item>
++    </string-array>
++    <string-array name="lenos_bfu_values">
++        <item>0</item>
++        <item>600000</item>
++        <item>1800000</item>
++        <item>3600000</item>
++        <item>7200000</item>
++        <item>14400000</item>
++        <item>28800000</item>
++        <item>43200000</item>
++        <item>64800000</item>
++        <item>86400000</item>
++        <item>129600000</item>
++        <item>172800000</item>
++        <item>259200000</item>
++    </string-array>
++    <string name="lenos_bfu_off">Off</string>
++    <string name="lenos_bfu_10m">10 minutes</string>
++    <string name="lenos_bfu_30m">30 minutes</string>
++    <string name="lenos_bfu_1h">1 hour</string>
++    <string name="lenos_bfu_2h">2 hours</string>
++    <string name="lenos_bfu_4h">4 hours</string>
++    <string name="lenos_bfu_8h">8 hours</string>
++    <string name="lenos_bfu_12h">12 hours</string>
++    <string name="lenos_bfu_18h">18 hours (ROM default)</string>
++    <string name="lenos_bfu_1d">1 day</string>
++    <string name="lenos_bfu_36h">36 hours</string>
++    <string name="lenos_bfu_2d">2 days</string>
++    <string name="lenos_bfu_3d">3 days</string>
++
++    <string name="lenos_duress_screen_title">Duress credentials</string>
++    <string name="lenos_duress_warning">Entering either duress credential anywhere Android asks for your lock deletes the keystore secrets protecting storage, erases stored eSIM profiles and powers the device off. Storage is gone. Do not test on this phone.</string>
++    <string name="lenos_duress_check_hint">Enter your current screen-lock PIN to check or change duress credentials.</string>
++    <string name="lenos_duress_owner_pin">Current screen-lock PIN</string>
++    <string name="lenos_duress_pin">Duress PIN (min 4 digits)</string>
++    <string name="lenos_duress_pin_confirm">Confirm duress PIN</string>
++    <string name="lenos_duress_password">Duress password (min 4 characters)</string>
++    <string name="lenos_duress_password_confirm">Confirm duress password</string>
++    <string name="lenos_duress_check">Check duress status</string>
++    <string name="lenos_duress_save">Save duress PIN + password</string>
++    <string name="lenos_duress_delete">Delete duress credentials</string>
++    <string name="lenos_duress_dialog_title">Destructive credential warning</string>
++    <string name="lenos_duress_dialog_proceed">Proceed</string>
++    <string name="lenos_duress_dialog_cancel">Cancel</string>
++    <string name="lenos_duress_delete_dialog_title">Delete duress credentials?</string>
++    <string name="lenos_duress_delete_dialog_message">This only removes the wipe credentials. It does not wipe the phone.</string>
++    <string name="lenos_duress_delete_confirm">Delete</string>
++    <string name="lenos_duress_saved">Duress credentials saved.</string>
++    <string name="lenos_duress_deleted">Duress credentials deleted.</string>
++    <string name="lenos_duress_none">No duress credentials are set.</string>
++    <string name="lenos_duress_present">Duress credentials are set. You can update or delete them.</string>
++    <string name="lenos_duress_pin_invalid">Duress PIN must match and be at least 4 digits.</string>
++    <string name="lenos_duress_password_invalid">Duress password must match and be at least 4 characters.</string>
++    <string name="lenos_duress_pin_same">Duress PIN must be different from your real PIN.</string>
++    <string name="lenos_duress_save_failed">Save failed.</string>
++    <string name="lenos_duress_enter_owner">Enter your current screen-lock PIN first.</string>
++    <string name="lenos_duress_wrong_owner">Current PIN is wrong.</string>
++    <string name="lenos_duress_frp">Factory reset protection is still active.</string>
++    <string name="lenos_duress_privilege">Settings lacks ACCESS_KEYGUARD_SECURE_STORAGE. Check the platform signature.</string>
++
++    <string name="lenos_toast_theme_applied">Theme pack applied.</string>
++    <string name="lenos_toast_theme_stock">Stock appearance restored.</string>
++    <string name="lenos_toast_theme_partial">SystemUI theme applied; the system accent could not be changed.</string>
++    <string name="lenos_toast_theme_failed">Could not apply theme: %1$s</string>
++    <string name="lenos_toast_qs_updated">Quick Settings layout updated.</string>
++    <string name="lenos_toast_qs_failed">Could not change the Quick Settings layout: %1$s</string>
++    <string name="lenos_toast_notify_corners_updated">Notification corners updated.</string>
++    <string name="lenos_toast_notify_corners_failed">Could not change notification corners: %1$s</string>
++    <string name="lenos_toast_dividers_hidden">Notification dividers hidden.</string>
++    <string name="lenos_toast_dividers_restored">Notification dividers restored.</string>
++    <string name="lenos_toast_dividers_failed">Could not change notification dividers: %1$s</string>
++    <string name="lenos_toast_clock_updated">Clock size updated.</string>
++    <string name="lenos_toast_clock_failed">Could not change the clock size: %1$s</string>
++    <string name="lenos_toast_motion_set">%1$s set to %2$sx.</string>
++    <string name="lenos_toast_motion_failed">Could not change animation scale: %1$s</string>
++    <string name="lenos_toast_motion_reset">Animation scales reset to 1.0x.</string>
++    <string name="lenos_toast_motion_reset_failed">Could not reset animation scales: %1$s</string>
++    <string name="lenos_toast_launcher_grid_updated">Launcher grid updated.</string>
++    <string name="lenos_toast_launcher_grid_failed">Could not change the launcher grid: %1$s</string>
++    <string name="lenos_toast_launcher_shape_updated">Icon shape updated.</string>
++    <string name="lenos_toast_launcher_shape_failed">Could not change the icon shape: %1$s</string>
++    <string name="lenos_toast_launcher_themed_on">Themed icons enabled.</string>
++    <string name="lenos_toast_launcher_themed_off">Themed icons disabled.</string>
++    <string name="lenos_toast_launcher_themed_failed">Could not change themed icons: %1$s</string>
++    <string name="lenos_toast_launcher_unavailable">Launcher settings are not available on this build.</string>
++    <string name="lenos_toast_status_bar_unavailable">Status bar settings are not available on this build.</string>
++    <string name="lenos_toast_lockscreen_unavailable">Lock screen settings are not available on this build.</string>
++    <string name="lenos_toast_bfu_off">Automatic BFU is off.</string>
++    <string name="lenos_toast_bfu_set">BFU set. Lock the phone once to arm.</string>
++    <string name="lenos_toast_bfu_failed">Could not write the BFU timeout. Check the platform signature.</string>
++    <string name="lenos_toast_scramble_on">PIN scramble on.</string>
++    <string name="lenos_toast_scramble_off">PIN scramble off.</string>
++    <string name="lenos_toast_scramble_failed">Could not write PIN scramble.</string>
++</resources>
+diff --git a/res/xml/lenos_settings.xml b/res/xml/lenos_settings.xml
+new file mode 100644
+index 0000000..38ae264
+--- /dev/null
++++ b/res/xml/lenos_settings.xml
+@@ -0,0 +1,204 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!--
++  SPDX-FileCopyrightText: 2026 lenOS
++  SPDX-License-Identifier: Apache-2.0
++
++  The single lenOS panel. It is launched from the top-level Settings entry and
++  contains both personalization and the security controls that used to live in
++  the earlier standalone personalization and security apps.
++-->
++<PreferenceScreen
++    xmlns:android="http://schemas.android.com/apk/res/android"
++    android:key="lenos_settings">
++
++    <PreferenceCategory android:title="@string/lenos_appearance_title">
++        <ListPreference
++            android:key="lenos_theme"
++            android:title="@string/lenos_theme_title"
++            android:summary="@string/lenos_theme_summary"
++            android:entries="@array/lenos_theme_entries"
++            android:entryValues="@array/lenos_theme_values"
++            android:persistent="false"
++            android:iconSpaceReserved="false" />
++
++        <ListPreference
++            android:key="lenos_qs_columns"
++            android:title="@string/lenos_qs_columns_title"
++            android:entries="@array/lenos_qs_columns_entries"
++            android:entryValues="@array/lenos_qs_columns_values"
++            android:persistent="false"
++            android:iconSpaceReserved="false" />
++
++        <ListPreference
++            android:key="lenos_qs_rows"
++            android:title="@string/lenos_qs_rows_title"
++            android:entries="@array/lenos_qs_rows_entries"
++            android:entryValues="@array/lenos_qs_rows_values"
++            android:persistent="false"
++            android:iconSpaceReserved="false" />
++
++        <ListPreference
++            android:key="lenos_notify_corners"
++            android:title="@string/lenos_notify_corners_title"
++            android:entries="@array/lenos_notify_corners_entries"
++            android:entryValues="@array/lenos_notify_corners_values"
++            android:persistent="false"
++            android:iconSpaceReserved="false" />
++
++        <SwitchPreferenceCompat
++            android:key="lenos_notify_dividers"
++            android:title="@string/lenos_notify_dividers_title"
++            android:summary="@string/lenos_notify_dividers_summary"
++            android:persistent="false"
++            android:iconSpaceReserved="false" />
++
++        <ListPreference
++            android:key="lenos_clock_size"
++            android:title="@string/lenos_clock_size_title"
++            android:summary="@string/lenos_clock_summary"
++            android:entries="@array/lenos_clock_size_entries"
++            android:entryValues="@array/lenos_clock_size_values"
++            android:persistent="false"
++            android:iconSpaceReserved="false" />
++
++        <Preference
++            android:key="lenos_status_bar_settings"
++            android:title="@string/lenos_status_bar_settings_title"
++            android:persistent="false"
++            android:iconSpaceReserved="false" />
++
++        <Preference
++            android:key="lenos_lock_screen_settings"
++            android:title="@string/lenos_lock_screen_settings_title"
++            android:persistent="false"
++            android:iconSpaceReserved="false" />
++    </PreferenceCategory>
++
++    <PreferenceCategory android:title="@string/lenos_motion_title">
++        <ListPreference
++            android:key="lenos_motion_animator"
++            android:title="@string/lenos_motion_animator_title"
++            android:entries="@array/lenos_motion_entries"
++            android:entryValues="@array/lenos_motion_values"
++            android:persistent="false"
++            android:iconSpaceReserved="false" />
++
++        <ListPreference
++            android:key="lenos_motion_transition"
++            android:title="@string/lenos_motion_transition_title"
++            android:entries="@array/lenos_motion_entries"
++            android:entryValues="@array/lenos_motion_values"
++            android:persistent="false"
++            android:iconSpaceReserved="false" />
++
++        <ListPreference
++            android:key="lenos_motion_window"
++            android:title="@string/lenos_motion_window_title"
++            android:entries="@array/lenos_motion_entries"
++            android:entryValues="@array/lenos_motion_values"
++            android:persistent="false"
++            android:iconSpaceReserved="false" />
++
++        <Preference
++            android:key="lenos_motion_reset"
++            android:title="@string/lenos_motion_reset_title"
++            android:summary="@string/lenos_motion_reset_summary"
++            android:persistent="false"
++            android:iconSpaceReserved="false" />
++    </PreferenceCategory>
++
++    <PreferenceCategory android:title="@string/lenos_launcher_title">
++        <ListPreference
++            android:key="lenos_launcher_grid"
++            android:title="@string/lenos_launcher_grid_title"
++            android:summary="@string/lenos_launcher_reading"
++            android:persistent="false"
++            android:iconSpaceReserved="false" />
++
++        <ListPreference
++            android:key="lenos_launcher_shape"
++            android:title="@string/lenos_launcher_shape_title"
++            android:summary="@string/lenos_launcher_reading"
++            android:persistent="false"
++            android:iconSpaceReserved="false" />
++
++        <SwitchPreferenceCompat
++            android:key="lenos_launcher_themed"
++            android:title="@string/lenos_launcher_themed_title"
++            android:summary="@string/lenos_launcher_reading"
++            android:persistent="false"
++            android:iconSpaceReserved="false" />
++
++        <Preference
++            android:key="lenos_launcher_settings"
++            android:title="@string/lenos_launcher_settings_title"
++            android:summary="@string/lenos_launcher_settings_summary"
++            android:persistent="false"
++            android:iconSpaceReserved="false" />
++    </PreferenceCategory>
++
++    <PreferenceCategory android:title="@string/lenos_security_title">
++        <ListPreference
++            android:key="lenos_bfu"
++            android:title="@string/lenos_bfu_title"
++            android:summary="@string/lenos_bfu_summary"
++            android:entries="@array/lenos_bfu_entries"
++            android:entryValues="@array/lenos_bfu_values"
++            android:persistent="false"
++            android:iconSpaceReserved="false" />
++
++        <SwitchPreferenceCompat
++            android:key="lenos_scramble"
++            android:title="@string/lenos_scramble_title"
++            android:summary="@string/lenos_scramble_summary"
++            android:persistent="false"
++            android:iconSpaceReserved="false" />
++
++        <Preference
++            android:key="lenos_duress"
++            android:title="@string/lenos_duress_title"
++            android:summary="@string/lenos_duress_summary"
++            android:persistent="false"
++            android:iconSpaceReserved="false" />
++
++        <Preference
++            android:key="lenos_security_status"
++            android:title="@string/lenos_security_status_title"
++            android:persistent="false"
++            android:selectable="false"
++            android:iconSpaceReserved="false" />
++    </PreferenceCategory>
++
++    <PreferenceCategory android:title="@string/lenos_privacy_title">
++        <Preference
++            android:key="lenos_wifi_privacy"
++            android:title="@string/lenos_wifi_privacy_title"
++            android:summary="@string/lenos_wifi_privacy_summary"
++            android:persistent="false"
++            android:iconSpaceReserved="false" />
++
++        <Preference
++            android:key="lenos_app_network"
++            android:title="@string/lenos_app_network_title"
++            android:summary="@string/lenos_app_network_summary"
++            android:persistent="false"
++            android:iconSpaceReserved="false" />
++
++        <Preference
++            android:key="lenos_bootloader"
++            android:title="@string/lenos_bootloader_title"
++            android:summary="@string/lenos_bootloader_summary"
++            android:persistent="false"
++            android:selectable="false"
++            android:iconSpaceReserved="false" />
++    </PreferenceCategory>
++
++    <PreferenceCategory android:title="@string/lenos_about_category">
++        <Preference
++            android:key="lenos_about"
++            android:title="@string/lenos_about_title"
++            android:persistent="false"
++            android:selectable="false"
++            android:iconSpaceReserved="false" />
++    </PreferenceCategory>
++</PreferenceScreen>
+diff --git a/res/xml/top_level_settings.xml b/res/xml/top_level_settings.xml
+index 93f4c9f..5c8d44b 100644
+--- a/res/xml/top_level_settings.xml
++++ b/res/xml/top_level_settings.xml
+@@ -120,6 +120,14 @@
+             android:summary="@string/wallpaper_dashboard_summary"
+             settings:highlightableMenuKey="@string/menu_key_wallpaper"
+             settings:controller="com.android.settings.display.TopLevelWallpaperPreferenceController"/>
++
++        <com.android.settings.widget.HomepagePreference
++            android:fragment="com.android.settings.lenos.LenosSettingsFragment"
++            android:icon="@drawable/ic_lenos_settings"
++            android:key="top_level_lenos"
++            android:order="0"
++            android:title="@string/lenos_settings_title"
++            android:summary="@string/lenos_settings_summary"/>
+     </PreferenceCategory>
+ 
+     <PreferenceCategory
+diff --git a/src/com/android/settings/lenos/LenosDuressFragment.java b/src/com/android/settings/lenos/LenosDuressFragment.java
+new file mode 100644
+index 0000000..5fab620
+--- /dev/null
++++ b/src/com/android/settings/lenos/LenosDuressFragment.java
+@@ -0,0 +1,301 @@
++/*
++ * SPDX-FileCopyrightText: 2026 lenOS
++ * SPDX-License-Identifier: Apache-2.0
++ */
++package com.android.settings.lenos;
++
++import android.app.AlertDialog;
++import android.graphics.Color;
++import android.os.Bundle;
++import android.util.Log;
++import android.util.TypedValue;
++import android.view.LayoutInflater;
++import android.view.View;
++import android.view.ViewGroup;
++import android.view.WindowManager;
++import android.widget.EditText;
++import android.widget.TextView;
++import android.widget.Toast;
++
++import androidx.annotation.NonNull;
++import androidx.annotation.Nullable;
++import androidx.fragment.app.Fragment;
++
++import com.android.settings.R;
++
++/**
++ * Duress credential UI, now a Settings sub-screen instead of a separate APK.
++ *
++ * <p>The controls are backed by the lenOS framework patch in
++ * LockSettingsService. Everything stays in memory: the fields are not
++ * preferences, are excluded from autofill and are not saved across rotation.
++ * The window is marked secure while this screen is visible.</p>
++ */
++public class LenosDuressFragment extends Fragment {
++    private static final String TAG = "LenosDuress";
++
++    private LenosLockBridge mLock;
++    private TextView mStatus;
++    private EditText mOwnerPin;
++    private EditText mDuressPin;
++    private EditText mDuressPinConfirm;
++    private EditText mDuressPassword;
++    private EditText mDuressPasswordConfirm;
++
++    @Nullable
++    @Override
++    public View onCreateView(@NonNull LayoutInflater inflater,
++            @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
++        return inflater.inflate(R.layout.lenos_duress_fragment, container, false);
++    }
++
++    @Override
++    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
++        super.onViewCreated(view, savedInstanceState);
++        mStatus = view.findViewById(R.id.lenos_duress_status);
++        mOwnerPin = view.findViewById(R.id.lenos_owner_pin);
++        mDuressPin = view.findViewById(R.id.lenos_duress_pin);
++        mDuressPinConfirm = view.findViewById(R.id.lenos_duress_pin_confirm);
++        mDuressPassword = view.findViewById(R.id.lenos_duress_password);
++        mDuressPasswordConfirm = view.findViewById(R.id.lenos_duress_password_confirm);
++
++        try {
++            mLock = new LenosLockBridge(requireContext());
++        } catch (Throwable t) {
++            Log.w(TAG, "LockBridge unavailable", t);
++            mLock = null;
++        }
++
++        view.findViewById(R.id.lenos_duress_check).setOnClickListener(
++                v -> checkDuress());
++        view.findViewById(R.id.lenos_duress_save).setOnClickListener(
++                v -> confirmSaveDuress());
++        view.findViewById(R.id.lenos_duress_delete).setOnClickListener(
++                v -> confirmDeleteDuress());
++        setStatus(R.string.lenos_duress_check_hint, false);
++    }
++
++    @Override
++    public void onResume() {
++        super.onResume();
++        if (getActivity() != null) {
++            getActivity().setTitle(R.string.lenos_duress_screen_title);
++            getActivity().getWindow().addFlags(
++                    WindowManager.LayoutParams.FLAG_SECURE);
++        }
++    }
++
++    @Override
++    public void onPause() {
++        if (getActivity() != null) {
++            getActivity().getWindow().clearFlags(
++                    WindowManager.LayoutParams.FLAG_SECURE);
++        }
++        super.onPause();
++    }
++
++    @Override
++    public void onDestroyView() {
++        clearFields();
++        mStatus = null;
++        mOwnerPin = null;
++        mDuressPin = null;
++        mDuressPinConfirm = null;
++        mDuressPassword = null;
++        mDuressPasswordConfirm = null;
++        super.onDestroyView();
++    }
++
++    private void checkDuress() {
++        Object owner = null;
++        try {
++            requireLock();
++            owner = ownerCredential();
++            boolean has = mLock.hasDuress(owner);
++            setStatus(has ? R.string.lenos_duress_present
++                    : R.string.lenos_duress_none, !has);
++        } catch (Exception e) {
++            setStatus(friendly(e), true);
++        } finally {
++            zero(owner);
++            clearOwnerPin();
++        }
++    }
++
++    private void confirmSaveDuress() {
++        String pin = textOf(mDuressPin);
++        String pinConfirm = textOf(mDuressPinConfirm);
++        String password = textOf(mDuressPassword);
++        String passwordConfirm = textOf(mDuressPasswordConfirm);
++        if (pin.length() < 4 || !pin.equals(pinConfirm)) {
++            toast(R.string.lenos_duress_pin_invalid);
++            return;
++        }
++        if (password.length() < 4 || !password.equals(passwordConfirm)) {
++            toast(R.string.lenos_duress_password_invalid);
++            return;
++        }
++        if (pin.equals(textOf(mOwnerPin))) {
++            toast(R.string.lenos_duress_pin_same);
++            return;
++        }
++        new AlertDialog.Builder(requireContext())
++                .setTitle(R.string.lenos_duress_dialog_title)
++                .setMessage(R.string.lenos_duress_warning)
++                .setNegativeButton(R.string.lenos_duress_dialog_cancel, null)
++                .setPositiveButton(R.string.lenos_duress_dialog_proceed,
++                        (dialog, which) -> saveDuress(pin, password))
++                .show();
++    }
++
++    private void saveDuress(String pin, String password) {
++        Object owner = null;
++        Object duressPin = null;
++        Object duressPassword = null;
++        try {
++            requireLock();
++            owner = ownerCredential();
++            duressPin = mLock.createPin(pin);
++            duressPassword = mLock.createPassword(password);
++            mLock.setDuress(owner, duressPin, duressPassword);
++            setStatus(R.string.lenos_duress_saved, false);
++            clearFields();
++            toast(R.string.lenos_duress_saved);
++        } catch (Exception e) {
++            setStatus(friendly(e), true);
++            toast(R.string.lenos_duress_save_failed);
++        } finally {
++            zero(owner);
++            zero(duressPin);
++            zero(duressPassword);
++        }
++    }
++
++    private void confirmDeleteDuress() {
++        new AlertDialog.Builder(requireContext())
++                .setTitle(R.string.lenos_duress_delete_dialog_title)
++                .setMessage(R.string.lenos_duress_delete_dialog_message)
++                .setNegativeButton(R.string.lenos_duress_dialog_cancel, null)
++                .setPositiveButton(R.string.lenos_duress_delete_confirm,
++                        (dialog, which) -> deleteDuress())
++                .show();
++    }
++
++    private void deleteDuress() {
++        Object owner = null;
++        try {
++            requireLock();
++            owner = ownerCredential();
++            mLock.deleteDuress(owner);
++            setStatus(R.string.lenos_duress_deleted, false);
++            toast(R.string.lenos_duress_deleted);
++        } catch (Exception e) {
++            setStatus(friendly(e), true);
++        } finally {
++            zero(owner);
++            clearOwnerPin();
++        }
++    }
++
++    private void requireLock() throws Exception {
++        if (mLock != null) {
++            return;
++        }
++        try {
++            mLock = new LenosLockBridge(requireContext());
++        } catch (Throwable t) {
++            throw new IllegalStateException("Lock APIs blocked: "
++                    + t.getClass().getSimpleName() + ": " + t.getMessage());
++        }
++    }
++
++    private Object ownerCredential() throws Exception {
++        String pin = textOf(mOwnerPin);
++        if (pin.isEmpty()) {
++            throw new IllegalArgumentException(
++                    getString(R.string.lenos_duress_enter_owner));
++        }
++        return mLock.createPin(pin);
++    }
++
++    private void zero(Object credential) {
++        if (mLock != null) {
++            mLock.zeroize(credential);
++        }
++    }
++
++    private String friendly(Exception e) {
++        String message = e.getMessage();
++        if (message == null || message.isEmpty()) {
++            message = e.getClass().getSimpleName();
++        }
++        if (message.contains("owner credential")) {
++            return getString(R.string.lenos_duress_wrong_owner);
++        }
++        if (message.contains("factory reset protection")
++                || message.contains("FRP")) {
++            return getString(R.string.lenos_duress_frp);
++        }
++        if (isPrivilegeError(e)) {
++            return getString(R.string.lenos_duress_privilege);
++        }
++        return message;
++    }
++
++    private static boolean isPrivilegeError(Exception e) {
++        String message = String.valueOf(e.getMessage()) + " "
++                + e.getClass().getName();
++        if (message.contains("owner credential")) {
++            return false;
++        }
++        return message.contains("ACCESS_KEYGUARD")
++                || message.contains("LockSettingsWrite")
++                || message.contains("Permission Denial")
++                || e instanceof SecurityException;
++    }
++
++    private void setStatus(int messageRes, boolean error) {
++        if (mStatus == null) {
++            return;
++        }
++        mStatus.setText(messageRes);
++        mStatus.setTextColor(error ? resolveColor(android.R.attr.colorError,
++                Color.RED) : resolveColor(android.R.attr.colorAccent,
++                Color.GRAY));
++    }
++
++    private int resolveColor(int attribute, int fallback) {
++        TypedValue value = new TypedValue();
++        if (requireContext().getTheme().resolveAttribute(attribute, value, true)) {
++            return value.data;
++        }
++        return fallback;
++    }
++
++    private void clearFields() {
++        setText(mOwnerPin, "");
++        setText(mDuressPin, "");
++        setText(mDuressPinConfirm, "");
++        setText(mDuressPassword, "");
++        setText(mDuressPasswordConfirm, "");
++    }
++
++    private void clearOwnerPin() {
++        setText(mOwnerPin, "");
++    }
++
++    private static void setText(EditText field, String value) {
++        if (field != null) {
++            field.setText(value);
++        }
++    }
++
++    private static String textOf(EditText field) {
++        return field == null || field.getText() == null
++                ? "" : field.getText().toString();
++    }
++
++    private void toast(int messageRes) {
++        Toast.makeText(requireContext(), messageRes, Toast.LENGTH_LONG).show();
++    }
++}
+diff --git a/src/com/android/settings/lenos/LenosLockBridge.java b/src/com/android/settings/lenos/LenosLockBridge.java
+new file mode 100644
+index 0000000..b61d24d
+--- /dev/null
++++ b/src/com/android/settings/lenos/LenosLockBridge.java
+@@ -0,0 +1,90 @@
++/*
++ * SPDX-FileCopyrightText: 2026 lenOS
++ * SPDX-License-Identifier: Apache-2.0
++ */
++package com.android.settings.lenos;
++
++import android.content.Context;
++
++import java.lang.reflect.Constructor;
++import java.lang.reflect.Method;
++
++/**
++ * Reflection wrapper over the hidden {@code LockPatternUtils} and
++ * {@code LockscreenCredential} APIs used by the duress backend.
++ *
++ * <p>The backend itself is a framework patch
++ * ({@code frameworks/base/0005-lenos-duress-credentials}) that adds
++ * {@code setDuressCredentials}, {@code hasDuressCredentials} and
++ * {@code deleteDuressCredentials}. Keeping the calls reflective means this
++ * Settings screen does not need a compile-time link to those hidden classes,
++ * and fails with a readable error when the backend is not present.</p>
++ */
++final class LenosLockBridge {
++    private static final String LOCK_PATTERN_UTILS =
++            "com.android.internal.widget.LockPatternUtils";
++    private static final String LOCKSCREEN_CREDENTIAL =
++            "com.android.internal.widget.LockscreenCredential";
++
++    private final Object mLockPatternUtils;
++
++    LenosLockBridge(Context context) throws Exception {
++        Class<?> clazz = Class.forName(LOCK_PATTERN_UTILS);
++        Constructor<?> constructor = clazz.getConstructor(Context.class);
++        mLockPatternUtils = constructor.newInstance(context);
++    }
++
++    boolean isSecure() {
++        try {
++            Method method = mLockPatternUtils.getClass().getMethod("isSecure", int.class);
++            return (Boolean) method.invoke(mLockPatternUtils, 0);
++        } catch (Exception e) {
++            return false;
++        }
++    }
++
++    Object createPin(String pin) throws Exception {
++        Class<?> clazz = Class.forName(LOCKSCREEN_CREDENTIAL);
++        Method method = clazz.getMethod("createPin", CharSequence.class);
++        return method.invoke(null, pin);
++    }
++
++    Object createPassword(String password) throws Exception {
++        Class<?> clazz = Class.forName(LOCKSCREEN_CREDENTIAL);
++        Method method = clazz.getMethod("createPassword", CharSequence.class);
++        return method.invoke(null, password);
++    }
++
++    void setDuress(Object owner, Object pin, Object password) throws Exception {
++        Class<?> credential = Class.forName(LOCKSCREEN_CREDENTIAL);
++        Method method = mLockPatternUtils.getClass().getMethod(
++                "setDuressCredentials", credential, credential, credential);
++        method.invoke(mLockPatternUtils, owner, pin, password);
++    }
++
++    boolean hasDuress(Object owner) throws Exception {
++        Class<?> credential = Class.forName(LOCKSCREEN_CREDENTIAL);
++        Method method = mLockPatternUtils.getClass().getMethod(
++                "hasDuressCredentials", credential);
++        return (Boolean) method.invoke(mLockPatternUtils, owner);
++    }
++
++    void deleteDuress(Object owner) throws Exception {
++        Class<?> credential = Class.forName(LOCKSCREEN_CREDENTIAL);
++        Method method = mLockPatternUtils.getClass().getMethod(
++                "deleteDuressCredentials", credential);
++        method.invoke(mLockPatternUtils, owner);
++    }
++
++    void zeroize(Object credential) {
++        if (credential == null) {
++            return;
++        }
++        try {
++            Method method = credential.getClass().getMethod("zeroize");
++            method.invoke(credential);
++        } catch (Exception ignored) {
++            // Best effort: the credential is already unreachable.
++        }
++    }
++}
+diff --git a/src/com/android/settings/lenos/LenosSettingsFragment.java b/src/com/android/settings/lenos/LenosSettingsFragment.java
+new file mode 100644
+index 0000000..c3e5caf
+--- /dev/null
++++ b/src/com/android/settings/lenos/LenosSettingsFragment.java
+@@ -0,0 +1,1378 @@
++/*
++ * SPDX-FileCopyrightText: 2026 lenOS
++ * SPDX-License-Identifier: Apache-2.0
++ */
++package com.android.settings.lenos;
++
++import android.app.Activity;
++import android.content.ActivityNotFoundException;
++import android.content.ContentValues;
++import android.content.Context;
++import android.content.Intent;
++import android.content.SharedPreferences;
++import android.content.om.OverlayInfo;
++import android.content.om.OverlayManager;
++import android.database.Cursor;
++import android.net.Uri;
++import android.os.Bundle;
++import android.os.Process;
++import android.provider.Settings;
++import android.text.TextUtils;
++import android.widget.Toast;
++
++import androidx.preference.ListPreference;
++import androidx.preference.Preference;
++import androidx.preference.SwitchPreferenceCompat;
++
++import com.android.settings.R;
++import com.android.settings.SettingsPreferenceFragment;
++import com.android.settings.core.SubSettingLauncher;
++import com.android.settingslib.core.instrumentation.Instrumentable;
++
++import org.json.JSONObject;
++
++import java.util.ArrayList;
++import java.util.HashSet;
++import java.util.List;
++import java.util.Set;
++
++/**
++ * The single lenOS panel inside Settings.
++ *
++ * <p>It replaces the earlier standalone personalization and security apps. Theme packs,
++ * Quick Settings grids, notification styling, clock size, motion, launcher
++ * controls and the hardening controls are all local: no network permission,
++ * no account and no downloaded configuration.</p>
++ */
++public class LenosSettingsFragment extends SettingsPreferenceFragment {
++    private static final String SYSTEMUI_PACKAGE = "com.android.systemui";
++    private static final String STATUS_BAR_ACTION =
++            "org.lineageos.lineageparts.STATUS_BAR_SETTINGS";
++
++    private static final String KEY_THEME = "lenos_theme";
++    private static final String KEY_QS_COLUMNS = "lenos_qs_columns";
++    private static final String KEY_QS_ROWS = "lenos_qs_rows";
++    private static final String KEY_NOTIFY_CORNERS = "lenos_notify_corners";
++    private static final String KEY_NOTIFY_DIVIDERS = "lenos_notify_dividers";
++    private static final String KEY_CLOCK_SIZE = "lenos_clock_size";
++    private static final String KEY_STATUS_BAR = "lenos_status_bar_settings";
++    private static final String KEY_LOCK_SCREEN = "lenos_lock_screen_settings";
++    private static final String KEY_MOTION_ANIMATOR = "lenos_motion_animator";
++    private static final String KEY_MOTION_TRANSITION = "lenos_motion_transition";
++    private static final String KEY_MOTION_WINDOW = "lenos_motion_window";
++    private static final String KEY_MOTION_RESET = "lenos_motion_reset";
++    private static final String KEY_LAUNCHER_GRID = "lenos_launcher_grid";
++    private static final String KEY_LAUNCHER_SHAPE = "lenos_launcher_shape";
++    private static final String KEY_LAUNCHER_THEMED = "lenos_launcher_themed";
++    private static final String KEY_LAUNCHER_SETTINGS = "lenos_launcher_settings";
++    private static final String KEY_BFU = "lenos_bfu";
++    private static final String KEY_SCRAMBLE = "lenos_scramble";
++    private static final String KEY_DURESS = "lenos_duress";
++    private static final String KEY_SECURITY_STATUS = "lenos_security_status";
++    private static final String KEY_WIFI_PRIVACY = "lenos_wifi_privacy";
++    private static final String KEY_APP_NETWORK = "lenos_app_network";
++    private static final String KEY_ABOUT = "lenos_about";
++
++    private static final String[] THEME_VALUES = {
++            "stock", "ember", "mint", "mono",
++    };
++    private static final String[] THEME_PACKAGES = {
++            "org.lenos.theme.ember.systemui",
++            "org.lenos.theme.mint.systemui",
++            "org.lenos.theme.mono.systemui",
++    };
++    private static final String[] FRAMEWORK_PACKAGES = {
++            "org.lenos.theme.ember.frameworks",
++            "org.lenos.theme.mint.frameworks",
++            "org.lenos.theme.mono.frameworks",
++    };
++    private static final String[] THEME_SEEDS = {
++            "C96A1E", "2FA37C", "6B6F76",
++    };
++    private static final String[] THEME_STYLES = {
++            "VIBRANT", "TONAL_SPOT", "MONOCHROMATIC",
++    };
++
++    // Monet reads these keys from Settings.Secure and builds its own fabricated
++    // framework overlays from the seed. Seeding a theme is therefore more
++    // reliable than relying on manifest priority alone.
++    private static final String THEME_OVERLAY_SETTING =
++            Settings.Secure.THEME_CUSTOMIZATION_OVERLAY_PACKAGES;
++    private static final String CATEGORY_SYSTEM_PALETTE =
++            "android.theme.customization.system_palette";
++    private static final String CATEGORY_THEME_STYLE =
++            "android.theme.customization.theme_style";
++    private static final String CATEGORY_COLOR_SOURCE =
++            "android.theme.customization.color_source";
++    private static final String COLOR_SOURCE_PRESET = "preset";
++    private static final String PREFS = "lenos_settings";
++    private static final String PREF_OWNED_PALETTE = "monet_owned_palette";
++    private static final String PREF_OWNED_STYLE = "monet_owned_style";
++    private static final String PREF_OWNED_SOURCE = "monet_owned_source";
++    private static final String PREF_BACKUP_PALETTE = "monet_backup_palette";
++    private static final String PREF_BACKUP_STYLE = "monet_backup_style";
++    private static final String PREF_BACKUP_SOURCE = "monet_backup_source";
++    private static final String PREF_BACKUP_PRESENT = "monet_backup_present";
++
++    private static final String[] QS_COLUMN_VALUES = {"default", "3", "5"};
++    private static final String[] QS_COLUMN_PACKAGES = {
++            null, "org.lenos.qs.columns3", "org.lenos.qs.columns5",
++    };
++    private static final String[] QS_ROW_VALUES = {"default", "3", "5"};
++    private static final String[] QS_ROW_PACKAGES = {
++            null, "org.lenos.qs.rows3", "org.lenos.qs.rows5",
++    };
++    private static final String[] NOTIFY_CORNER_VALUES = {
++            "default", "round", "compact", "square",
++    };
++    private static final String[] NOTIFY_CORNER_PACKAGES = {
++            null,
++            "org.lenos.notify.corners.round",
++            "org.lenos.notify.corners.compact",
++            "org.lenos.notify.corners.square",
++    };
++    private static final String NOTIFY_DIVIDERS_PACKAGE =
++            "org.lenos.notify.dividers.hidden";
++    private static final String[] CLOCK_VALUES = {
++            "default", "compact", "large", "xlarge",
++    };
++    private static final String[] CLOCK_PACKAGES = {
++            null,
++            "org.lenos.clock.compact",
++            "org.lenos.clock.large",
++            "org.lenos.clock.xlarge",
++    };
++    private static final String[] MOTION_VALUES = {
++            "1.0", "1.25", "0.75", "0.5", "0.0",
++    };
++
++    private static final String LAUNCHER_PACKAGE = "com.android.launcher3";
++    private static final String LAUNCHER_GRID_AUTHORITY =
++            "com.android.launcher3.grid_control";
++    private static final String LAUNCHER_LIST_OPTIONS = "/list_options";
++    private static final String LAUNCHER_DEFAULT_GRID = "/default_grid";
++    private static final String LAUNCHER_SHAPE_OPTIONS = "/shape_options";
++    private static final String LAUNCHER_SET_SHAPE = "/shape";
++    private static final String LAUNCHER_GET_ICON_THEMED = "/get_icon_themed";
++    private static final String LAUNCHER_SET_ICON_THEMED = "/set_icon_themed";
++
++    private static final String BFU_SETTING = "settings_reboot_after_timeout";
++    private static final int BFU_DEFAULT_MS = 64_800_000;
++    private static final String SCRAMBLE_SETTING = "lockscreen_scramble_pin_layout";
++
++    private final List<String> mLauncherGridNames = new ArrayList<>();
++    private final List<String> mLauncherShapeKeys = new ArrayList<>();
++    private String mLauncherGridCurrent;
++    private String mLauncherShapeCurrent;
++    private int mLauncherGridRequest;
++    private int mLauncherShapeRequest;
++    private int mLauncherThemedRequest;
++
++    @Override
++    public int getMetricsCategory() {
++        return Instrumentable.METRICS_CATEGORY_UNKNOWN;
++    }
++
++    @Override
++    protected int getPreferenceScreenResId() {
++        return R.xml.lenos_settings;
++    }
++
++    @Override
++    public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
++        super.onCreatePreferences(savedInstanceState, rootKey);
++
++        configureThemePreference();
++        configureQuickSettingsPreferences();
++        configureNotificationPreferences();
++        configureClockPreference();
++        configureMotionPreferences();
++        configureLauncherPreferences();
++        configureSecurityPreferences();
++        configurePrivacyPreferences();
++    }
++
++    @Override
++    public void onResume() {
++        super.onResume();
++        if (getActivity() != null) {
++            getActivity().setTitle(R.string.lenos_settings_title);
++        }
++        refreshThemePreference();
++        refreshQuickSettingsPreferences();
++        refreshNotificationPreferences();
++        refreshClockPreference();
++        refreshLauncherGrid();
++        refreshLauncherShapes();
++        refreshLauncherThemedIcons();
++        refreshSecurityStatus();
++    }
++
++    // ---------------------------------------------------------------------
++    // Appearance: theme packs
++    // ---------------------------------------------------------------------
++
++    private void configureThemePreference() {
++        ListPreference preference = findPreference(KEY_THEME);
++        if (preference == null) {
++            return;
++        }
++        preference.setOnPreferenceChangeListener((p, newValue) -> {
++            if (!applyTheme(String.valueOf(newValue))) {
++                return false;
++            }
++            updateListSummary((ListPreference) p);
++            return true;
++        });
++    }
++
++    private void refreshThemePreference() {
++        ListPreference preference = findPreference(KEY_THEME);
++        if (preference == null) {
++            return;
++        }
++        preference.setValue(currentThemeValue());
++        updateListSummary(preference);
++    }
++
++    private String currentThemeValue() {
++        String pkg = currentThemePackage();
++        if (pkg == null) {
++            return THEME_VALUES[0];
++        }
++        for (int i = 0; i < THEME_PACKAGES.length; i++) {
++            if (THEME_PACKAGES[i].equals(pkg)) {
++                return THEME_VALUES[i + 1];
++            }
++        }
++        return THEME_VALUES[0];
++    }
++
++    private String currentThemePackage() {
++        try {
++            OverlayManager manager = getContext().getSystemService(OverlayManager.class);
++            if (manager == null) {
++                return null;
++            }
++            for (OverlayInfo info : manager.getOverlayInfosForTarget(
++                    SYSTEMUI_PACKAGE, Process.myUserHandle())) {
++                if (info.isEnabled() && isKnownTheme(info.getPackageName())) {
++                    return info.getPackageName();
++                }
++            }
++        } catch (Throwable ignored) {
++            // A missing OverlayManager or an uninstalled pack is not fatal;
++            // the stock selection stays visible.
++        }
++        return null;
++    }
++
++    private static boolean isKnownTheme(String pkg) {
++        for (String known : THEME_PACKAGES) {
++            if (known.equals(pkg)) {
++                return true;
++            }
++        }
++        return false;
++    }
++
++    private boolean applyTheme(String value) {
++        try {
++            OverlayManager manager = getContext().getSystemService(OverlayManager.class);
++            if (manager == null) {
++                throw new IllegalStateException("OverlayManager unavailable");
++            }
++            int selected = indexOf(THEME_VALUES, value);
++            if (selected < 0) {
++                selected = 0;
++            }
++            int pack = selected - 1;
++
++            Set<String> systemUiInstalled = installedPackages(manager, SYSTEMUI_PACKAGE);
++            Set<String> frameworkInstalled = installedPackages(manager, "android");
++            for (int i = 0; i < THEME_PACKAGES.length; i++) {
++                if (systemUiInstalled.contains(THEME_PACKAGES[i])) {
++                    manager.setEnabled(THEME_PACKAGES[i], i == pack,
++                            Process.myUserHandle());
++                }
++            }
++            boolean frameworkFailure = false;
++            for (int i = 0; i < FRAMEWORK_PACKAGES.length; i++) {
++                if (!frameworkInstalled.contains(FRAMEWORK_PACKAGES[i])) {
++                    frameworkFailure |= i == pack;
++                    continue;
++                }
++                try {
++                    manager.setEnabled(FRAMEWORK_PACKAGES[i], i == pack,
++                            Process.myUserHandle());
++                } catch (Throwable t) {
++                    frameworkFailure = true;
++                }
++            }
++            boolean seedApplied = applyMonetSeed(pack);
++            if (frameworkFailure && !seedApplied) {
++                toast(R.string.lenos_toast_theme_partial);
++            } else {
++                toast(pack < 0 ? R.string.lenos_toast_theme_stock
++                        : R.string.lenos_toast_theme_applied);
++            }
++            return true;
++        } catch (Throwable t) {
++            toast(getString(R.string.lenos_toast_theme_failed, messageOf(t)));
++            return false;
++        }
++    }
++
++    /**
++     * Seeds Monet with the pack's accent and style through the secure theme
++     * setting. This is the reliable path on Android 17: the controller builds
++     * fabricated overlays after boot, so an unconfigured preinstalled RRO
++     * cannot outrank them through manifest priority alone.
++     */
++    private boolean applyMonetSeed(int pack) {
++        try {
++            if (pack < 0) {
++                return restoreMonetSeed();
++            }
++            SharedPreferences prefs = prefs();
++            String current = Settings.Secure.getString(getContentResolver(),
++                    THEME_OVERLAY_SETTING);
++            JSONObject object = current == null || current.isEmpty()
++                    ? new JSONObject() : new JSONObject(current);
++            backupMonetValue(object, CATEGORY_SYSTEM_PALETTE,
++                    PREF_OWNED_PALETTE, PREF_BACKUP_PALETTE);
++            backupMonetValue(object, CATEGORY_THEME_STYLE,
++                    PREF_OWNED_STYLE, PREF_BACKUP_STYLE);
++            backupMonetValue(object, CATEGORY_COLOR_SOURCE,
++                    PREF_OWNED_SOURCE, PREF_BACKUP_SOURCE);
++            object.put(CATEGORY_SYSTEM_PALETTE, THEME_SEEDS[pack]);
++            object.put(CATEGORY_THEME_STYLE, THEME_STYLES[pack]);
++            object.put(CATEGORY_COLOR_SOURCE, COLOR_SOURCE_PRESET);
++            Settings.Secure.putString(getContentResolver(),
++                    THEME_OVERLAY_SETTING, object.toString());
++            prefs.edit()
++                    .putString(PREF_OWNED_PALETTE, THEME_SEEDS[pack])
++                    .putString(PREF_OWNED_STYLE, THEME_STYLES[pack])
++                    .putString(PREF_OWNED_SOURCE, COLOR_SOURCE_PRESET)
++                    .putBoolean(PREF_BACKUP_PRESENT, true)
++                    .apply();
++            return true;
++        } catch (Throwable t) {
++            return false;
++        }
++    }
++
++    /**
++     * Restores whatever values Monet had before the first pack was applied.
++     * A key is only restored while it still holds the value this panel wrote,
++     * so a later wallpaper/preset choice is never overwritten.
++     */
++    private boolean restoreMonetSeed() {
++        try {
++            SharedPreferences prefs = prefs();
++            if (!prefs.getBoolean(PREF_BACKUP_PRESENT, false)) {
++                return true;
++            }
++            String current = Settings.Secure.getString(getContentResolver(),
++                    THEME_OVERLAY_SETTING);
++            JSONObject object = current == null || current.isEmpty()
++                    ? new JSONObject() : new JSONObject(current);
++            restoreMonetValue(object, CATEGORY_SYSTEM_PALETTE,
++                    PREF_OWNED_PALETTE, PREF_BACKUP_PALETTE);
++            restoreMonetValue(object, CATEGORY_THEME_STYLE,
++                    PREF_OWNED_STYLE, PREF_BACKUP_STYLE);
++            restoreMonetValue(object, CATEGORY_COLOR_SOURCE,
++                    PREF_OWNED_SOURCE, PREF_BACKUP_SOURCE);
++            Settings.Secure.putString(getContentResolver(),
++                    THEME_OVERLAY_SETTING, object.toString());
++            prefs.edit()
++                    .remove(PREF_OWNED_PALETTE)
++                    .remove(PREF_OWNED_STYLE)
++                    .remove(PREF_OWNED_SOURCE)
++                    .remove(PREF_BACKUP_PALETTE)
++                    .remove(PREF_BACKUP_STYLE)
++                    .remove(PREF_BACKUP_SOURCE)
++                    .remove(PREF_BACKUP_PRESENT)
++                    .apply();
++            return true;
++        } catch (Throwable t) {
++            return false;
++        }
++    }
++
++    private void backupMonetValue(JSONObject object, String category,
++            String ownedKey, String backupKey) {
++        SharedPreferences prefs = prefs();
++        String current = object.has(category)
++                ? object.optString(category, null) : null;
++        String owned = prefs.getString(ownedKey, null);
++        if (owned != null && owned.equals(current)) {
++            // This is still the value we wrote; keep the original backup.
++            return;
++        }
++        SharedPreferences.Editor editor = prefs.edit();
++        if (current == null) {
++            editor.remove(backupKey);
++        } else {
++            editor.putString(backupKey, current);
++        }
++        editor.apply();
++    }
++
++    private void restoreMonetValue(JSONObject object, String category,
++            String ownedKey, String backupKey) {
++        SharedPreferences prefs = prefs();
++        String current = object.has(category)
++                ? object.optString(category, null) : null;
++        String owned = prefs.getString(ownedKey, null);
++        if (owned == null || !owned.equals(current)) {
++            // The user or the system changed this value after we wrote it.
++            return;
++        }
++        String backup = prefs.getString(backupKey, null);
++        try {
++            if (backup == null) {
++                object.remove(category);
++            } else {
++                object.put(category, backup);
++            }
++        } catch (Throwable ignored) {
++            // A malformed key must not abort restoring the remaining keys.
++        }
++    }
++
++    private SharedPreferences prefs() {
++        return requireContext().getSharedPreferences(PREFS, Context.MODE_PRIVATE);
++    }
++
++    // ---------------------------------------------------------------------
++    // Appearance: Quick Settings, notifications, clock
++    // ---------------------------------------------------------------------
++
++    private void configureQuickSettingsPreferences() {
++        configureOverlayList(KEY_QS_COLUMNS, QS_COLUMN_VALUES,
++                QS_COLUMN_PACKAGES);
++        configureOverlayList(KEY_QS_ROWS, QS_ROW_VALUES,
++                QS_ROW_PACKAGES);
++    }
++
++    private void configureOverlayList(String key, String[] values,
++            String[] packages) {
++        ListPreference preference = findPreference(key);
++        if (preference == null) {
++            return;
++        }
++        preference.setOnPreferenceChangeListener((p, newValue) -> {
++            if (!applyOverlayChoice(values, packages, String.valueOf(newValue),
++                    R.string.lenos_toast_qs_updated,
++                    R.string.lenos_toast_qs_failed)) {
++                return false;
++            }
++            updateListSummary((ListPreference) p);
++            return true;
++        });
++    }
++
++    private void refreshQuickSettingsPreferences() {
++        setOverlayListValue(KEY_QS_COLUMNS, QS_COLUMN_VALUES, QS_COLUMN_PACKAGES);
++        setOverlayListValue(KEY_QS_ROWS, QS_ROW_VALUES, QS_ROW_PACKAGES);
++    }
++
++    private void configureNotificationPreferences() {
++        ListPreference corners = findPreference(KEY_NOTIFY_CORNERS);
++        if (corners != null) {
++            corners.setOnPreferenceChangeListener((p, newValue) -> {
++                if (!applyOverlayChoice(NOTIFY_CORNER_VALUES,
++                        NOTIFY_CORNER_PACKAGES, String.valueOf(newValue),
++                        R.string.lenos_toast_notify_corners_updated,
++                        R.string.lenos_toast_notify_corners_failed)) {
++                    return false;
++                }
++                updateListSummary((ListPreference) p);
++                return true;
++            });
++        }
++
++        SwitchPreferenceCompat dividers = findPreference(KEY_NOTIFY_DIVIDERS);
++        if (dividers != null) {
++            dividers.setOnPreferenceChangeListener((p, newValue) ->
++                    applyNotifyDividers((Boolean) newValue));
++        }
++    }
++
++    private void refreshNotificationPreferences() {
++        ListPreference corners = findPreference(KEY_NOTIFY_CORNERS);
++        if (corners != null) {
++            corners.setValue(currentOverlayValue(
++                    NOTIFY_CORNER_VALUES, NOTIFY_CORNER_PACKAGES));
++            updateListSummary(corners);
++        }
++        SwitchPreferenceCompat dividers = findPreference(KEY_NOTIFY_DIVIDERS);
++        if (dividers != null) {
++            dividers.setChecked(enabledOption(
++                    new String[]{NOTIFY_DIVIDERS_PACKAGE}, -1) >= 0);
++        }
++    }
++
++    private boolean applyNotifyDividers(boolean enabled) {
++        try {
++            OverlayManager manager = getContext().getSystemService(OverlayManager.class);
++            if (manager == null) {
++                throw new IllegalStateException("OverlayManager unavailable");
++            }
++            if (!installedPackages(manager, SYSTEMUI_PACKAGE)
++                    .contains(NOTIFY_DIVIDERS_PACKAGE)) {
++                throw new IllegalStateException("overlay not installed");
++            }
++            if (enabled == (enabledOption(
++                    new String[]{NOTIFY_DIVIDERS_PACKAGE}, -1) >= 0)) {
++                return true;
++            }
++            manager.setEnabled(NOTIFY_DIVIDERS_PACKAGE, enabled,
++                    Process.myUserHandle());
++            toast(enabled ? R.string.lenos_toast_dividers_hidden
++                    : R.string.lenos_toast_dividers_restored);
++            return true;
++        } catch (Throwable t) {
++            toast(getString(R.string.lenos_toast_dividers_failed, messageOf(t)));
++            SwitchPreferenceCompat dividers = findPreference(KEY_NOTIFY_DIVIDERS);
++            if (dividers != null) {
++                dividers.setChecked(!enabled);
++            }
++            return false;
++        }
++    }
++
++    private void configureClockPreference() {
++        ListPreference preference = findPreference(KEY_CLOCK_SIZE);
++        if (preference == null) {
++            return;
++        }
++        preference.setOnPreferenceChangeListener((p, newValue) -> {
++            if (!applyOverlayChoice(CLOCK_VALUES, CLOCK_PACKAGES,
++                    String.valueOf(newValue),
++                    R.string.lenos_toast_clock_updated,
++                    R.string.lenos_toast_clock_failed)) {
++                return false;
++            }
++            updateListSummary((ListPreference) p);
++            return true;
++        });
++
++        Preference statusBar = findPreference(KEY_STATUS_BAR);
++        if (statusBar != null) {
++            statusBar.setOnPreferenceClickListener(p -> {
++                openStatusBarSettings();
++                return true;
++            });
++        }
++        Preference lockScreen = findPreference(KEY_LOCK_SCREEN);
++        if (lockScreen != null) {
++            lockScreen.setOnPreferenceClickListener(p -> {
++                openLockScreenSettings();
++                return true;
++            });
++        }
++    }
++
++    private void refreshClockPreference() {
++        setOverlayListValue(KEY_CLOCK_SIZE, CLOCK_VALUES, CLOCK_PACKAGES);
++    }
++
++    private boolean applyOverlayChoice(String[] values, String[] packages,
++            String value, int successMessage, int failureMessage) {
++        try {
++            OverlayManager manager = getContext().getSystemService(OverlayManager.class);
++            if (manager == null) {
++                throw new IllegalStateException("OverlayManager unavailable");
++            }
++            int selected = indexOf(values, value);
++            if (selected < 0) {
++                return false;
++            }
++            if (selected == enabledOption(packages, 0)) {
++                // The first layout pass can report the already-current
++                // selection; it must not toggle an overlay.
++                return true;
++            }
++            Set<String> installed = installedPackages(manager, SYSTEMUI_PACKAGE);
++            for (int i = 0; i < packages.length; i++) {
++                String pkg = packages[i];
++                if (pkg == null || !installed.contains(pkg)) {
++                    continue;
++                }
++                manager.setEnabled(pkg, i == selected, Process.myUserHandle());
++            }
++            toast(successMessage);
++            return true;
++        } catch (Throwable t) {
++            toast(getString(failureMessage, messageOf(t)));
++            return false;
++        }
++    }
++
++    private void setOverlayListValue(String key, String[] values, String[] packages) {
++        ListPreference preference = findPreference(key);
++        if (preference == null) {
++            return;
++        }
++        preference.setValue(currentOverlayValue(values, packages));
++        updateListSummary(preference);
++    }
++
++    private String currentOverlayValue(String[] values, String[] packages) {
++        int index = enabledOption(packages, 0);
++        return index >= 0 && index < values.length ? values[index] : values[0];
++    }
++
++    private int enabledOption(String[] packages, int defaultIndex) {
++        try {
++            OverlayManager manager = getContext().getSystemService(OverlayManager.class);
++            if (manager == null) {
++                return defaultIndex;
++            }
++            Set<String> enabled = new HashSet<>();
++            for (OverlayInfo info : manager.getOverlayInfosForTarget(
++                    SYSTEMUI_PACKAGE, Process.myUserHandle())) {
++                if (info.isEnabled()) {
++                    enabled.add(info.getPackageName());
++                }
++            }
++            for (int i = 0; i < packages.length; i++) {
++                if (packages[i] != null && enabled.contains(packages[i])) {
++                    return i;
++                }
++            }
++        } catch (Throwable ignored) {
++            // Keep the default visible if the overlay service is unavailable.
++        }
++        return defaultIndex;
++    }
++
++    private static Set<String> installedPackages(OverlayManager manager,
++            String targetPackage) {
++        Set<String> installed = new HashSet<>();
++        for (OverlayInfo info : manager.getOverlayInfosForTarget(
++                targetPackage, Process.myUserHandle())) {
++            installed.add(info.getPackageName());
++        }
++        return installed;
++    }
++
++    // ---------------------------------------------------------------------
++    // Motion
++    // ---------------------------------------------------------------------
++
++    private void configureMotionPreferences() {
++        configureMotionPreference(KEY_MOTION_ANIMATOR,
++                Settings.Global.ANIMATOR_DURATION_SCALE);
++        configureMotionPreference(KEY_MOTION_TRANSITION,
++                Settings.Global.TRANSITION_ANIMATION_SCALE);
++        configureMotionPreference(KEY_MOTION_WINDOW,
++                Settings.Global.WINDOW_ANIMATION_SCALE);
++
++        Preference reset = findPreference(KEY_MOTION_RESET);
++        if (reset != null) {
++            reset.setOnPreferenceClickListener(p -> {
++                resetMotion();
++                return true;
++            });
++        }
++    }
++
++    private void configureMotionPreference(String key, String settingKey) {
++        ListPreference preference = findPreference(key);
++        if (preference == null) {
++            return;
++        }
++        setMotionValue(preference, settingKey);
++        preference.setOnPreferenceChangeListener((p, newValue) -> {
++            float scale;
++            try {
++                scale = Float.parseFloat(String.valueOf(newValue));
++            } catch (NumberFormatException e) {
++                return false;
++            }
++            if (!applyMotion(settingKey, scale, (ListPreference) p)) {
++                return false;
++            }
++            updateListSummary((ListPreference) p);
++            return true;
++        });
++    }
++
++    private void setMotionValue(ListPreference preference, String settingKey) {
++        float current = Settings.Global.getFloat(getContentResolver(),
++                settingKey, 1.0f);
++        String value = MOTION_VALUES[0];
++        for (String candidate : MOTION_VALUES) {
++            if (Math.abs(Float.parseFloat(candidate) - current) < 0.01f) {
++                value = candidate;
++                break;
++            }
++        }
++        preference.setValue(value);
++        updateListSummary(preference);
++    }
++
++    private boolean applyMotion(String settingKey, float scale,
++            ListPreference preference) {
++        try {
++            float current = Settings.Global.getFloat(getContentResolver(),
++                    settingKey, 1.0f);
++            if (Math.abs(current - scale) < 0.01f) {
++                return true;
++            }
++            Settings.Global.putFloat(getContentResolver(), settingKey, scale);
++            toast(getString(R.string.lenos_toast_motion_set,
++                    motionLabel(settingKey), String.valueOf(scale)));
++            return true;
++        } catch (Throwable t) {
++            toast(getString(R.string.lenos_toast_motion_failed, messageOf(t)));
++            setMotionValue(preference, settingKey);
++            return false;
++        }
++    }
++
++    private void resetMotion() {
++        try {
++            Settings.Global.putFloat(getContentResolver(),
++                    Settings.Global.ANIMATOR_DURATION_SCALE, 1.0f);
++            Settings.Global.putFloat(getContentResolver(),
++                    Settings.Global.TRANSITION_ANIMATION_SCALE, 1.0f);
++            Settings.Global.putFloat(getContentResolver(),
++                    Settings.Global.WINDOW_ANIMATION_SCALE, 1.0f);
++            ListPreference animator = findPreference(KEY_MOTION_ANIMATOR);
++            ListPreference transition = findPreference(KEY_MOTION_TRANSITION);
++            ListPreference window = findPreference(KEY_MOTION_WINDOW);
++            if (animator != null) {
++                setMotionValue(animator, Settings.Global.ANIMATOR_DURATION_SCALE);
++            }
++            if (transition != null) {
++                setMotionValue(transition, Settings.Global.TRANSITION_ANIMATION_SCALE);
++            }
++            if (window != null) {
++                setMotionValue(window, Settings.Global.WINDOW_ANIMATION_SCALE);
++            }
++            toast(R.string.lenos_toast_motion_reset);
++        } catch (Throwable t) {
++            toast(getString(R.string.lenos_toast_motion_reset_failed,
++                    messageOf(t)));
++        }
++    }
++
++    private static String motionLabel(String key) {
++        if (Settings.Global.ANIMATOR_DURATION_SCALE.equals(key)) {
++            return "System animations";
++        }
++        if (Settings.Global.TRANSITION_ANIMATION_SCALE.equals(key)) {
++            return "Transition animations";
++        }
++        return "Window animations";
++    }
++
++    // ---------------------------------------------------------------------
++    // Launcher
++    // ---------------------------------------------------------------------
++
++    private void configureLauncherPreferences() {
++        ListPreference grid = findPreference(KEY_LAUNCHER_GRID);
++        if (grid != null) {
++            grid.setEnabled(false);
++            grid.setOnPreferenceChangeListener((p, newValue) -> {
++                String name = String.valueOf(newValue);
++                if (name.equals(mLauncherGridCurrent)) {
++                    return true;
++                }
++                applyLauncherGrid(name);
++                return true;
++            });
++        }
++        ListPreference shape = findPreference(KEY_LAUNCHER_SHAPE);
++        if (shape != null) {
++            shape.setEnabled(false);
++            shape.setOnPreferenceChangeListener((p, newValue) -> {
++                String key = String.valueOf(newValue);
++                if (key.equals(mLauncherShapeCurrent)) {
++                    return true;
++                }
++                applyLauncherShape(key);
++                return true;
++            });
++        }
++        SwitchPreferenceCompat themed = findPreference(KEY_LAUNCHER_THEMED);
++        if (themed != null) {
++            themed.setEnabled(false);
++            themed.setOnPreferenceChangeListener((p, newValue) ->
++                    applyLauncherThemedIcons((Boolean) newValue));
++        }
++        Preference settings = findPreference(KEY_LAUNCHER_SETTINGS);
++        if (settings != null) {
++            settings.setOnPreferenceClickListener(p -> {
++                openLauncherSettings();
++                return true;
++            });
++        }
++    }
++
++    /**
++     * Reads the launcher's grid choices off the UI thread. The provider may
++     * start the launcher process, so a synchronous query could block the panel
++     * on first open.
++     */
++    private void refreshLauncherGrid() {
++        ListPreference preference = findPreference(KEY_LAUNCHER_GRID);
++        if (preference == null) {
++            return;
++        }
++        preference.setEnabled(false);
++        final Context context = requireContext().getApplicationContext();
++        final Activity activity = getActivity();
++        if (activity == null) {
++            return;
++        }
++        final int request = ++mLauncherGridRequest;
++        new Thread(() -> {
++            List<String> names = new ArrayList<>();
++            List<String> labels = new ArrayList<>();
++            int selected = -1;
++            try (Cursor cursor = context.getContentResolver().query(
++                    launcherProviderUri(LAUNCHER_LIST_OPTIONS),
++                    new String[]{"name", "grid_title", "rows", "cols",
++                            "is_default"},
++                    null, null, null)) {
++                if (cursor != null) {
++                    int nameIndex = cursor.getColumnIndexOrThrow("name");
++                    int titleIndex = cursor.getColumnIndex("grid_title");
++                    int rowsIndex = cursor.getColumnIndexOrThrow("rows");
++                    int columnsIndex = cursor.getColumnIndexOrThrow("cols");
++                    int defaultIndex =
++                            cursor.getColumnIndexOrThrow("is_default");
++                    while (cursor.moveToNext()) {
++                        String name = cursor.getString(nameIndex);
++                        if (name == null || name.isEmpty()) {
++                            continue;
++                        }
++                        String title = titleIndex >= 0
++                                ? cursor.getString(titleIndex) : null;
++                        int rows = cursor.getInt(rowsIndex);
++                        int columns = cursor.getInt(columnsIndex);
++                        boolean current = cursor.getInt(defaultIndex) != 0;
++                        names.add(name);
++                        labels.add(launcherGridLabel(title, columns, rows));
++                        if (current) {
++                            selected = names.size() - 1;
++                        }
++                    }
++                }
++            } catch (Throwable ignored) {
++                // A missing provider, a denied permission or a launcher
++                // without grid support all fall back to the settings entry.
++            }
++            final List<String> resultNames = names;
++            final List<String> resultLabels = labels;
++            final int resultSelected = selected;
++            activity.runOnUiThread(() -> {
++                if (!isAdded() || request != mLauncherGridRequest) {
++                    return;
++                }
++                showLauncherGrid(resultNames, resultLabels, resultSelected);
++            });
++        }, "lenos-launcher-grid-query").start();
++    }
++
++    private void showLauncherGrid(List<String> names, List<String> labels,
++            int selected) {
++        ListPreference preference = findPreference(KEY_LAUNCHER_GRID);
++        if (preference == null) {
++            return;
++        }
++        mLauncherGridNames.clear();
++        mLauncherGridNames.addAll(names);
++        if (names.isEmpty()) {
++            preference.setEntries(new CharSequence[]{
++                    getString(R.string.lenos_launcher_unavailable)});
++            preference.setEntryValues(new CharSequence[]{""});
++            preference.setValue("");
++            preference.setSummary(R.string.lenos_launcher_unavailable);
++            preference.setEnabled(false);
++            mLauncherGridCurrent = null;
++            return;
++        }
++        preference.setEntries(labels.toArray(new CharSequence[0]));
++        preference.setEntryValues(names.toArray(new CharSequence[0]));
++        int shown = selected >= 0 && selected < names.size() ? selected : 0;
++        preference.setValue(names.get(shown));
++        preference.setSummary(labels.get(shown));
++        preference.setEnabled(true);
++        // Treat the visible option as current so the initial callback cannot
++        // write a grid the user did not choose.
++        mLauncherGridCurrent = names.get(shown);
++    }
++
++    private void applyLauncherGrid(String name) {
++        ListPreference preference = findPreference(KEY_LAUNCHER_GRID);
++        if (preference != null) {
++            preference.setEnabled(false);
++        }
++        final Context context = requireContext().getApplicationContext();
++        final Activity activity = getActivity();
++        if (activity == null) {
++            return;
++        }
++        new Thread(() -> {
++            int updated = 0;
++            String failure = null;
++            try {
++                ContentValues values = new ContentValues();
++                values.put("name", name);
++                updated = context.getContentResolver().update(
++                        launcherProviderUri(LAUNCHER_DEFAULT_GRID), values,
++                        null, null);
++            } catch (Throwable t) {
++                failure = t.getMessage();
++            }
++            final int result = updated;
++            final String message = failure;
++            activity.runOnUiThread(() -> {
++                if (!isAdded()) {
++                    return;
++                }
++                if (result > 0) {
++                    mLauncherGridCurrent = name;
++                    toast(R.string.lenos_toast_launcher_grid_updated);
++                } else {
++                    toast(getString(R.string.lenos_toast_launcher_grid_failed,
++                            message == null ? "launcher rejected the change" : message));
++                }
++                refreshLauncherGrid();
++            });
++        }, "lenos-launcher-grid-apply").start();
++    }
++
++    private static String launcherGridLabel(String title, int columns, int rows) {
++        String size = columns + " \u00d7 " + rows;
++        if (title == null || title.trim().isEmpty()) {
++            return size;
++        }
++        return title.trim();
++    }
++
++    private void refreshLauncherShapes() {
++        ListPreference preference = findPreference(KEY_LAUNCHER_SHAPE);
++        if (preference == null) {
++            return;
++        }
++        preference.setEnabled(false);
++        final Context context = requireContext().getApplicationContext();
++        final Activity activity = getActivity();
++        if (activity == null) {
++            return;
++        }
++        final int request = ++mLauncherShapeRequest;
++        new Thread(() -> {
++            List<String> keys = new ArrayList<>();
++            List<String> labels = new ArrayList<>();
++            int selected = -1;
++            try (Cursor cursor = context.getContentResolver().query(
++                    launcherProviderUri(LAUNCHER_SHAPE_OPTIONS),
++                    new String[]{"shape_key", "shape_title", "is_default"},
++                    null, null, null)) {
++                if (cursor != null) {
++                    int keyIndex = cursor.getColumnIndexOrThrow("shape_key");
++                    int titleIndex = cursor.getColumnIndex("shape_title");
++                    int defaultIndex =
++                            cursor.getColumnIndexOrThrow("is_default");
++                    while (cursor.moveToNext()) {
++                        String key = cursor.getString(keyIndex);
++                        if (key == null || key.isEmpty()) {
++                            continue;
++                        }
++                        String title = titleIndex >= 0
++                                ? cursor.getString(titleIndex) : null;
++                        boolean current = cursor.getInt(defaultIndex) != 0;
++                        keys.add(key);
++                        labels.add(launcherShapeLabel(title, key));
++                        if (current) {
++                            selected = keys.size() - 1;
++                        }
++                    }
++                }
++            } catch (Throwable ignored) {
++                // Fall back to the stock launcher settings screen.
++            }
++            final List<String> resultKeys = keys;
++            final List<String> resultLabels = labels;
++            final int resultSelected = selected;
++            activity.runOnUiThread(() -> {
++                if (!isAdded() || request != mLauncherShapeRequest) {
++                    return;
++                }
++                showLauncherShapes(resultKeys, resultLabels, resultSelected);
++            });
++        }, "lenos-launcher-shape-query").start();
++    }
++
++    private void showLauncherShapes(List<String> keys, List<String> labels,
++            int selected) {
++        ListPreference preference = findPreference(KEY_LAUNCHER_SHAPE);
++        if (preference == null) {
++            return;
++        }
++        mLauncherShapeKeys.clear();
++        mLauncherShapeKeys.addAll(keys);
++        if (keys.isEmpty()) {
++            preference.setEntries(new CharSequence[]{
++                    getString(R.string.lenos_launcher_unavailable)});
++            preference.setEntryValues(new CharSequence[]{""});
++            preference.setValue("");
++            preference.setSummary(R.string.lenos_launcher_unavailable);
++            preference.setEnabled(false);
++            mLauncherShapeCurrent = null;
++            return;
++        }
++        preference.setEntries(labels.toArray(new CharSequence[0]));
++        preference.setEntryValues(keys.toArray(new CharSequence[0]));
++        int shown = selected >= 0 && selected < keys.size() ? selected : 0;
++        preference.setValue(keys.get(shown));
++        preference.setSummary(labels.get(shown));
++        preference.setEnabled(true);
++        mLauncherShapeCurrent = keys.get(shown);
++    }
++
++    private void applyLauncherShape(String key) {
++        ListPreference preference = findPreference(KEY_LAUNCHER_SHAPE);
++        if (preference != null) {
++            preference.setEnabled(false);
++        }
++        final Context context = requireContext().getApplicationContext();
++        final Activity activity = getActivity();
++        if (activity == null) {
++            return;
++        }
++        new Thread(() -> {
++            int updated = 0;
++            String failure = null;
++            try {
++                ContentValues values = new ContentValues();
++                values.put("shape_key", key);
++                updated = context.getContentResolver().update(
++                        launcherProviderUri(LAUNCHER_SET_SHAPE), values,
++                        null, null);
++            } catch (Throwable t) {
++                failure = t.getMessage();
++            }
++            final int result = updated;
++            final String message = failure;
++            activity.runOnUiThread(() -> {
++                if (!isAdded()) {
++                    return;
++                }
++                if (result > 0) {
++                    mLauncherShapeCurrent = key;
++                    toast(R.string.lenos_toast_launcher_shape_updated);
++                } else {
++                    toast(getString(R.string.lenos_toast_launcher_shape_failed,
++                            message == null ? "launcher rejected the change" : message));
++                }
++                refreshLauncherShapes();
++            });
++        }, "lenos-launcher-shape-apply").start();
++    }
++
++    private static String launcherShapeLabel(String title, String key) {
++        if (title == null || title.trim().isEmpty()) {
++            return key;
++        }
++        return title.trim();
++    }
++
++    private void refreshLauncherThemedIcons() {
++        SwitchPreferenceCompat preference = findPreference(KEY_LAUNCHER_THEMED);
++        if (preference == null) {
++            return;
++        }
++        preference.setEnabled(false);
++        final Context context = requireContext().getApplicationContext();
++        final Activity activity = getActivity();
++        if (activity == null) {
++            return;
++        }
++        final int request = ++mLauncherThemedRequest;
++        new Thread(() -> {
++            Boolean enabled = null;
++            try (Cursor cursor = context.getContentResolver().query(
++                    launcherProviderUri(LAUNCHER_GET_ICON_THEMED),
++                    new String[]{"boolean_value"},
++                    null, null, null)) {
++                if (cursor != null && cursor.moveToFirst()) {
++                    int index = cursor.getColumnIndexOrThrow("boolean_value");
++                    enabled = cursor.getInt(index) != 0;
++                }
++            } catch (Throwable ignored) {
++                // Fall back to the stock launcher settings screen.
++            }
++            final Boolean result = enabled;
++            activity.runOnUiThread(() -> {
++                if (!isAdded() || request != mLauncherThemedRequest) {
++                    return;
++                }
++                SwitchPreferenceCompat preferenceNow =
++                        findPreference(KEY_LAUNCHER_THEMED);
++                if (preferenceNow == null) {
++                    return;
++                }
++                preferenceNow.setChecked(Boolean.TRUE.equals(result));
++                preferenceNow.setEnabled(result != null);
++                preferenceNow.setSummary(result == null
++                        ? R.string.lenos_launcher_unavailable
++                        : R.string.lenos_launcher_themed_title);
++            });
++        }, "lenos-launcher-themed-query").start();
++    }
++
++    private boolean applyLauncherThemedIcons(boolean enabled) {
++        SwitchPreferenceCompat preference = findPreference(KEY_LAUNCHER_THEMED);
++        if (preference != null) {
++            preference.setEnabled(false);
++        }
++        final Context context = requireContext().getApplicationContext();
++        final Activity activity = getActivity();
++        if (activity == null) {
++            return false;
++        }
++        new Thread(() -> {
++            int updated = 0;
++            String failure = null;
++            try {
++                ContentValues values = new ContentValues();
++                values.put("boolean_value", enabled);
++                updated = context.getContentResolver().update(
++                        launcherProviderUri(LAUNCHER_SET_ICON_THEMED), values,
++                        null, null);
++            } catch (Throwable t) {
++                failure = t.getMessage();
++            }
++            final int result = updated;
++            final String message = failure;
++            activity.runOnUiThread(() -> {
++                if (!isAdded()) {
++                    return;
++                }
++                if (result > 0) {
++                    toast(enabled ? R.string.lenos_toast_launcher_themed_on
++                            : R.string.lenos_toast_launcher_themed_off);
++                } else {
++                    toast(getString(R.string.lenos_toast_launcher_themed_failed,
++                            message == null ? "launcher rejected the change" : message));
++                }
++                refreshLauncherThemedIcons();
++            });
++        }, "lenos-launcher-themed-apply").start();
++        return true;
++    }
++
++    private void openLauncherSettings() {
++        Intent preferences = new Intent(Intent.ACTION_APPLICATION_PREFERENCES);
++        preferences.setPackage(LAUNCHER_PACKAGE);
++        preferences.addCategory(Intent.CATEGORY_DEFAULT);
++        if (tryStartActivity(preferences)) {
++            return;
++        }
++        if (tryStartActivity(new Intent(Settings.ACTION_HOME_SETTINGS))) {
++            return;
++        }
++        toast(R.string.lenos_toast_launcher_unavailable);
++    }
++
++    private static Uri launcherProviderUri(String path) {
++        return Uri.parse("content://" + LAUNCHER_GRID_AUTHORITY + path);
++    }
++
++    // ---------------------------------------------------------------------
++    // Security
++    // ---------------------------------------------------------------------
++
++    private void configureSecurityPreferences() {
++        ListPreference bfu = findPreference(KEY_BFU);
++        if (bfu != null) {
++            bfu.setValue(String.valueOf(Settings.Global.getInt(
++                    getContentResolver(), BFU_SETTING, BFU_DEFAULT_MS)));
++            updateListSummary(bfu);
++            bfu.setOnPreferenceChangeListener((p, newValue) -> {
++                int value;
++                try {
++                    value = Integer.parseInt(String.valueOf(newValue));
++                } catch (NumberFormatException e) {
++                    return false;
++                }
++                int current = Settings.Global.getInt(getContentResolver(),
++                        BFU_SETTING, BFU_DEFAULT_MS);
++                if (value == current) {
++                    return true;
++                }
++                try {
++                    Settings.Global.putInt(getContentResolver(), BFU_SETTING, value);
++                    toast(value == 0 ? R.string.lenos_toast_bfu_off
++                            : R.string.lenos_toast_bfu_set);
++                    updateListSummary((ListPreference) p);
++                    return true;
++                } catch (Throwable t) {
++                    toast(R.string.lenos_toast_bfu_failed);
++                    return false;
++                }
++            });
++        }
++
++        SwitchPreferenceCompat scramble = findPreference(KEY_SCRAMBLE);
++        if (scramble != null) {
++            scramble.setChecked(Settings.Secure.getInt(getContentResolver(),
++                    SCRAMBLE_SETTING, 1) != 0);
++            scramble.setOnPreferenceChangeListener((p, newValue) -> {
++                boolean enabled = (Boolean) newValue;
++                try {
++                    Settings.Secure.putInt(getContentResolver(), SCRAMBLE_SETTING,
++                            enabled ? 1 : 0);
++                    toast(enabled ? R.string.lenos_toast_scramble_on
++                            : R.string.lenos_toast_scramble_off);
++                    return true;
++                } catch (Throwable t) {
++                    toast(R.string.lenos_toast_scramble_failed);
++                    ((SwitchPreferenceCompat) p).setChecked(!enabled);
++                    return false;
++                }
++            });
++        }
++
++        Preference duress = findPreference(KEY_DURESS);
++        if (duress != null) {
++            duress.setOnPreferenceClickListener(p -> {
++                new SubSettingLauncher(requireContext())
++                        .setDestination(LenosDuressFragment.class.getName())
++                        .setTitleRes(R.string.lenos_duress_screen_title)
++                        .setSourceMetricsCategory(getMetricsCategory())
++                        .launch();
++                return true;
++            });
++        }
++    }
++
++    private void refreshSecurityStatus() {
++        Preference preference = findPreference(KEY_SECURITY_STATUS);
++        if (preference == null) {
++            return;
++        }
++        String lockState;
++        try {
++            LenosLockBridge lock = new LenosLockBridge(requireContext());
++            lockState = lock.isSecure()
++                    ? getString(R.string.lenos_security_lock_set)
++                    : getString(R.string.lenos_security_lock_unset);
++        } catch (Throwable t) {
++            lockState = getString(R.string.lenos_security_lock_unknown);
++        }
++        preference.setSummary(getString(R.string.lenos_security_status_summary,
++                sysProp("ro.lenos.security.auto_bfu", "?"),
++                sysProp("ro.lenos.security.duress", "?"),
++                lockState));
++    }
++
++    private static String sysProp(String key, String fallback) {
++        try {
++            Class<?> clazz = Class.forName("android.os.SystemProperties");
++            return (String) clazz.getMethod("get", String.class, String.class)
++                    .invoke(null, key, fallback);
++        } catch (Exception e) {
++            return fallback;
++        }
++    }
++
++    // ---------------------------------------------------------------------
++    // Privacy and navigation
++    // ---------------------------------------------------------------------
++
++    private void configurePrivacyPreferences() {
++        Preference wifi = findPreference(KEY_WIFI_PRIVACY);
++        if (wifi != null) {
++            wifi.setOnPreferenceClickListener(p -> {
++                tryStartActivity(new Intent(Settings.ACTION_WIFI_SETTINGS));
++                return true;
++            });
++        }
++        Preference network = findPreference(KEY_APP_NETWORK);
++        if (network != null) {
++            network.setOnPreferenceClickListener(p -> {
++                tryStartActivity(new Intent(Settings.ACTION_DATA_USAGE_SETTINGS));
++                return true;
++            });
++        }
++        Preference about = findPreference(KEY_ABOUT);
++        if (about != null) {
++            about.setSummary(getString(R.string.lenos_about_summary,
++                    sysProp("ro.lenos.version", "?")));
++        }
++    }
++
++    private void openStatusBarSettings() {
++        Intent intent = new Intent(STATUS_BAR_ACTION);
++        intent.addCategory(Intent.CATEGORY_DEFAULT);
++        if (tryStartActivity(intent)) {
++            return;
++        }
++        if (tryStartActivity(new Intent(Settings.ACTION_DISPLAY_SETTINGS))) {
++            return;
++        }
++        toast(R.string.lenos_toast_status_bar_unavailable);
++    }
++
++    private void openLockScreenSettings() {
++        if (tryStartActivity(new Intent(Settings.ACTION_LOCKSCREEN_SETTINGS))) {
++            return;
++        }
++        if (tryStartActivity(new Intent(Settings.ACTION_SECURITY_SETTINGS))) {
++            return;
++        }
++        toast(R.string.lenos_toast_lockscreen_unavailable);
++    }
++
++    private boolean tryStartActivity(Intent intent) {
++        try {
++            startActivity(intent);
++            return true;
++        } catch (ActivityNotFoundException | SecurityException e) {
++            return false;
++        }
++    }
++
++    // ---------------------------------------------------------------------
++    // Small helpers
++    // ---------------------------------------------------------------------
++
++    private void updateListSummary(ListPreference preference) {
++        CharSequence entry = preference.getEntry();
++        preference.setSummary(entry != null ? entry : "");
++    }
++
++    private static int indexOf(String[] values, String value) {
++        for (int i = 0; i < values.length; i++) {
++            if (TextUtils.equals(values[i], value)) {
++                return i;
++            }
++        }
++        return -1;
++    }
++
++    private static String messageOf(Throwable throwable) {
++        String message = throwable.getMessage();
++        return message == null || message.isEmpty()
++                ? throwable.getClass().getSimpleName() : message;
++    }
++
++    private void toast(int message) {
++        Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show();
++    }
++
++    private void toast(String message) {
++        Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show();
++    }
++}

@@ -3,7 +3,7 @@
 A personal LineageOS 24.0 build for the Nothing Phone (3a) and (3a) Pro
 (`asteroids`).
 
-This repo is not a ROM distribution. It is the patch set and small apps that
+This repo is not a ROM distribution. It is the patch set and resources that
 make up the build. The LineageOS tree stays clean and every change is carried
 as an ordinary git patch, so the build can be reproduced and reviewed. If you
 have the same phone, you can build it too, or take only the changes you want.
@@ -19,8 +19,11 @@ applies it.
 - strict DNS-over-TLS, non-Google time and captive-portal endpoints
 - hardened first-boot defaults, PIN scrambling, duress wipe, and memory clearing
   on lock
-- no Google apps or services added; AudioFX excluded
-- local-only personalization (theme packs, Quick Settings layout, notification corners/dividers, status-bar clock size, motion controls, launcher grid/icon shape/themed icons) via `LenosParts`
+- no Google apps or services added; Updater, Jelly, Etar, Twelve, Recorder,
+  Glimpse and AudioFX are not installed
+- local-only personalization (theme packs, Quick Settings layout, notification
+  corners/dividers, status-bar clock size, motion controls, launcher grid/icon
+  shape/themed icons) in the merged lenOS panel inside Settings
 - optional extras behind `LENOS_EXPERIMENTAL=1`
 
 The full list, including what does not work, is in
@@ -100,8 +103,10 @@ python3 vendor/lenos/tools/lenos-patch.py --tree . --reset
 
 - `patches/` — the default patch series, grouped by upstream project
 - `patches-experimental/` — optional second series, applied after the default one
-- `app/LenosSecurity/` — small settings app for controls the stock UI lacks
+- `patches/packages_apps_Settings/` — the native lenOS panel merged into
+  Settings (appearance, motion, launcher and security controls)
 - `config/`, `rro/` — product configuration and privacy overlays
+- `experimental/app/` — optional app source, built only with `LENOS_EXPERIMENTAL=1`
 - `docs/` — build notes, feature list, porting notes, local personalization, flashing safety
 - `experimental/` — opt-in app source, checks, and status notes
 - `tools/` — patch application, read-only verification helpers, and the pinned

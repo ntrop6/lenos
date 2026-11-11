@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0
 //
 // Mutable SystemUI overlay for the Ember local theme pack. It is installed on
-// the product partition and enabled only by LenosParts; there is no network
+// the product partition and enabled only by the lenOS Settings panel; there is no network
 // component and no code.
 //
 runtime_resource_overlay {

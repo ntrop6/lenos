@@ -6,7 +6,7 @@
      Mutable framework overlay. framework-res does not declare an overlayable
      subset, so the legacy CHANGE_OVERLAY_PACKAGES actor check applies. This
      palette is the fallback when dynamic color is disabled; when Monet is on,
-     LenosParts seeds the accent through the secure theme setting instead.
+     The lenOS Settings panel seeds the accent through the secure theme setting instead.
      Manifest priority is advisory for unconfigured overlays on Android 17.
 -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"

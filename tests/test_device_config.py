@@ -59,9 +59,12 @@ class TestDeviceConfig(LenosPatchTest):
         inherit_at = body.index("$(call inherit-product, device/nothing/asteroids/")
         self.assertLess(strip_at, inherit_at)
         self.assertLess(audiofx_at, inherit_at)
-        # LineageOS 24.0 no longer ships Gallery2, so the default strip list is
-        # empty; the hook must still be declared before the inheritance.
-        self.assertIn("LENOS_STRIP_PACKAGES :=\n", body)
+        # LineageOS 24.0 ships the full app set; the lenOS product drops the
+        # updater, browser, calendar, music, recorder and gallery apps. AudioFX
+        # is dropped through LineageOS' own switch.
+        self.assertIn(
+            "LENOS_STRIP_PACKAGES := Updater Jelly Etar Twelve Recorder Glimpse\n",
+            body)
 
     def test_product_is_registered_for_lunch(self):
         self.assert_contains(

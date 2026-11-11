@@ -109,9 +109,9 @@ enabled after that. Never sideload an unpatched or differently signed OTA.
 
 ## Updates
 
-lenOS does not ship or configure a signed OTA/updater endpoint. If the
-LineageOS Updater app is present in your tree, it is not wired to a lenOS
-server and must not be used for this build.
+lenOS does not ship or configure a signed OTA/updater endpoint, and the
+LineageOS Updater app is filtered out of the product. Do not add it back or
+point it at LineageOS infrastructure for this build.
 
 Update by installing a complete OTA from recovery, signed with the same OTA key
 as the installed build. Do not sideload an old or differently signed image. Do

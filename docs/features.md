@@ -127,10 +127,8 @@ their content until the user explicitly allows it.
 
 | Item | Status |
 |---|---|
-| Bundled apps | AudioFX off (`TARGET_EXCLUDES_AUDIOFX`), MP3/Music app (`Twelve`) kept for now. `LENOS_STRIP_PACKAGES` remains wired through `vendor_lineage/0001`, but LineageOS 24.0 no longer ships `Gallery2` (or another app this product drops), so the default list is empty |
-| Jelly browser | **kept** for 1.0; Cromite/WebView replacement is still under investigation (see limits) |
-| `LenosSecurity` app | ships with: auto-BFU timer (init backend), PIN-scramble switch (writes the same `Settings.Secure` key SystemUI reads), duress PIN/password UI (framework service), status card. The old global Wi-Fi hostname toggle was dropped in the GrapheneOS-faithful redo — that control is per network in Wi-Fi settings, and the app no longer needs `NETWORK_SETTINGS` |
-| Local personalization (`LenosParts`) | **source-complete, not device-validated.** A local-only dashboard with three preinstalled theme packs (Ember/Mint/Mono), Quick Settings column/row choices (3/4/5), notification corner and divider choices, status-bar clock-size choices, independent system/transition/window motion scales, and a Launcher section. Each pack has a SystemUI overlay (notification/scrim colors, QS corners, tile spacing) and a framework-res palette (full Material 3 tones and dynamic color roles for light/dark). Notification corners use separate round/compact/square overlays, grouped-notification dividers can be hidden without changing row layout, and the status-bar/Quick Settings header clock has separate compact/large/extra-large overlays; the stock 14sp clock needs none. The Launcher section reads and changes the Home/All apps grid, icon shape and themed-icon preference through Launcher3's exported grid-control provider using the signature-scoped `GRID_CONTROL` permission, then falls back to the stock launcher settings screen; it does not touch the workspace database. It has no `INTERNET` permission, no GMS/Theme Store/online configs, and links to the stock LineageOS status-bar panel for clock position/seconds/battery/network/brightness controls and to the stock lock-screen settings for the dynamic clock. See [`axion-ui.md`](axion-ui.md) |
+| Bundled apps | `Updater`, `Jelly`, `Etar`, `Twelve`, `Recorder` and `Glimpse` are filtered out of `PRODUCT_PACKAGES` through `LENOS_STRIP_PACKAGES`; `AudioFX` is dropped with `TARGET_EXCLUDES_AUDIOFX`. The sources stay in the LineageOS tree but are not built or installed. The Updater's init rc is skipped with the app |
+| Local personalization and security | **source-complete, not device-validated.** A single native panel, `LenosSettingsFragment`, is merged into Settings with a top-level entry. It contains the three preinstalled theme packs (Ember/Mint/Mono), Quick Settings column/row choices, notification corner and divider choices, status-bar clock size, independent motion scales, launcher grid/icon-shape/themed-icon controls, auto-BFU timeout, PIN scrambling, duress management and a local security status card. There is no separate `LenosParts` or `LenosSecurity` APK, no privileged-permission allowlist, no GMS/Theme Store/online config and no network code. See [`axion-ui.md`](axion-ui.md) |
 | Call recording | **LineageOS baseline, kept** — the in-call screen records voice calls with no region/carrier gate and no recording tone; `CallRecording` writes through MediaStore to `Recordings/Call recordings`, and the privileged Dialer's privapp allowlist grants `CAPTURE_AUDIO_OUTPUT` for the `VOICE_CALL` audio source. GrapheneOS's extra auto-recording-by-contact subsystem (preferences store, contact modes, stale-contact cleanup) is a larger Dialer fork and stays out of 1.0 |
 | Screenshot metadata | `frameworks_base/0013` + `packages_apps_Settings/0001` | SystemUI screenshot exports carry no timestamp, timezone or build-string EXIF metadata by default (GrapheneOS's `ExtSettings.SCREENSHOT_TIMESTAMP_EXIF` gate, default off; LineageOS's `TAG_SOFTWARE = "Android " + Build.DISPLAY` line removed to match GrapheneOS/AOSP). Per-user toggle: Settings → Security & privacy → More security & privacy → "Save screenshot timestamp to EXIF" |
 | User-installed apps can be disabled | `packages_apps_Settings/0002` (GrapheneOS port) | the app info screen offers "Disable" for user-installed apps, not only system apps: the app is completely prevented from running while keeping its data (strictly stronger than Force stop, which lets anything restart the app), and "Enable" brings it back. The uninstall/archive rules still apply (device-policy blocks, device provisioning package, uninstall already queued) and enabling still requires authentication. Framework support already exists (no patch): `PackageManagerService.setEnabledSettings` accepts `DISABLED_USER` for any package and Settings holds `CHANGE_COMPONENT_ENABLED_STATE`. Reaches users through the default SPA app-info screen; the legacy screen is unchanged, matching GrapheneOS |
@@ -194,8 +192,8 @@ kernel workstream: 48-bit VA / 4-level page tables, forced module
 signing/lockdown, LTS point-release cadence) is **not implemented yet**. The
 optional root helper can re-sign an OTA with your AVB key, but that is not the
 same as provisioning the bootloader key or supporting a locked bootloader.
-There is also no lenOS update server or configured updater endpoint: do not
-point the LineageOS Updater app at LineageOS infrastructure for this build.
+There is also no lenOS update server or configured updater endpoint, and the
+LineageOS Updater app is not installed in this product.
 
 ## Honest limits
 
@@ -308,11 +306,12 @@ point the LineageOS Updater app at LineageOS infrastructure for this build.
   opt-in: nothing happens until the user sets a duress PIN/password with the
   owner credential. The carrier does not receive an eSIM removal
   notification, and a missing or unresponsive eUICC can delay the power-off
-  by at most three seconds. The app warns "do not test on this phone"; only
+  by at most three seconds. The panel warns "do not test on this phone"; only
   test when a full wipe is acceptable.
-* **Jelly (WebView-based browser) still ships.** It is the Lineage default and
-  gets WebView security updates from the system; replacing it with Cromite and
-  updating WebView are separate work items.
+* **No browser is installed.** Jelly is filtered out of the product along with
+  the other bundled apps above. WebView itself still receives system security
+  updates; installing a browser is left to the user, and a reviewed default
+  browser remains a separate work item.
 * **Kernel hardening is config-only and not yet device-verified.** The shipped
   fragment covers the portable Kconfig subset; 48-bit VA / 4-level page
   tables, forced module signing/lockdown and the LTS point-release cadence need

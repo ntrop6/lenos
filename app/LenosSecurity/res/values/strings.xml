@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<resources>
-    <string name="app_name">lenOS security</string>
-    <string name="lenos_tagline">A silent OS.</string>
-    <string name="lenos_attribution">Based on LineageOS</string>
-    <string name="lenos_version">1.0.0</string>
-    <string name="lenos_header_subtitle">A silent OS. \u00b7 Based on LineageOS \u00b7 1.0.0</string>
-</resources>

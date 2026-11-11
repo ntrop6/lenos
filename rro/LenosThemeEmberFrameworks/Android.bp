@@ -4,7 +4,7 @@
 //
 // Mutable framework-res overlay for the Ember local theme pack. It is
 // preinstalled on the product partition, signed with the platform certificate
-// and enabled only by LenosParts. No code, no network.
+// and enabled only by the lenOS Settings panel. No code, no network.
 //
 runtime_resource_overlay {
     name: "LenosThemeEmberFrameworks",

@@ -20,7 +20,14 @@ from __future__ import annotations
 import unittest
 from pathlib import Path
 
-from harness import VENDOR, LenosPatchTest, java_syntax_errors
+from harness import VENDOR, LenosPatchTest, added_lines
+
+PANEL_PATCH = VENDOR / "patches/packages_apps_Settings/0004-lenos-panel.patch"
+PANEL = "src/com/android/settings/lenos/LenosSettingsFragment.java"
+DURESS = "src/com/android/settings/lenos/LenosDuressFragment.java"
+BRIDGE = "src/com/android/settings/lenos/LenosLockBridge.java"
+DURESS_LAYOUT = "res/layout/lenos_duress_fragment.xml"
+PANEL_STRINGS = "res/values/strings_lenos.xml"
 
 AIDL = "core/java/com/android/internal/widget/ILockSettings.aidl"
 LPU = "core/java/com/android/internal/widget/LockPatternUtils.java"
@@ -31,9 +38,6 @@ CREDS = "services/core/java/com/android/server/locksettings/DuressCredentials.ja
 WIPE = "services/core/java/com/android/server/locksettings/DuressWipe.java"
 SHELL = "services/core/java/com/android/server/locksettings/LockSettingsShellCommand.java"
 RECOVERY = "services/core/java/com/android/server/recoverysystem/RecoverySystemService.java"
-
-APP_DIR = "app/LenosSecurity/src/org/lenos/security"
-
 
 def read_vendor(rel: str) -> str:
     return (VENDOR / rel).read_text(encoding="utf-8")
@@ -55,13 +59,15 @@ class TestDuressBackend(LenosPatchTest):
             "boolean hasDuressCredentials(in LockscreenCredential ownerCredential);",
         )
 
-    def test_client_api_matches_the_app_contract(self):
-        # The app reflects on these LockPatternUtils methods by name.
+    def test_client_api_matches_the_settings_contract(self):
+        # The Settings bridge reflects on these LockPatternUtils methods by
+        # name, so the backend and panel can never drift silently.
         lpu = self.text(LPU)
+        bridge = added_lines(PANEL_PATCH, BRIDGE)
         for method in ("setDuressCredentials", "hasDuressCredentials",
                        "deleteDuressCredentials"):
             self.assertIn(method, lpu)
-            self.assertIn(method, read_vendor(f"{APP_DIR}/LockBridge.java"))
+            self.assertIn(method, bridge)
         self.assert_contains(LPU, "LockscreenCredential.createNone()")
 
     def test_duress_credentials_are_at_least_4_chars_low_complexity(self):
@@ -177,32 +183,31 @@ class TestDuressProductWiring(unittest.TestCase):
         self.assertIn("ro.lenos.security.duress=framework",
                       read_vendor("config/lenos.mk"))
 
-    def test_app_text_lists_the_esim_erasure(self):
-        for name in ("MainActivity.java", "LockBridge.java"):
-            errors = java_syntax_errors(VENDOR / APP_DIR / name)
-            self.assertEqual(errors, 0, f"{name}: {errors} Java parse errors")
-        main = read_vendor(f"{APP_DIR}/MainActivity.java")
-        self.assertIn("deletes the keystore secrets protecting storage", main)
-        self.assertIn("erases stored eSIM profiles", main)
-        self.assertIn("erase stored eSIM profiles", main)
+    def test_panel_text_lists_the_esim_erasure(self):
+        warning = added_lines(PANEL_PATCH, PANEL_STRINGS)
+        self.assertIn("deletes the keystore secrets protecting storage", warning)
+        self.assertIn("erases stored eSIM profiles", warning)
+        # The destructive warning is visible on the duress sub-screen.
+        self.assertIn("lenos_duress_warning", added_lines(
+            PANEL_PATCH, DURESS_LAYOUT))
 
-    def test_app_uses_the_owner_gated_path_directly(self):
-        main = read_vendor(f"{APP_DIR}/MainActivity.java")
-        self.assertIn("lock.setDuress(owner, dPin, dPass);", main)
-        self.assertIn("lock.hasDuress(owner)", main)
-        self.assertIn("lock.deleteDuress(owner)", main)
+    def test_panel_uses_the_owner_gated_path_directly(self):
+        duress = added_lines(PANEL_PATCH, DURESS)
+        self.assertIn("mLock.setDuress(owner, duressPin, duressPassword);",
+                      duress)
+        self.assertIn("mLock.hasDuress(owner)", duress)
+        self.assertIn("mLock.deleteDuress(owner)", duress)
 
-    def test_platform_signed_app_has_no_root_shell_fallback(self):
-        # The app is platform-signed and holds ACCESS_KEYGUARD_SECURE_STORAGE
+    def test_platform_signed_panel_has_no_root_shell_fallback(self):
+        # Settings is platform-signed and holds ACCESS_KEYGUARD_SECURE_STORAGE
         # and WRITE_SECURE_SETTINGS. A su/app_process fallback would add an
         # unnecessary root path and hide permission failures.
-        for name in ("MainActivity.java", "LockBridge.java"):
-            body = read_vendor(f"{APP_DIR}/{name}")
+        for rel in (DURESS, BRIDGE):
+            body = added_lines(PANEL_PATCH, rel)
             self.assertNotIn("RootShell", body)
             self.assertNotIn('"su"', body)
             self.assertNotIn("app_process", body)
-        self.assertFalse((VENDOR / APP_DIR / "RootShell.java").exists())
-        self.assertFalse((VENDOR / APP_DIR / "DuressCli.java").exists())
+        self.assertFalse((VENDOR / "app/LenosSecurity").exists())
 
 
 if __name__ == "__main__":

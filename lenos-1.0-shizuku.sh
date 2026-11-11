@@ -338,8 +338,9 @@ require_pristine() {
   fi
 }
 
-# Build inputs only (config/, app/, rro/). The patchkit, tests and
-# docs stay in $VENDOR outside the tree; nothing else is compiled.
+# Build inputs only (config/ and rro/, plus experimental/app/ when enabled).
+# The patchkit, tests and docs stay in $VENDOR outside the tree; nothing else
+# is compiled.
 install_vendor_lenos() {
   local part
   if [[ "$VENDOR" -ef "$SRC/vendor/lenos" ]]; then
@@ -348,18 +349,18 @@ install_vendor_lenos() {
   info "install vendor/lenos build inputs -> $SRC/vendor/lenos"
   rm -rf "$SRC/vendor/lenos"
   mkdir -p "$SRC/vendor/lenos"
-  for part in config app rro; do
+  for part in config rro; do
     cp -a "$VENDOR/$part" "$SRC/vendor/lenos/"
   done
   if experimental_enabled; then
     [[ -d "$VENDOR/experimental/app" ]] \
       || die "experimental app tree missing: $VENDOR/experimental/app"
     info "install experimental app inputs -> $SRC/vendor/lenos/app"
+    mkdir -p "$SRC/vendor/lenos/app"
     cp -a "$VENDOR/experimental/app/." "$SRC/vendor/lenos/app/"
     need_file "$SRC/vendor/lenos/app/LenosOpsec/Android.bp"
   fi
   need_file "$SRC/vendor/lenos/config/lenos.mk"
-  need_file "$SRC/vendor/lenos/config/privapp-permissions-org.lenos.security.xml"
 }
 
 cmd_apply() {

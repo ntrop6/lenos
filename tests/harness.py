@@ -69,6 +69,27 @@ def patch_paths(patch: Path) -> list[str]:
     return out
 
 
+def added_lines(patch: Path, rel: str) -> str:
+    """Return the added lines for one file in a patch.
+
+    New files therefore come back as their full content. For modified files
+    this is only the added hunks, which is enough for source-level feature
+    checks that do not need the surrounding original.
+    """
+    marker = f"+++ b/{rel}"
+    collecting = False
+    out: list[str] = []
+    for line in patch.read_text(encoding="utf-8").splitlines():
+        if line.startswith("diff --git "):
+            collecting = False
+        elif line == marker:
+            collecting = True
+        elif collecting:
+            if line.startswith("+") and not line.startswith("+++"):
+                out.append(line[1:])
+    return "\n".join(out)
+
+
 def patch_created_paths(patch: Path) -> set[str]:
     """Files the patch creates (old side is /dev/null)."""
     created: set[str] = set()

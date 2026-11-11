@@ -11,10 +11,10 @@ index f204e05..966e2c4 100644
 +    $(LOCAL_DIR)/lenos_asteroids.mk
 diff --git a/lenos_asteroids.mk b/lenos_asteroids.mk
 new file mode 100644
-index 0000000..aa0ecda
+index 0000000..42a8f6d
 --- /dev/null
 +++ b/lenos_asteroids.mk
-@@ -0,0 +1,40 @@
+@@ -0,0 +1,38 @@
 +#
 +# SPDX-FileCopyrightText: 2026 lenOS
 +# SPDX-License-Identifier: Apache-2.0
@@ -38,11 +38,9 @@ index 0000000..aa0ecda
 +# PRODUCT_PACKAGES values. Same for TARGET_EXCLUDES_AUDIOFX, an existing
 +# LineageOS switch.
 +
-+# Apps dropped from the build (sources stay in the tree). LineageOS 24.0 no
-+# longer ships Gallery2, so the default list is empty; the hook stays
-+# available for future policy. The browser (Jelly) is kept for now, see
-+# vendor/lenos/docs/features.md.
-+LENOS_STRIP_PACKAGES :=
++# Apps dropped from the build; the sources stay in the tree. Keep this in
++# sync with the "packages removed" list in vendor/lenos/docs/features.md.
++LENOS_STRIP_PACKAGES := Updater Jelly Etar Twelve Recorder Glimpse
 +
 +# LineageOS' existing switch for AudioFX (bass boost / equalizer).
 +TARGET_EXCLUDES_AUDIOFX := true

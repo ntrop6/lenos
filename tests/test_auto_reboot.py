@@ -23,9 +23,11 @@ from __future__ import annotations
 
 import unittest
 
-from harness import VENDOR, LenosPatchTest
+from harness import VENDOR, LenosPatchTest, added_lines
 
-APP = "app/LenosSecurity/src/org/lenos/security/MainActivity.java"
+PANEL_PATCH = VENDOR / "patches/packages_apps_Settings/0004-lenos-panel.patch"
+PANEL = "src/com/android/settings/lenos/LenosSettingsFragment.java"
+STRINGS = "res/values/strings_lenos.xml"
 RRO = "rro/LenosSettingsProviderOverlay/res/values/defaults.xml"
 LEGACY_KEY = "lenos_auto_reboot_timeout_ms"
 
@@ -173,27 +175,34 @@ class TestAutoRebootProductWiring(unittest.TestCase):
     def test_backend_status_prop_is_init(self):
         self.assertIn("ro.lenos.security.auto_bfu=init", read_vendor("config/lenos.mk"))
 
-    def test_app_writes_the_extsettings_key(self):
-        app = read_vendor(APP)
+    def test_settings_panel_writes_the_extsettings_key(self):
+        app = added_lines(PANEL_PATCH, PANEL)
         self.assertIn('BFU_SETTING = "settings_reboot_after_timeout"', app)
         self.assertIn(
             "Settings.Global.putInt(getContentResolver(), BFU_SETTING, value)", app)
         self.assertIn(
-            "Settings.Global.getInt(getContentResolver(), BFU_SETTING, BFU_DEFAULT_MS)",
-            app)
+            "Settings.Global.getInt(getContentResolver(), BFU_SETTING, "
+            "BFU_DEFAULT_MS)", " ".join(app.split()))
 
-    def test_app_default_matches_the_extsettings_default(self):
-        self.assertIn("BFU_DEFAULT_MS = 64_800_000", read_vendor(APP))
+    def test_panel_default_matches_the_extsettings_default(self):
+        self.assertIn("BFU_DEFAULT_MS = 64_800_000",
+                      added_lines(PANEL_PATCH, PANEL))
 
-    def test_app_choices_cover_the_extremes(self):
-        app = read_vendor(APP)
-        self.assertIn('BFU_CHOICES.put(0, "Off")', app)
-        self.assertIn("BFU_CHOICES.put(600_000,", app)
-        self.assertIn("BFU_CHOICES.put(259_200_000,", app)
+    def test_panel_choices_cover_the_extremes(self):
+        values = added_lines(PANEL_PATCH, STRINGS)
+        self.assertIn("<item>0</item>", values)
+        self.assertIn("<item>600000</item>", values)
+        self.assertIn("<item>259200000</item>", values)
+        self.assertIn("lenos_bfu_18h", values)
 
     def test_legacy_key_is_gone_everywhere(self):
-        for rel in (APP, RRO):
-            self.assertNotIn(LEGACY_KEY, read_vendor(rel), rel)
+        for rel in (PANEL, STRINGS,
+                    "res/layout/lenos_duress_fragment.xml", RRO):
+            if rel == RRO:
+                body = read_vendor(rel)
+            else:
+                body = added_lines(PANEL_PATCH, rel)
+            self.assertNotIn(LEGACY_KEY, body, rel)
         for name in ("0002-lenos-first-boot-defaults.patch",
                      "0003-lenos-auto-reboot.patch"):
             patch = VENDOR / "patches" / "frameworks_base" / name

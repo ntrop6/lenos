@@ -1,16 +1,15 @@
 """lenOS product configuration (vendor/lenos itself, no upstream patches).
 
 Feature contract (see docs/features.md):
-* The product ships the LineageOS app set (AudioFX excluded) plus the lenOS
-  security companion app.
+* The product ships the LineageOS app set minus Updater, Jelly, Etar,
+  Twelve, Recorder, Glimpse and AudioFX, plus the merged lenOS Settings panel.
 * Privacy-critical resource defaults live in static RROs, not in patched
   upstream files: framework-res NTP fallback, SettingsProvider first-boot
   defaults, NetworkStack connectivity-check endpoints.
 * No Google infrastructure is referenced by any lenOS-shipped resource.
-* The security app is built against the platform API surface with an explicit,
-  least-privilege permission allowlist. Wi-Fi privacy defaults are
-  GrapheneOS-faithful per-network defaults (packages/modules/Wifi patch), so
-  the app needs no Wi-Fi permissions and carries no global hostname switch.
+* The panel lives inside platform-signed Settings, so it needs no separate
+  APK or privileged permission allowlist. Wi-Fi privacy defaults are
+  GrapheneOS-faithful per-network defaults (packages/modules/Wifi patch).
 """
 from __future__ import annotations
 
@@ -19,7 +18,7 @@ import unittest
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
-from harness import VENDOR, java_syntax_errors
+from harness import VENDOR
 
 ANDROID_NS = "{http://schemas.android.com/apk/res/android}"
 
@@ -32,10 +31,6 @@ RROS = {
 
 def strip_xml_comments(body: str) -> str:
     return re.sub(r"<!--.*?-->", "", body, flags=re.S)
-
-
-def strip_bp_comments(body: str) -> str:
-    return re.sub(r"(?m)^\s*//.*$", "", body)
 
 
 def make_logical_statements(body: str) -> list[str]:
@@ -83,10 +78,24 @@ class ProductConfigTestCase(unittest.TestCase):
 class TestProductMakefile(ProductConfigTestCase):
     MK = "config/lenos.mk"
 
-    def test_ships_the_security_app_and_the_three_overlays(self):
-        self.assertIn("LenosSecurity", self.text(self.MK))
+    def test_ships_the_settings_panel_and_privacy_overlays(self):
+        body = self.text(self.MK)
+        self.assertIn("merged lenOS panel", body)
+        self.assertNotIn("LenosSecurity", body)
+        self.assertNotIn("LenosParts", body)
         for overlay in RROS:
-            self.assertIn(overlay, self.text(self.MK))
+            self.assertIn(overlay, body)
+        for package in (
+            "LenosThemeEmberSystemUI",
+            "LenosThemeMintSystemUI",
+            "LenosThemeMonoSystemUI",
+            "LenosQsColumns3",
+            "LenosQsColumns5",
+            "LenosNotifyCornersRound",
+            "LenosNotifyDividersHidden",
+            "LenosClockLarge",
+        ):
+            self.assertIn(package, body)
 
     def test_product_properties_are_privacy_hardening(self):
         body = self.text(self.MK)
@@ -166,7 +175,6 @@ class TestRuntimeOverlays(ProductConfigTestCase):
         for root_dir in (
             VENDOR / "config",
             VENDOR / "rro",
-            VENDOR / "app",
             VENDOR / "experimental",
         ):
             for path in sorted(root_dir.rglob("*.xml")):
@@ -246,68 +254,6 @@ class TestRuntimeOverlays(ProductConfigTestCase):
         # device_nothing_asteroids/0006-privacy-device-name.patch); defining
         # it here as well would create two competing static overlays.
         self.assertNotIn("def_device_name", body)
-
-
-class TestSecurityApp(ProductConfigTestCase):
-    APP = "app/LenosSecurity"
-
-    def test_built_against_the_platform_api_surface(self):
-        body = strip_bp_comments(self.text(f"{self.APP}/Android.bp"))
-        self.assertIn("platform_apis: true", body)
-        self.assertNotRegex(body, r"^\s*sdk_version\s*:", "sdk_version must not be set")
-
-    def test_holds_only_needed_privileged_permissions(self):
-        # The GrapheneOS-faithful Wi-Fi redo removed the app's only
-        # NETWORK_SETTINGS consumer (the global hostname clamp) and the only
-        # Settings.System writer (the old Lineage scramble key); the root
-        # helper removal also dropped the last telephony placeholder. None of
-        # these permissions may linger in the manifest or the allowlist.
-        manifest = self.text(f"{self.APP}/AndroidManifest.xml")
-        allowlist = self.text("config/privapp-permissions-org.lenos.security.xml")
-        for perm in ("android.permission.NETWORK_SETTINGS",
-                     'android.permission.WRITE_SETTINGS"',
-                     "android.permission.READ_PRIVILEGED_PHONE_STATE"):
-            self.assertNotIn(perm, manifest)
-            self.assertNotIn(perm, allowlist)
-        for perm in ("android.permission.ACCESS_KEYGUARD_SECURE_STORAGE",
-                     "android.permission.WRITE_SECURE_SETTINGS"):
-            self.assertIn(perm, manifest)
-            self.assertIn(perm, allowlist)
-
-    def test_platform_app_does_not_pin_a_stale_target_sdk(self):
-        # Platform apps inherit the platform target SDK. Pinning 36 here
-        # would opt the app out of Android 17 behavior on a 24.0 build.
-        manifest = self.text(f"{self.APP}/AndroidManifest.xml")
-        self.assertNotIn("<uses-sdk", manifest)
-
-    def test_version_strings_are_1_0_0(self):
-        manifest = self.text(f"{self.APP}/AndroidManifest.xml")
-        self.assertIn('android:versionName="1.0.0"', manifest)
-        strings = self.text(f"{self.APP}/res/values/strings.xml")
-        self.assertIn('<string name="lenos_version">1.0.0</string>', strings)
-        self.assertNotIn("shizuku", strings.lower())
-
-    def test_no_global_wifi_hostname_switch(self):
-        # The control is per network in Wi-Fi settings now; the app must not
-        # keep a lying toggle for the removed global clamp API.
-        main = self.text(f"{self.APP}/src/org/lenos/security/MainActivity.java")
-        self.assertNotIn("setSendDhcpHostnameRestriction", main)
-        self.assertNotIn("lenos_wifi_send_dhcp_hostname_restriction", main)
-        self.assertIn("requests carry no hostname", main)
-
-    def test_scramble_switch_uses_the_secure_key(self):
-        main = self.text(f"{self.APP}/src/org/lenos/security/MainActivity.java")
-        self.assertIn('SCRAMBLE_KEY = "lockscreen_scramble_pin_layout"', main)
-        self.assertIn("Settings.Secure.putInt(getContentResolver(), SCRAMBLE_KEY, value)", main)
-        # The app is platform-signed and privileged; no su/app_process fallback.
-        self.assertNotIn("settingsPutSecure", main)
-        self.assertNotIn("RootShell", main)
-
-    def test_main_activity_still_parses(self):
-        self.assertEqual(
-            java_syntax_errors(
-                VENDOR / f"{self.APP}/src/org/lenos/security/MainActivity.java"),
-            0)
 
 
 if __name__ == "__main__":

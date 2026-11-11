@@ -8,18 +8,12 @@
 # through PRODUCT_BUILD_PROP_OVERRIDES (BuildFingerprint=Nothing/...). A custom
 # AVB key and an unlocked bootloader still break Play Integrity/attestation.
 
-# lenOS companion app ("lenOS security"). Everything else in the UI is stock
-# LineageOS Settings; this app only hosts controls that Settings does not have.
+# Local-only personalization: the merged lenOS panel in Settings plus three
+# mutable SystemUI theme packs, their framework palettes, Quick Settings grid
+# choices, notification styling and clock-size overlays. The overlays are
+# preinstalled on the product partition and are disabled until the user selects
+# one; nothing is downloaded.
 PRODUCT_PACKAGES += \
-    LenosSecurity
-
-# Local-only personalization: the LenosParts dashboard plus three mutable
-# SystemUI theme packs, their framework palettes, Quick Settings grid choices,
-# notification styling and clock-size overlays. The overlays are preinstalled
-# on the product partition and are disabled until the user selects one; nothing
-# is downloaded.
-PRODUCT_PACKAGES += \
-    LenosParts \
     LenosThemeEmberSystemUI \
     LenosThemeMintSystemUI \
     LenosThemeMonoSystemUI \
@@ -63,14 +57,6 @@ PRODUCT_PACKAGES += \
 # from early boot.
 PRODUCT_COMPRESSED_APEX := false
 
-# Privileged permission allowlist for LenosSecurity. The APK is signed with
-# the platform key, so most permissions are already satisfied by the signature;
-# the allowlist keeps the app working (and documents the intent) if it is ever
-# built without the platform certificate.
-PRODUCT_COPY_FILES += \
-    vendor/lenos/config/privapp-permissions-org.lenos.security.xml:$(TARGET_COPY_OUT_SYSTEM)/etc/permissions/privapp-permissions-org.lenos.security.xml \
-    vendor/lenos/config/privapp-permissions-org.lenos.parts.xml:$(TARGET_COPY_OUT_SYSTEM)/etc/permissions/privapp-permissions-org.lenos.parts.xml
-
 # Product properties are loaded last by init, so they override values from
 # system/system_ext/vendor/odm (see system/core/init/property_service.cpp).
 # Keep this list short and commented; anything user-visible belongs in the
@@ -83,15 +69,15 @@ PRODUCT_PRODUCT_PROPERTIES += \
 # Auto-reboot-to-BFU backend: init timer (system/core/0001), armed from the
 # keyguard showing-state in frameworks/base (0003). The timeout lives in
 # Settings.Global."settings_reboot_after_timeout" (18h default via
-# android.ext.settings, frameworks/base/0006). Status string for the lenOS
-# security app.
+# android.ext.settings, frameworks/base/0006). Status string shown in the
+# merged lenOS panel in Settings.
 PRODUCT_PRODUCT_PROPERTIES += \
     ro.lenos.security.auto_bfu=init
 
 # Duress credential backend: LockSettingsService (frameworks/base/0005) with
-# the lenOS security app as UI. Destructive by design; entering a duress
-# credential at any prompt destroys the storage keys. Status string for the
-# app.
+# the merged lenOS panel in Settings as UI. Destructive by design; entering a
+# duress credential at any prompt destroys the storage keys. Status string
+# shown in the panel.
 PRODUCT_PRODUCT_PROPERTIES += \
     ro.lenos.security.duress=framework
 
