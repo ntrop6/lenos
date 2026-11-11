@@ -161,7 +161,9 @@ public class MainActivity extends Activity {
     private static final int STROKE = Color.parseColor("#3C4043");
 
     private RadioGroup themeGroup;
-    private Spinner motionSpinner;
+    private Spinner animatorSpinner;
+    private Spinner transitionSpinner;
+    private Spinner windowSpinner;
     private Spinner qsColumnsSpinner;
     private Spinner qsRowsSpinner;
     private Spinner launcherGridSpinner;
@@ -193,7 +195,10 @@ public class MainActivity extends Activity {
     protected void onResume() {
         super.onResume();
         refreshThemeSelection();
-        refreshMotionSelection();
+        // Motion spinners are initialized from the current scales once. Do
+        // not re-select them on every resume: a non-preset value set through
+        // Developer Options would display as 1.0x, and a queued selection
+        // callback could then overwrite it.
         refreshQsSelection();
         refreshLauncherGrid();
         refreshLauncherShapes();
@@ -243,35 +248,23 @@ public class MainActivity extends Activity {
 
         root.addView(section("Motion"));
         root.addView(text(
-                "Sets the standard Android animator, transition and window scales. "
-                        + "0x disables animations; accessibility and battery saver can "
-                        + "still override them.",
+                "Each animation surface has its own scale. 1.0x is the system "
+                        + "default; 0x disables that surface. Accessibility and "
+                        + "battery saver can still override the scales.",
                 12, MUTED, false));
-        motionSpinner = new Spinner(this);
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(this,
-                android.R.layout.simple_spinner_dropdown_item, MOTION_LABELS);
-        motionSpinner.setAdapter(adapter);
-        // Match the existing scale before attaching the listener; otherwise the
-        // first layout pass could overwrite the user's current choice.
-        motionSpinner.setSelection(currentMotionIndex());
-        motionSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            @Override
-            public void onItemSelected(AdapterView<?> parent, View view,
-                    int position, long id) {
-                if (suppressMotion) {
-                    return;
-                }
-                applyMotion(MOTION_VALUES[position]);
-            }
-
-            @Override
-            public void onNothingSelected(AdapterView<?> parent) {
-            }
-        });
         LinearLayout motionCard = new LinearLayout(this);
         motionCard.setOrientation(LinearLayout.VERTICAL);
-        motionCard.addView(motionSpinner);
+        animatorSpinner = motionSpinner("System animations",
+                Settings.Global.ANIMATOR_DURATION_SCALE, motionCard);
+        transitionSpinner = motionSpinner("Transition animations",
+                Settings.Global.TRANSITION_ANIMATION_SCALE, motionCard);
+        windowSpinner = motionSpinner("Window animations",
+                Settings.Global.WINDOW_ANIMATION_SCALE, motionCard);
         root.addView(card(motionCard));
+
+        Button resetButton = button("Reset all to 1.0x");
+        resetButton.setOnClickListener(v -> resetMotion());
+        root.addView(resetButton);
 
         root.addView(section("Quick Settings layout"));
         root.addView(text(
@@ -641,15 +634,50 @@ public class MainActivity extends Activity {
         return installed;
     }
 
+    private Spinner motionSpinner(String label, String key,
+            LinearLayout card) {
+        TextView title = text(label, 14, TEXT, true);
+        title.setPadding(0, dp(14), 0, 0);
+        card.addView(title);
+        Spinner spinner = new Spinner(this);
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(this,
+                android.R.layout.simple_spinner_dropdown_item, MOTION_LABELS);
+        spinner.setAdapter(adapter);
+        // Match the existing scale before attaching the listener; otherwise
+        // the first layout pass could overwrite the user's current choice.
+        spinner.setSelection(currentMotionIndex(key));
+        spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view,
+                    int position, long id) {
+                if (suppressMotion) {
+                    return;
+                }
+                applyMotion(key, MOTION_VALUES[position]);
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+            }
+        });
+        card.addView(spinner);
+        return spinner;
+    }
+
     private void refreshMotionSelection() {
         suppressMotion = true;
-        motionSpinner.setSelection(currentMotionIndex());
+        animatorSpinner.setSelection(currentMotionIndex(
+                Settings.Global.ANIMATOR_DURATION_SCALE));
+        transitionSpinner.setSelection(currentMotionIndex(
+                Settings.Global.TRANSITION_ANIMATION_SCALE));
+        windowSpinner.setSelection(currentMotionIndex(
+                Settings.Global.WINDOW_ANIMATION_SCALE));
         suppressMotion = false;
     }
 
-    private int currentMotionIndex() {
-        float current = Settings.Global.getFloat(getContentResolver(),
-                Settings.Global.ANIMATOR_DURATION_SCALE, 1.0f);
+    private int currentMotionIndex(String key) {
+        float current = Settings.Global.getFloat(getContentResolver(), key,
+                1.0f);
         for (int i = 0; i < MOTION_VALUES.length; i++) {
             if (Math.abs(MOTION_VALUES[i] - current) < 0.01f) {
                 return i;
@@ -658,27 +686,51 @@ public class MainActivity extends Activity {
         return 0;
     }
 
-    private void applyMotion(float scale) {
+    private void applyMotion(String key, float scale) {
         try {
-            float current = Settings.Global.getFloat(getContentResolver(),
-                    Settings.Global.ANIMATOR_DURATION_SCALE, 1.0f);
+            float current = Settings.Global.getFloat(getContentResolver(), key,
+                    1.0f);
             if (Math.abs(current - scale) < 0.01f) {
-                // Already at this preset; do not rewrite the setting or toast.
+                // Already at this value; do not rewrite the setting or toast.
                 return;
             }
-            Settings.Global.putFloat(getContentResolver(),
-                    Settings.Global.ANIMATOR_DURATION_SCALE, scale);
-            Settings.Global.putFloat(getContentResolver(),
-                    Settings.Global.TRANSITION_ANIMATION_SCALE, scale);
-            Settings.Global.putFloat(getContentResolver(),
-                    Settings.Global.WINDOW_ANIMATION_SCALE, scale);
-            Toast.makeText(this, "Motion scale set to " + scale + "x",
+            Settings.Global.putFloat(getContentResolver(), key, scale);
+            Toast.makeText(this,
+                    motionLabel(key) + " set to " + scale + "x",
                     Toast.LENGTH_SHORT).show();
         } catch (Throwable t) {
             Toast.makeText(this,
                     "Could not change animation scale: " + t.getMessage(),
                     Toast.LENGTH_LONG).show();
         }
+    }
+
+    private void resetMotion() {
+        try {
+            Settings.Global.putFloat(getContentResolver(),
+                    Settings.Global.ANIMATOR_DURATION_SCALE, 1.0f);
+            Settings.Global.putFloat(getContentResolver(),
+                    Settings.Global.TRANSITION_ANIMATION_SCALE, 1.0f);
+            Settings.Global.putFloat(getContentResolver(),
+                    Settings.Global.WINDOW_ANIMATION_SCALE, 1.0f);
+            Toast.makeText(this, "Animation scales reset to 1.0x",
+                    Toast.LENGTH_SHORT).show();
+            refreshMotionSelection();
+        } catch (Throwable t) {
+            Toast.makeText(this,
+                    "Could not reset animation scales: " + t.getMessage(),
+                    Toast.LENGTH_LONG).show();
+        }
+    }
+
+    private static String motionLabel(String key) {
+        if (Settings.Global.ANIMATOR_DURATION_SCALE.equals(key)) {
+            return "System animations";
+        }
+        if (Settings.Global.TRANSITION_ANIMATION_SCALE.equals(key)) {
+            return "Transition animations";
+        }
+        return "Window animations";
     }
 
     private Spinner qsSpinner(String[] labels, boolean columns) {

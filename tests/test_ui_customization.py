@@ -7,7 +7,8 @@ Feature contract (see docs/axion-ui.md):
   Google/GMS/Play Integrity code path.
 * Theme packs are mutable SystemUI overlays. LenosParts enables exactly one
   pack (or none) through OverlayManager.
-* Motion presets only write the standard Android animation-scale settings.
+* Motion controls write only the standard Android animation-scale settings,
+  one surface at a time, plus an explicit reset.
 * The launcher section uses Launcher3's exported grid-control provider through
   its signature-scoped GRID_CONTROL permission, with the stock Home settings
   intent as the fallback.
@@ -390,6 +391,29 @@ class TestQuickSettingsOverlays(unittest.TestCase):
                         values,
                         {"quick_settings_paginated_grid_num_rows": value},
                     )
+
+
+class TestMotionControls(unittest.TestCase):
+    SOURCE = VENDOR / "app/LenosParts/src/org/lenos/parts/MainActivity.java"
+
+    def test_surfaces_have_independent_controls(self):
+        body = self.SOURCE.read_text()
+        for needle in (
+            'motionSpinner("System animations"',
+            'motionSpinner("Transition animations"',
+            'motionSpinner("Window animations"',
+            "Settings.Global.ANIMATOR_DURATION_SCALE",
+            "Settings.Global.TRANSITION_ANIMATION_SCALE",
+            "Settings.Global.WINDOW_ANIMATION_SCALE",
+            "applyMotion(key, MOTION_VALUES[position])",
+            "resetMotion(",
+        ):
+            self.assertIn(needle, body)
+
+    def test_no_master_preset_rewrites_all_surfaces(self):
+        body = self.SOURCE.read_text()
+        self.assertNotIn("applyMotion(MOTION_VALUES[position])", body,
+                         "the old master preset must not overwrite every scale")
 
 
 class TestLauncherIntegration(unittest.TestCase):

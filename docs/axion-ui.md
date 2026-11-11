@@ -28,7 +28,7 @@ The practical route is therefore:
 
 | Component | Path | Behavior |
 |---|---|---|
-| `LenosParts` | `app/LenosParts` | Local dashboard: theme-pack selection, motion presets, launcher grid/icon-shape/themed-icon controls, links to the stock LineageOS status-bar panel and Launcher3 settings |
+| `LenosParts` | `app/LenosParts` | Local dashboard: theme-pack selection, motion controls, launcher grid/icon-shape/themed-icon controls, links to the stock LineageOS status-bar panel and Launcher3 settings |
 | Ember / Mint / Mono | `rro/LenosTheme*SystemUI` | Mutable SystemUI resource overlays: notification/scrim colors, notification corner radii, QS corner radius and tile spacing |
 | Ember / Mint / Mono | `rro/LenosTheme*Frameworks` | Mutable framework-res palettes: full Material 3 tonal palettes and dynamic color roles for light and dark themes |
 | Quick Settings layout | `rro/LenosQs*` | Mutable SystemUI overlays for 3/5 columns and 3/5 expanded rows; the stock 4/4 layout needs no overlay |
@@ -64,9 +64,11 @@ adb shell cmd overlay disable org.lenos.theme.ember.frameworks
 adb shell cmd overlay disable org.lenos.theme.ember.systemui
 ```
 
-Motion presets write the standard Android `Settings.Global` animation scales
-(`animator_duration_scale`, `transition_animation_scale`,
-`window_animation_scale`). The "Off" preset sets all three to `0`; the user can
+Motion controls write the three standard Android `Settings.Global` animation
+scales independently: `animator_duration_scale` (system animations),
+`transition_animation_scale` (activity and fragment transitions) and
+`window_animation_scale` (window animations). Each can be 1.0x (default), 1.25x,
+0.75x, 0.5x or 0x; "Reset all to 1.0x" restores the defaults. The user can
 change them again at any time, and accessibility/battery-saver behavior is
 unchanged.
 
@@ -129,7 +131,7 @@ no GMS/Theme Store/Play Integrity references.
 | Status bar | Link to LineageOS's existing clock/battery/network/brightness panel | Add Axion-style icon controls only where LineageOS has no equivalent |
 | Quick Settings | 3/5 columns and 3/5 expanded rows via local overlays (rows apply to the paginated grid; the dual-shade infinite grid scrolls); theme pack controls tile shape/spacing | Split tile shape from the theme pack and add a compact/collapsed-rows control |
 | Notifications | Theme pack controls corners/colors | Add optional background/blur styling; blur stays device-dependent and off by default |
-| Motion | Three scales plus off | Add per-surface animation presets only after A17 SystemUI hooks are reviewed |
+| Motion | Independent system, transition and window scales plus reset | Add higher-level presets only after A17 SystemUI hooks are reviewed |
 | Lock screen | Not yet | Start with clock styles and local media-art styling; Lockscreen Studio is a later project |
 | Launcher / Recents | Grid selection, icon shape and themed icons through Launcher3's grid-control provider, plus a link to the stock launcher settings | Recents is a separate risk |
 | Dynamic Bar | Not yet | Local-only subset (media, timer, alarm, charging, torch); exclude sports/online feeds |
@@ -171,7 +173,8 @@ When a build/device is available:
    reflected on the Home screen and in All apps. If a spinner is disabled,
    confirm "Open launcher settings" still reaches the stock launcher
    preferences.
-7. Change each motion preset and verify the three `Settings.Global` values.
+7. Change each motion scale independently and verify only that `Settings.Global`
+   key changes; use "Reset all to 1.0x" and verify all three return to `1.0`.
 8. Confirm the app has no network access and no `INTERNET` permission:
    `adb shell dumpsys package org.lenos.parts | grep -i internet` should be empty.
 9. Confirm the launcher grid permission is the narrow one, not the wallpaper
