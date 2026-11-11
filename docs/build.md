@@ -35,7 +35,7 @@ the patches; reset the tree first if you need to move it.
 Clone the patchkit into `vendor/lenos` and apply the default series:
 
 ```bash
-git clone https://github.com/ntrop6/lenos-patches.git vendor/lenos
+git clone https://github.com/ntrop6/lenos.git vendor/lenos
 python3 vendor/lenos/tools/lenos-patch.py --tree . --check
 python3 vendor/lenos/tools/lenos-patch.py --tree . --apply
 ```
@@ -114,10 +114,10 @@ chain.
 If you use it, keep the patchkit outside the build tree:
 
 ```bash
-git clone https://github.com/ntrop6/lenos-patches.git ~/lenos-patches
-LENOS_SOURCE=$HOME/lineage ~/lenos-patches/lenos-1.0-shizuku.sh doctor
-LENOS_SOURCE=$HOME/lineage ~/lenos-patches/lenos-1.0-shizuku.sh apply
-LENOS_SOURCE=$HOME/lineage ~/lenos-patches/lenos-1.0-shizuku.sh build
+git clone https://github.com/ntrop6/lenos.git ~/lenos
+LENOS_SOURCE=$HOME/lineage ~/lenos/lenos-1.0-shizuku.sh doctor
+LENOS_SOURCE=$HOME/lineage ~/lenos/lenos-1.0-shizuku.sh apply
+LENOS_SOURCE=$HOME/lineage ~/lenos/lenos-1.0-shizuku.sh build
 ```
 
 The wrapper replaces `$LENOS_SOURCE/vendor/lenos` with its build inputs during
@@ -132,9 +132,9 @@ rootless build, from the exact signed base OTA:
 ```bash
 LENOS_SOURCE=$HOME/lineage LENOS_ROOT=bakasu \
   LENOS_ROOT_LKM=/path/to/kernelsu.ko \
-  ~/lenos-patches/lenos-1.0-shizuku.sh root-prepare
+  ~/lenos/lenos-1.0-shizuku.sh root-prepare
 LENOS_SOURCE=$HOME/lineage LENOS_ROOT=bakasu \
-  ~/lenos-patches/lenos-1.0-shizuku.sh package
+  ~/lenos/lenos-1.0-shizuku.sh package
 ```
 
 Use `LENOS_ROOT=kernelsu` for the fallback. The LKM must be built against the

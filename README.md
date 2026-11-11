@@ -73,7 +73,7 @@ applies with fuzz.
 Clone this repo into `vendor/lenos`, then check and apply the series:
 
 ```bash
-git clone https://github.com/ntrop6/lenos-patches.git vendor/lenos
+git clone https://github.com/ntrop6/lenos.git vendor/lenos
 python3 vendor/lenos/tools/lenos-patch.py --tree . --check
 python3 vendor/lenos/tools/lenos-patch.py --tree . --apply
 ```

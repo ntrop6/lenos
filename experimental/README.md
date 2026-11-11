@@ -119,7 +119,7 @@ tree.
 
 ```bash
 WS=/path/to/lineage
-cd /path/to/lenos-patches        # or vendor/lenos inside the tree
+cd /path/to/lenos                 # or vendor/lenos inside the tree
 
 python3 tools/lenos-patch.py --tree "$WS" --check
 python3 tools/lenos-patch.py --tree "$WS" --apply
