@@ -8,6 +8,9 @@ Feature contract (see docs/axion-ui.md):
 * Theme packs are mutable SystemUI overlays. LenosParts enables exactly one
   pack (or none) through OverlayManager.
 * Motion presets only write the standard Android animation-scale settings.
+* The launcher section uses Launcher3's exported grid-control provider through
+  its signature-scoped GRID_CONTROL permission, with the stock Home settings
+  intent as the fallback.
 * The stock LineageOS status bar panel remains the source of truth for clock,
   battery, network-traffic and brightness controls.
 """
@@ -85,6 +88,7 @@ class TestLenosPartsApp(unittest.TestCase):
             {
                 "android.permission.CHANGE_OVERLAY_PACKAGES",
                 "android.permission.WRITE_SECURE_SETTINGS",
+                "com.android.launcher3.permission.GRID_CONTROL",
             },
             "LenosParts must keep its privileged permission set minimal",
         )
@@ -135,6 +139,12 @@ class TestLenosPartsApp(unittest.TestCase):
             "org.lenos.qs.rows3",
             "org.lenos.qs.rows5",
             "applyQsLayout(",
+            "applyLauncherGrid(",
+            "openLauncherSettings(",
+            "Intent.ACTION_APPLICATION_PREFERENCES",
+            "Settings.ACTION_HOME_SETTINGS",
+            "com.android.launcher3.grid_control",
+            "GRID_CONTROL",
             "applyMonetSeed(",
             "restoreMonetSeed(",
             "backupMonetValue(",
@@ -378,6 +388,73 @@ class TestQuickSettingsOverlays(unittest.TestCase):
                         values,
                         {"quick_settings_paginated_grid_num_rows": value},
                     )
+
+
+class TestLauncherIntegration(unittest.TestCase):
+    SOURCE = VENDOR / "app/LenosParts/src/org/lenos/parts/MainActivity.java"
+    MANIFEST = "app/LenosParts/AndroidManifest.xml"
+
+    def test_grid_control_permission_is_narrow_and_signature_scoped(self):
+        root = parse_xml(self.MANIFEST)
+        permissions = {
+            node.get(f"{ANDROID_NS}name")
+            for node in root.findall("uses-permission")
+        }
+        self.assertIn(
+            "com.android.launcher3.permission.GRID_CONTROL", permissions)
+        self.assertNotIn("android.permission.BIND_WALLPAPER", permissions,
+                         "the broad wallpaper permission is not needed")
+        allowlist = parse_xml(
+            "config/privapp-permissions-org.lenos.parts.xml")
+        node = allowlist.find("privapp-permissions")
+        allowlisted = {
+            child.get("name") for child in node.findall("permission")
+        }
+        self.assertNotIn(
+            "com.android.launcher3.permission.GRID_CONTROL", allowlisted,
+            "GRID_CONTROL is signature-scoped, not a privileged permission",
+        )
+
+    def test_grid_provider_uses_the_documented_contract(self):
+        body = self.SOURCE.read_text()
+        for needle in (
+            "com.android.launcher3.grid_control",
+            '"/list_options"',
+            '"/default_grid"',
+            '"name"',
+            '"grid_title"',
+            '"rows"',
+            '"cols"',
+            '"is_default"',
+            "ContentValues",
+            "getContentResolver().update(",
+        ):
+            self.assertIn(needle, body)
+        # The grid provider is the supported API; never touch the launcher's
+        # workspace database or ask for ACCESS_LAUNCHER_DATA.
+        self.assertNotIn("LauncherProvider", body)
+        self.assertNotIn("ACCESS_LAUNCHER_DATA", body)
+
+    def test_launcher_settings_intent_has_a_stock_fallback(self):
+        body = self.SOURCE.read_text()
+        for needle in (
+            "Intent.ACTION_APPLICATION_PREFERENCES",
+            "setPackage(LAUNCHER_PACKAGE)",
+            "Settings.ACTION_HOME_SETTINGS",
+            "openLauncherSettings(",
+            "tryStartActivity(",
+        ):
+            self.assertIn(needle, body)
+
+    def test_launcher_calls_do_not_block_the_ui_thread(self):
+        body = self.SOURCE.read_text()
+        for needle in (
+            "lenos-launcher-grid-query",
+            "lenos-launcher-grid-apply",
+            "runOnUiThread(",
+            "launcherGridRequest",
+        ):
+            self.assertIn(needle, body)
 
 
 class TestProductWiring(unittest.TestCase):

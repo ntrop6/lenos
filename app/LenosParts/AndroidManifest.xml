@@ -15,6 +15,12 @@
 
     <uses-permission android:name="android.permission.CHANGE_OVERLAY_PACKAGES" />
     <uses-permission android:name="android.permission.WRITE_SECURE_SETTINGS" />
+    <!--
+         Signature-scoped launcher grid control. LenosParts and Launcher3 are
+         both platform-signed, so this is granted without BIND_WALLPAPER and
+         without adding a privileged-permission allowlist entry.
+    -->
+    <uses-permission android:name="com.android.launcher3.permission.GRID_CONTROL" />
 
     <application
         android:label="@string/app_name"

@@ -6,13 +6,16 @@ package org.lenos.parts;
 
 import android.app.Activity;
 import android.content.ActivityNotFoundException;
+import android.content.ContentValues;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.om.OverlayInfo;
 import android.content.om.OverlayManager;
+import android.database.Cursor;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Process;
 import android.provider.Settings;
@@ -31,7 +34,10 @@ import android.widget.Toast;
 
 import org.json.JSONObject;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -132,6 +138,16 @@ public class MainActivity extends Activity {
             "org.lenos.qs.rows5",
     };
 
+    // LineageOS 24.0 ships the Launcher3 fork as com.android.launcher3. Its
+    // exported grid-control provider is guarded by the signature-level
+    // GRID_CONTROL permission, not BIND_WALLPAPER. LenosParts is platform
+    // signed, so it can use the narrow launcher permission instead.
+    private static final String LAUNCHER_PACKAGE = "com.android.launcher3";
+    private static final String LAUNCHER_GRID_AUTHORITY =
+            "com.android.launcher3.grid_control";
+    private static final String LAUNCHER_LIST_OPTIONS = "/list_options";
+    private static final String LAUNCHER_DEFAULT_GRID = "/default_grid";
+
     private static final int BG = Color.parseColor("#111318");
     private static final int CARD = Color.parseColor("#1C1F26");
     private static final int TEXT = Color.parseColor("#E8EAED");
@@ -143,9 +159,15 @@ public class MainActivity extends Activity {
     private Spinner motionSpinner;
     private Spinner qsColumnsSpinner;
     private Spinner qsRowsSpinner;
+    private Spinner launcherGridSpinner;
+    private TextView launcherGridNote;
+    private final List<String> launcherGridNames = new ArrayList<>();
+    private String launcherGridCurrent;
+    private int launcherGridRequest;
     private boolean suppressTheme;
     private boolean suppressMotion;
     private boolean suppressQs;
+    private boolean suppressLauncher;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -159,6 +181,7 @@ public class MainActivity extends Activity {
         refreshThemeSelection();
         refreshMotionSelection();
         refreshQsSelection();
+        refreshLauncherGrid();
     }
 
     private void buildUi() {
@@ -251,6 +274,42 @@ public class MainActivity extends Activity {
         qsCard.addView(qsRowsSpinner);
         root.addView(card(qsCard));
         suppressQs = false;
+
+        root.addView(section("Launcher"));
+        root.addView(text(
+                "The Home screen and All apps grid is read from the launcher's "
+                        + "own grid-control provider. Changes apply immediately; "
+                        + "icon shape, themed icons, notification dots and the "
+                        + "remaining Home options stay in launcher settings.",
+                12, MUTED, false));
+        launcherGridSpinner = new Spinner(this);
+        launcherGridSpinner.setEnabled(false);
+        launcherGridSpinner.setOnItemSelectedListener(
+                new AdapterView.OnItemSelectedListener() {
+                    @Override
+                    public void onItemSelected(AdapterView<?> parent, View view,
+                            int position, long id) {
+                        if (suppressLauncher) {
+                            return;
+                        }
+                        applyLauncherGrid(position);
+                    }
+
+                    @Override
+                    public void onNothingSelected(AdapterView<?> parent) {
+                    }
+                });
+        launcherGridNote = text("Reading launcher grid options\u2026",
+                12, MUTED, false);
+        LinearLayout launcherCard = new LinearLayout(this);
+        launcherCard.setOrientation(LinearLayout.VERTICAL);
+        launcherCard.addView(launcherGridSpinner);
+        launcherCard.addView(launcherGridNote);
+        root.addView(card(launcherCard));
+
+        Button launcherSettings = button("Open launcher settings");
+        launcherSettings.setOnClickListener(v -> openLauncherSettings());
+        root.addView(launcherSettings);
 
         root.addView(section("Status bar and Quick Settings"));
         root.addView(text(
@@ -653,6 +712,184 @@ public class MainActivity extends Activity {
                     "Could not change the Quick Settings layout: " + t.getMessage(),
                     Toast.LENGTH_LONG).show();
         }
+    }
+
+    /**
+     * Reads the launcher's grid choices off the UI thread. The provider may
+     * start the launcher process, so a synchronous query could block the
+     * dashboard on first open.
+     */
+    private void refreshLauncherGrid() {
+        if (launcherGridSpinner == null) {
+            return;
+        }
+        launcherGridSpinner.setEnabled(false);
+        final int request = ++launcherGridRequest;
+        new Thread(() -> {
+            List<String> names = new ArrayList<>();
+            List<String> labels = new ArrayList<>();
+            int selected = -1;
+            try (Cursor cursor = getContentResolver().query(
+                    launcherGridUri(LAUNCHER_LIST_OPTIONS),
+                    new String[]{"name", "grid_title", "rows", "cols",
+                            "is_default"},
+                    null, null, null)) {
+                if (cursor != null) {
+                    int nameIndex = cursor.getColumnIndexOrThrow("name");
+                    int titleIndex = cursor.getColumnIndex("grid_title");
+                    int rowsIndex = cursor.getColumnIndexOrThrow("rows");
+                    int columnsIndex = cursor.getColumnIndexOrThrow("cols");
+                    int defaultIndex =
+                            cursor.getColumnIndexOrThrow("is_default");
+                    while (cursor.moveToNext()) {
+                        String name = cursor.getString(nameIndex);
+                        if (name == null || name.isEmpty()) {
+                            continue;
+                        }
+                        String title = titleIndex >= 0
+                                ? cursor.getString(titleIndex) : null;
+                        int rows = cursor.getInt(rowsIndex);
+                        int columns = cursor.getInt(columnsIndex);
+                        boolean current = cursor.getInt(defaultIndex) != 0;
+                        names.add(name);
+                        labels.add(launcherGridLabel(title, columns, rows));
+                        if (current) {
+                            selected = names.size() - 1;
+                        }
+                    }
+                }
+            } catch (Throwable ignored) {
+                // A missing provider, a denied permission or a launcher
+                // without grid support all fall back to the settings entry.
+            }
+            final List<String> resultNames = names;
+            final List<String> resultLabels = labels;
+            final int resultSelected = selected;
+            runOnUiThread(() -> {
+                if (request != launcherGridRequest || isFinishing()
+                        || isDestroyed()) {
+                    return;
+                }
+                showLauncherGrid(resultNames, resultLabels, resultSelected);
+            });
+        }, "lenos-launcher-grid-query").start();
+    }
+
+    private void showLauncherGrid(List<String> names, List<String> labels,
+            int selected) {
+        launcherGridNames.clear();
+        launcherGridNames.addAll(names);
+        suppressLauncher = true;
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(this,
+                android.R.layout.simple_spinner_dropdown_item,
+                labels.isEmpty()
+                        ? Collections.singletonList(
+                                "Grid control not available")
+                        : labels);
+        launcherGridSpinner.setAdapter(adapter);
+        int shown = selected >= 0 && selected < names.size() ? selected : 0;
+        launcherGridSpinner.setSelection(shown);
+        // Treat the visible option as current so the initial selection
+        // callback cannot write a grid the user did not choose.
+        launcherGridCurrent = names.isEmpty() ? null : names.get(shown);
+        launcherGridSpinner.setEnabled(!names.isEmpty());
+        suppressLauncher = false;
+        if (names.isEmpty()) {
+            launcherGridNote.setText(
+                    "This launcher build does not expose grid control to "
+                            + "lenOS. Use launcher settings below; it still "
+                            + "contains the launcher's own grid picker.");
+        } else {
+            launcherGridNote.setText(
+                    "Choosing a grid applies it immediately. Launcher settings "
+                            + "below also covers icon shape, themed icons and "
+                            + "notification dots.");
+        }
+    }
+
+    private void applyLauncherGrid(int position) {
+        if (position < 0 || position >= launcherGridNames.size()) {
+            return;
+        }
+        String name = launcherGridNames.get(position);
+        if (name.equals(launcherGridCurrent)) {
+            return;
+        }
+        launcherGridSpinner.setEnabled(false);
+        new Thread(() -> {
+            int updated = 0;
+            String failure = null;
+            try {
+                ContentValues values = new ContentValues();
+                values.put("name", name);
+                updated = getContentResolver().update(
+                        launcherGridUri(LAUNCHER_DEFAULT_GRID), values,
+                        null, null);
+            } catch (Throwable t) {
+                failure = t.getMessage();
+            }
+            final int result = updated;
+            final String message = failure;
+            runOnUiThread(() -> {
+                if (isFinishing() || isDestroyed()) {
+                    return;
+                }
+                if (result > 0) {
+                    launcherGridCurrent = name;
+                    Toast.makeText(this, "Launcher grid updated",
+                            Toast.LENGTH_SHORT).show();
+                    refreshLauncherGrid();
+                } else {
+                    Toast.makeText(this,
+                            message == null
+                                    ? "This launcher did not accept the grid "
+                                            + "change"
+                                    : "Could not change the launcher grid: "
+                                            + message,
+                            Toast.LENGTH_LONG).show();
+                    // Put the spinner back on the grid the launcher actually
+                    // reports instead of leaving the rejected choice visible.
+                    refreshLauncherGrid();
+                }
+            });
+        }, "lenos-launcher-grid-apply").start();
+    }
+
+    private static String launcherGridLabel(String title, int columns,
+            int rows) {
+        String size = columns + " \u00d7 " + rows;
+        if (title == null || title.trim().isEmpty()) {
+            return size;
+        }
+        return title.trim();
+    }
+
+    private void openLauncherSettings() {
+        Intent preferences = new Intent(Intent.ACTION_APPLICATION_PREFERENCES);
+        preferences.setPackage(LAUNCHER_PACKAGE);
+        preferences.addCategory(Intent.CATEGORY_DEFAULT);
+        if (tryStartActivity(preferences)) {
+            return;
+        }
+        if (tryStartActivity(new Intent(Settings.ACTION_HOME_SETTINGS))) {
+            return;
+        }
+        Toast.makeText(this,
+                "Launcher settings are not available on this build",
+                Toast.LENGTH_LONG).show();
+    }
+
+    private boolean tryStartActivity(Intent intent) {
+        try {
+            startActivity(intent);
+            return true;
+        } catch (ActivityNotFoundException | SecurityException e) {
+            return false;
+        }
+    }
+
+    private static Uri launcherGridUri(String path) {
+        return Uri.parse("content://" + LAUNCHER_GRID_AUTHORITY + path);
     }
 
     private void openStatusBarSettings() {

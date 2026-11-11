@@ -28,7 +28,7 @@ The practical route is therefore:
 
 | Component | Path | Behavior |
 |---|---|---|
-| `LenosParts` | `app/LenosParts` | Local dashboard: theme-pack selection, motion presets, link to the stock LineageOS status-bar panel |
+| `LenosParts` | `app/LenosParts` | Local dashboard: theme-pack selection, motion presets, launcher grid selection, links to the stock LineageOS status-bar panel and Launcher3 settings |
 | Ember / Mint / Mono | `rro/LenosTheme*SystemUI` | Mutable SystemUI resource overlays: notification/scrim colors, notification corner radii, QS corner radius and tile spacing |
 | Ember / Mint / Mono | `rro/LenosTheme*Frameworks` | Mutable framework-res palettes: full Material 3 tonal palettes and dynamic color roles for light and dark themes |
 | Quick Settings layout | `rro/LenosQs*` | Mutable SystemUI overlays for 3/5 columns and 3/5 expanded rows; the stock 4/4 layout needs no overlay |
@@ -70,6 +70,31 @@ Motion presets write the standard Android `Settings.Global` animation scales
 change them again at any time, and accessibility/battery-saver behavior is
 unchanged.
 
+## Launcher controls
+
+LineageOS 24.0 ships its Launcher3 fork as `com.android.launcher3`. The launcher
+exports `LauncherCustomizationProvider` at
+`content://com.android.launcher3.grid_control` with the documented
+`/list_options` query and `/default_grid` update. `LenosParts` reads the
+available grid options (name, title, rows, columns, current selection) and
+writes only the selected grid name. It does not open or modify the launcher's
+workspace database and does not request `ACCESS_LAUNCHER_DATA`.
+
+The provider accepts either `BIND_WALLPAPER` or the signature-scoped
+`com.android.launcher3.permission.GRID_CONTROL`. lenOS uses the narrow
+permission: both apps are platform-signed, so it is granted at install without a
+privileged-permission allowlist entry. If a derivative launcher does not expose
+the provider or the permission is not granted, the grid spinner disables itself
+and the dashboard falls back to the launcher's own settings screen.
+
+"Open launcher settings" starts
+`android.intent.action.APPLICATION_PREFERENCES` against
+`com.android.launcher3`, then falls back to `Settings.ACTION_HOME_SETTINGS` on
+builds with a different home app. Icon shape, themed icons, notification dots
+and the remaining Home options stay in that stock screen; this slice does not
+duplicate them. Grid queries and updates run off the UI thread because the
+provider may start the launcher process.
+
 ## Local-only boundary
 
 The following are **not** part of this work and must not be added without a
@@ -97,7 +122,7 @@ no GMS/Theme Store/Play Integrity references.
 | Notifications | Theme pack controls corners/colors | Add optional background/blur styling; blur stays device-dependent and off by default |
 | Motion | Three scales plus off | Add per-surface animation presets only after A17 SystemUI hooks are reviewed |
 | Lock screen | Not yet | Start with clock styles and local media-art styling; Lockscreen Studio is a later project |
-| Launcher / Recents | Not yet | Port small Launcher3 preferences first; Recents is a separate risk |
+| Launcher / Recents | Grid selection through Launcher3's grid-control provider, plus a link to the stock launcher settings | Add a compact option for icon shape/themed icons only if the provider API remains sufficient; Recents is a separate risk |
 | Dynamic Bar | Not yet | Local-only subset (media, timer, alarm, charging, torch); exclude sports/online feeds |
 
 This slice still avoids framework Java and the security patches: it proves the
@@ -131,12 +156,19 @@ When a build/device is available:
    `adb shell settings get secure theme_customization_overlay_packages`.
 5. Select 3, 5, and the default Quick Settings columns/rows; confirm the grid
    changes and that only one overlay per dimension is enabled.
-6. Change each motion preset and verify the three `Settings.Global` values.
-7. Confirm the app has no network access and no `INTERNET` permission:
+6. Open the Launcher section and change the Home/All apps grid. Confirm the
+   spinner lists the launcher's grid options and that the workspace rearranges
+   immediately. If the spinner is disabled, confirm "Open launcher settings"
+   still reaches the stock launcher preferences.
+7. Change each motion preset and verify the three `Settings.Global` values.
+8. Confirm the app has no network access and no `INTERNET` permission:
    `adb shell dumpsys package org.lenos.parts | grep -i internet` should be empty.
-8. If SystemUI becomes unusable after a pack change, disable the framework
-   overlay and the SystemUI overlay with `cmd overlay disable` from `adb` (see
-   above) and reboot.
+9. Confirm the launcher grid permission is the narrow one, not the wallpaper
+   permission: `adb shell dumpsys package org.lenos.parts | grep -E
+   'GRID_CONTROL|BIND_WALLPAPER'` should list only `GRID_CONTROL`.
+10. If SystemUI becomes unusable after a pack change, disable the framework
+    overlay and the SystemUI overlay with `cmd overlay disable` from `adb` (see
+    above) and reboot.
 
 ## Attribution
 
