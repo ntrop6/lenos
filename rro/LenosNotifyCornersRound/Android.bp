@@ -1,0 +1,12 @@
+//
+// SPDX-FileCopyrightText: 2026 lenOS
+// SPDX-License-Identifier: Apache-2.0
+//
+// Mutable SystemUI overlay for the notification corner-radius choice.
+// Installed on the product partition and toggled by LenosParts.
+//
+runtime_resource_overlay {
+    name: "LenosNotifyCornersRound",
+    product_specific: true,
+    certificate: "platform",
+}

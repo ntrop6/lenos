@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+     SPDX-FileCopyrightText: 2026 lenOS
+     SPDX-License-Identifier: Apache-2.0
+
+     Mutable notification corner overlay. Only one notification-corner overlay
+     is enabled at a time; the stock 28dp/4dp radii are used when none is
+     enabled.
+-->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="org.lenos.notify.corners.square">
+    <overlay
+        android:targetPackage="com.android.systemui"
+        android:isStatic="false"
+        android:priority="200" />
+    <application android:hasCode="false" />
+</manifest>

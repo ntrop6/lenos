@@ -14,9 +14,10 @@ PRODUCT_PACKAGES += \
     LenosSecurity
 
 # Local-only personalization: the LenosParts dashboard plus three mutable
-# SystemUI theme packs and their framework palettes. The overlays are
-# preinstalled on the product partition and are disabled until the user
-# selects one; nothing is downloaded.
+# SystemUI theme packs, their framework palettes, Quick Settings grid choices
+# and notification styling overlays. The overlays are preinstalled on the
+# product partition and are disabled until the user selects one; nothing is
+# downloaded.
 PRODUCT_PACKAGES += \
     LenosParts \
     LenosThemeEmberSystemUI \
@@ -28,7 +29,11 @@ PRODUCT_PACKAGES += \
     LenosQsColumns3 \
     LenosQsColumns5 \
     LenosQsRows3 \
-    LenosQsRows5
+    LenosQsRows5 \
+    LenosNotifyCornersRound \
+    LenosNotifyCornersCompact \
+    LenosNotifyCornersSquare \
+    LenosNotifyDividersHidden
 
 # Experimental features are opt-in at build time. The driver only applies the
 # patches-experimental/ series and installs experimental/app/ when

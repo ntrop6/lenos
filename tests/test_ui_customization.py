@@ -7,6 +7,8 @@ Feature contract (see docs/axion-ui.md):
   Google/GMS/Play Integrity code path.
 * Theme packs are mutable SystemUI overlays. LenosParts enables exactly one
   pack (or none) through OverlayManager.
+* Notification corner radius and grouped-notification dividers are separate
+  mutable SystemUI overlays, independent of the theme packs.
 * Motion controls write only the standard Android animation-scale settings,
   one surface at a time, plus an explicit reset.
 * The launcher section uses Launcher3's exported grid-control provider through
@@ -44,6 +46,17 @@ QS_OVERLAYS = {
     "LenosQsRows3": ("org.lenos.qs.rows3", "rows", 3),
     "LenosQsRows5": ("org.lenos.qs.rows5", "rows", 5),
 }
+
+NOTIFY_CORNER_OVERLAYS = {
+    "LenosNotifyCornersRound": (
+        "org.lenos.notify.corners.round", "24dp", "6dp"),
+    "LenosNotifyCornersCompact": (
+        "org.lenos.notify.corners.compact", "16dp", "4dp"),
+    "LenosNotifyCornersSquare": (
+        "org.lenos.notify.corners.square", "6dp", "2dp"),
+}
+NOTIFY_DIVIDERS_OVERLAY = "LenosNotifyDividersHidden"
+NOTIFY_DIVIDERS_PACKAGE = "org.lenos.notify.dividers.hidden"
 
 BANNED_JAVA = (
     "java.net.",
@@ -139,7 +152,13 @@ class TestLenosPartsApp(unittest.TestCase):
             "org.lenos.qs.columns5",
             "org.lenos.qs.rows3",
             "org.lenos.qs.rows5",
+            "org.lenos.notify.corners.round",
+            "org.lenos.notify.corners.compact",
+            "org.lenos.notify.corners.square",
+            "org.lenos.notify.dividers.hidden",
             "applyQsLayout(",
+            "applyNotifyCorners(",
+            "applyNotifyDividers(",
             "applyLauncherGrid(",
             "applyLauncherShape(",
             "applyLauncherThemedIcons(",
@@ -233,7 +252,7 @@ class TestThemeOverlays(unittest.TestCase):
                 self.assertNotIn("device_specific", build)
 
     def test_overlays_define_distinct_visual_values(self):
-        radii = set()
+        scrims = set()
         for name in THEMES:
             with self.subTest(overlay=name):
                 root = parse_xml(f"rro/{name}/res/values/theme.xml")
@@ -246,17 +265,21 @@ class TestThemeOverlays(unittest.TestCase):
                     "notification_legacy_background_color",
                     "status_bar_clock_color",
                     "qs_tile_divider",
-                    "notification_corner_radius",
                     "qs_corner_radius",
                     "qs_tile_margin_horizontal",
                 ):
                     self.assertIn(resource, values)
-                radii.add(values["notification_corner_radius"])
-        self.assertEqual(len(radii), len(THEMES),
-                         "each pack must have a distinct corner radius")
+                # Notification radii belong to the independent notification
+                # overlays; a pack must not race them for the same resource.
+                self.assertNotIn("notification_corner_radius", values)
+                self.assertNotIn("notification_corner_radius_small", values)
+                scrims.add(values["notification_scrim_base"])
+        self.assertEqual(len(scrims), len(THEMES),
+                         "each pack must have a distinct notification scrim")
 
     def test_no_network_or_remote_code_in_overlay_sources(self):
-        for name in (*THEMES, *FRAMEWORK_THEMES, *QS_OVERLAYS):
+        for name in (*THEMES, *FRAMEWORK_THEMES, *QS_OVERLAYS,
+                     *NOTIFY_CORNER_OVERLAYS, NOTIFY_DIVIDERS_OVERLAY):
             for path in (VENDOR / f"rro/{name}").rglob("*"):
                 if not path.is_file():
                     continue
@@ -393,6 +416,108 @@ class TestQuickSettingsOverlays(unittest.TestCase):
                     )
 
 
+class TestNotificationOverlays(unittest.TestCase):
+    def test_corner_overlays_are_mutable_systemui_packages(self):
+        for name, (package, radius, small) in NOTIFY_CORNER_OVERLAYS.items():
+            with self.subTest(overlay=name):
+                root = parse_xml(f"rro/{name}/AndroidManifest.xml")
+                self.assertEqual(root.get("package"), package)
+                node = root.find("overlay")
+                self.assertIsNotNone(node)
+                self.assertEqual(
+                    node.get(f"{ANDROID_NS}targetPackage"),
+                    "com.android.systemui",
+                )
+                self.assertEqual(
+                    node.get(f"{ANDROID_NS}isStatic"), "false")
+                self.assertEqual(
+                    node.get(f"{ANDROID_NS}priority"), "200")
+                self.assertEqual(
+                    root.find("application").get(f"{ANDROID_NS}hasCode"),
+                    "false",
+                )
+
+                build = (VENDOR / f"rro/{name}/Android.bp").read_text()
+                self.assertIn("runtime_resource_overlay", build)
+                self.assertIn(f'name: "{name}"', build)
+                self.assertIn("product_specific: true", build)
+                self.assertIn('certificate: "platform"', build)
+
+                values = {
+                    child.get("name"): (child.text or "").strip()
+                    for child in parse_xml(
+                        f"rro/{name}/res/values/dimens.xml")
+                }
+                self.assertEqual(
+                    values,
+                    {
+                        "notification_corner_radius": radius,
+                        "notification_corner_radius_small": small,
+                    },
+                )
+
+    def test_corner_overlays_are_distinct(self):
+        radii = {
+            values[1:]
+            for values in NOTIFY_CORNER_OVERLAYS.values()
+        }
+        self.assertEqual(len(radii), len(NOTIFY_CORNER_OVERLAYS),
+                         "each corner overlay must have a distinct radius")
+
+    def test_divider_overlay_hides_only_the_divider_color(self):
+        root = parse_xml(
+            f"rro/{NOTIFY_DIVIDERS_OVERLAY}/AndroidManifest.xml")
+        self.assertEqual(root.get("package"), NOTIFY_DIVIDERS_PACKAGE)
+        node = root.find("overlay")
+        self.assertIsNotNone(node)
+        self.assertEqual(
+            node.get(f"{ANDROID_NS}targetPackage"), "com.android.systemui")
+        self.assertEqual(node.get(f"{ANDROID_NS}isStatic"), "false")
+        self.assertEqual(node.get(f"{ANDROID_NS}priority"), "200")
+        self.assertEqual(
+            root.find("application").get(f"{ANDROID_NS}hasCode"), "false")
+
+        build = (VENDOR / f"rro/{NOTIFY_DIVIDERS_OVERLAY}/Android.bp").read_text()
+        self.assertIn("runtime_resource_overlay", build)
+        self.assertIn(f'name: "{NOTIFY_DIVIDERS_OVERLAY}"', build)
+        self.assertIn("product_specific: true", build)
+        self.assertIn('certificate: "platform"', build)
+
+        values = {
+            child.get("name"): (child.text or "").strip()
+            for child in parse_xml(
+                f"rro/{NOTIFY_DIVIDERS_OVERLAY}/res/values/colors.xml")
+        }
+        self.assertEqual(values, {"notification_divider_color": "#00000000"})
+
+
+class TestNotificationControls(unittest.TestCase):
+    SOURCE = VENDOR / "app/LenosParts/src/org/lenos/parts/MainActivity.java"
+
+    def test_corners_and_dividers_have_independent_controls(self):
+        body = self.SOURCE.read_text()
+        for needle in (
+            "NOTIFY_CORNER_PACKAGES",
+            "org.lenos.notify.corners.round",
+            "org.lenos.notify.corners.compact",
+            "org.lenos.notify.corners.square",
+            "NOTIFY_DIVIDERS_PACKAGE",
+            "org.lenos.notify.dividers.hidden",
+            "applyNotifyCorners(",
+            "applyNotifyDividers(",
+            "refreshNotifySelection(",
+            "suppressNotify",
+        ):
+            self.assertIn(needle, body)
+
+    def test_notification_controls_do_not_write_theme_pack_resources(self):
+        body = self.SOURCE.read_text()
+        # Radius choices are separate overlays; the theme-pack selector must
+        # not also set the notification radii.
+        self.assertNotIn("notification_corner_radius", body)
+        self.assertNotIn("notification_corner_radius_small", body)
+
+
 class TestMotionControls(unittest.TestCase):
     SOURCE = VENDOR / "app/LenosParts/src/org/lenos/parts/MainActivity.java"
 
@@ -508,7 +633,8 @@ class TestProductWiring(unittest.TestCase):
     def test_personalization_is_shipped(self):
         body = (VENDOR / "config/lenos.mk").read_text()
         for needle in ("LenosParts", *THEMES, *FRAMEWORK_THEMES,
-                       *QS_OVERLAYS):
+                       *QS_OVERLAYS, *NOTIFY_CORNER_OVERLAYS,
+                       NOTIFY_DIVIDERS_OVERLAY):
             self.assertIn(needle, body)
 
     def test_privapp_allowlist_is_scoped_to_the_app(self):

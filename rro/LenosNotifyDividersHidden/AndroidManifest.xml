@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+     SPDX-FileCopyrightText: 2026 lenOS
+     SPDX-License-Identifier: Apache-2.0
+
+     Mutable SystemUI overlay that makes the dividers between grouped
+     notifications transparent. The divider view and its spacing are left in
+     place so notification layout and touch targets do not change.
+-->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="org.lenos.notify.dividers.hidden">
+    <overlay
+        android:targetPackage="com.android.systemui"
+        android:isStatic="false"
+        android:priority="200" />
+    <application android:hasCode="false" />
+</manifest>

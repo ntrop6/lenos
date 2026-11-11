@@ -70,9 +70,9 @@ public class MainActivity extends Activity {
             "Mono",
     };
     private static final String[] THEME_DESCRIPTIONS = {
-            "Warm amber accents and softer corners.",
-            "Cool green accents and compact corners.",
-            "Neutral graphite with sharper corners.",
+            "Warm amber accents for notifications and Quick Settings.",
+            "Cool green accents for notifications and Quick Settings.",
+            "Neutral graphite accents for notifications and Quick Settings.",
     };
 
     // Monet reads these keys from Settings.Secure and builds its own fabricated
@@ -139,6 +139,24 @@ public class MainActivity extends Activity {
             "org.lenos.qs.rows5",
     };
 
+    // Notification styling is independent of the theme packs: the packs no
+    // longer override the notification radii, so these overlays are the only
+    // writers and cannot race them for the same resource on Android 17.
+    private static final String[] NOTIFY_CORNER_LABELS = {
+            "System default (28 dp)",
+            "Round (24 dp)",
+            "Compact (16 dp)",
+            "Square (6 dp)",
+    };
+    private static final String[] NOTIFY_CORNER_PACKAGES = {
+            null,
+            "org.lenos.notify.corners.round",
+            "org.lenos.notify.corners.compact",
+            "org.lenos.notify.corners.square",
+    };
+    private static final String NOTIFY_DIVIDERS_PACKAGE =
+            "org.lenos.notify.dividers.hidden";
+
     // LineageOS 24.0 ships the Launcher3 fork as com.android.launcher3. Its
     // exported grid-control provider is guarded by the signature-level
     // GRID_CONTROL permission, not BIND_WALLPAPER. LenosParts is platform
@@ -166,6 +184,8 @@ public class MainActivity extends Activity {
     private Spinner windowSpinner;
     private Spinner qsColumnsSpinner;
     private Spinner qsRowsSpinner;
+    private Spinner notifyCornersSpinner;
+    private CheckBox notifyDividersCheck;
     private Spinner launcherGridSpinner;
     private TextView launcherGridNote;
     private Spinner launcherShapeSpinner;
@@ -181,6 +201,7 @@ public class MainActivity extends Activity {
     private boolean suppressTheme;
     private boolean suppressMotion;
     private boolean suppressQs;
+    private boolean suppressNotify;
     private boolean suppressLauncher;
     private boolean suppressLauncherShape;
     private boolean suppressLauncherThemed;
@@ -200,6 +221,7 @@ public class MainActivity extends Activity {
         // Developer Options would display as 1.0x, and a queued selection
         // callback could then overwrite it.
         refreshQsSelection();
+        refreshNotifySelection();
         refreshLauncherGrid();
         refreshLauncherShapes();
         refreshLauncherThemedIcons();
@@ -223,8 +245,9 @@ public class MainActivity extends Activity {
         root.addView(section("Theme packs"));
         root.addView(text(
                 "These packs change system accent colors, SystemUI notification "
-                        + "and Quick Settings colors, notification corners and "
-                        + "Quick Settings spacing. The selected pack overrides the "
+                        + "and Quick Settings colors, Quick Settings corners and "
+                        + "spacing. Notification corners are controlled "
+                        + "separately below. The selected pack overrides the "
                         + "wallpaper-generated accent while it is enabled.",
                 12, MUTED, false));
 
@@ -283,6 +306,59 @@ public class MainActivity extends Activity {
         qsCard.addView(qsRowsSpinner);
         root.addView(card(qsCard));
         suppressQs = false;
+
+        root.addView(section("Notifications"));
+        root.addView(text(
+                "The corner choice applies to notifications in the shade. "
+                        + "\"Hide dividers\" makes the lines between grouped "
+                        + "notifications transparent without changing their "
+                        + "layout or spacing. Both choices are independent of "
+                        + "the selected theme pack.",
+                12, MUTED, false));
+        LinearLayout notifyCard = new LinearLayout(this);
+        notifyCard.setOrientation(LinearLayout.VERTICAL);
+        notifyCornersSpinner = new Spinner(this);
+        ArrayAdapter<String> notifyAdapter = new ArrayAdapter<>(this,
+                android.R.layout.simple_spinner_dropdown_item,
+                NOTIFY_CORNER_LABELS);
+        notifyCornersSpinner.setAdapter(notifyAdapter);
+        // Pick the current state before attaching the listener so the first
+        // layout pass cannot mistake the default position for a user choice.
+        suppressNotify = true;
+        notifyCornersSpinner.setSelection(
+                enabledOption(NOTIFY_CORNER_PACKAGES, 0));
+        notifyCornersSpinner.setOnItemSelectedListener(
+                new AdapterView.OnItemSelectedListener() {
+                    @Override
+                    public void onItemSelected(AdapterView<?> parent, View view,
+                            int position, long id) {
+                        if (suppressNotify) {
+                            return;
+                        }
+                        applyNotifyCorners(position);
+                    }
+
+                    @Override
+                    public void onNothingSelected(AdapterView<?> parent) {
+                    }
+                });
+        notifyCard.addView(notifyCornersSpinner);
+        notifyDividersCheck = new CheckBox(this);
+        notifyDividersCheck.setText(
+                "Hide dividers between grouped notifications");
+        notifyDividersCheck.setTextColor(TEXT);
+        notifyDividersCheck.setTextSize(14);
+        notifyDividersCheck.setPadding(0, dp(10), 0, 0);
+        notifyDividersCheck.setOnCheckedChangeListener(
+                (buttonView, isChecked) -> {
+                    if (suppressNotify) {
+                        return;
+                    }
+                    applyNotifyDividers(isChecked);
+                });
+        notifyCard.addView(notifyDividersCheck);
+        root.addView(card(notifyCard));
+        suppressNotify = false;
 
         root.addView(section("Launcher"));
         root.addView(text(
@@ -819,6 +895,75 @@ public class MainActivity extends Activity {
             Toast.makeText(this,
                     "Could not change the Quick Settings layout: " + t.getMessage(),
                     Toast.LENGTH_LONG).show();
+        }
+    }
+
+    private void refreshNotifySelection() {
+        suppressNotify = true;
+        notifyCornersSpinner.setSelection(
+                enabledOption(NOTIFY_CORNER_PACKAGES, 0));
+        notifyDividersCheck.setChecked(
+                enabledOption(new String[]{NOTIFY_DIVIDERS_PACKAGE}, -1) >= 0);
+        suppressNotify = false;
+    }
+
+    private void applyNotifyCorners(int selectedIndex) {
+        try {
+            OverlayManager manager = getSystemService(OverlayManager.class);
+            if (manager == null) {
+                throw new IllegalStateException("OverlayManager unavailable");
+            }
+            if (selectedIndex == enabledOption(NOTIFY_CORNER_PACKAGES, 0)) {
+                // The first layout pass can report the already-current
+                // selection; it must not toggle an overlay.
+                return;
+            }
+            Set<String> installed = installedPackages(manager, SYSTEMUI_PACKAGE);
+            for (int i = 0; i < NOTIFY_CORNER_PACKAGES.length; i++) {
+                String pkg = NOTIFY_CORNER_PACKAGES[i];
+                if (pkg == null || !installed.contains(pkg)) {
+                    continue;
+                }
+                manager.setEnabled(pkg, i == selectedIndex,
+                        Process.myUserHandle());
+            }
+            Toast.makeText(this, "Notification corners updated",
+                    Toast.LENGTH_SHORT).show();
+            refreshNotifySelection();
+        } catch (Throwable t) {
+            Toast.makeText(this,
+                    "Could not change notification corners: " + t.getMessage(),
+                    Toast.LENGTH_LONG).show();
+        }
+    }
+
+    private void applyNotifyDividers(boolean enabled) {
+        try {
+            OverlayManager manager = getSystemService(OverlayManager.class);
+            if (manager == null) {
+                throw new IllegalStateException("OverlayManager unavailable");
+            }
+            if (!installedPackages(manager, SYSTEMUI_PACKAGE)
+                    .contains(NOTIFY_DIVIDERS_PACKAGE)) {
+                throw new IllegalStateException("overlay not installed");
+            }
+            if (enabled == (enabledOption(
+                    new String[]{NOTIFY_DIVIDERS_PACKAGE}, -1) >= 0)) {
+                return;
+            }
+            manager.setEnabled(NOTIFY_DIVIDERS_PACKAGE, enabled,
+                    Process.myUserHandle());
+            Toast.makeText(this,
+                    enabled ? "Notification dividers hidden"
+                            : "Notification dividers restored",
+                    Toast.LENGTH_SHORT).show();
+            refreshNotifySelection();
+        } catch (Throwable t) {
+            Toast.makeText(this,
+                    "Could not change notification dividers: "
+                            + t.getMessage(),
+                    Toast.LENGTH_LONG).show();
+            refreshNotifySelection();
         }
     }
 

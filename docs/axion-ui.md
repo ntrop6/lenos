@@ -28,18 +28,20 @@ The practical route is therefore:
 
 | Component | Path | Behavior |
 |---|---|---|
-| `LenosParts` | `app/LenosParts` | Local dashboard: theme-pack selection, motion controls, launcher grid/icon-shape/themed-icon controls, links to the stock LineageOS status-bar panel and Launcher3 settings |
-| Ember / Mint / Mono | `rro/LenosTheme*SystemUI` | Mutable SystemUI resource overlays: notification/scrim colors, notification corner radii, QS corner radius and tile spacing |
+| `LenosParts` | `app/LenosParts` | Local dashboard: theme-pack selection, notification corners/dividers, motion controls, launcher grid/icon-shape/themed-icon controls, links to the stock LineageOS status-bar panel and Launcher3 settings |
+| Ember / Mint / Mono | `rro/LenosTheme*SystemUI` | Mutable SystemUI resource overlays: notification/scrim colors, QS corner radius and tile spacing |
 | Ember / Mint / Mono | `rro/LenosTheme*Frameworks` | Mutable framework-res palettes: full Material 3 tonal palettes and dynamic color roles for light and dark themes |
 | Quick Settings layout | `rro/LenosQs*` | Mutable SystemUI overlays for 3/5 columns and 3/5 expanded rows; the stock 4/4 layout needs no overlay |
+| Notification styling | `rro/LenosNotify*` | Mutable SystemUI overlays: three corner radii (round/compact/square) and hidden group dividers; the stock 28dp/4dp radii and visible divider need no overlay |
 | Privapp allowlist | `config/privapp-permissions-org.lenos.parts.xml` | Only `CHANGE_OVERLAY_PACKAGES` and `WRITE_SECURE_SETTINGS` |
-| Product wiring | `config/lenos.mk` | Installs the app and the ten overlays on the product partition |
+| Product wiring | `config/lenos.mk` | Installs the app and the fourteen overlays on the product partition |
 
 The theme packs are **preinstalled and disabled by default**. Selecting one
 enables exactly one SystemUI overlay and one framework palette through
 `OverlayManager`; selecting "Stock" disables all six. The Quick Settings layout
-overlays are independent of the theme: selecting the stock layout disables the
-non-default grid overlays. Nothing is downloaded, and the app has no network
+and notification styling overlays are independent of the theme: selecting the
+stock layout or the stock notification style disables the corresponding
+non-default overlays. Nothing is downloaded, and the app has no network
 permission.
 
 Selecting a pack also seeds Monet through
@@ -71,6 +73,26 @@ scales independently: `animator_duration_scale` (system animations),
 0.75x, 0.5x or 0x; "Reset all to 1.0x" restores the defaults. The user can
 change them again at any time, and accessibility/battery-saver behavior is
 unchanged.
+
+## Notification controls
+
+Notification styling is split out of the theme packs so the two choices do not
+race for the same Android 17 overlay resource. The theme packs still set
+notification and scrim colors; the notification section owns the geometry:
+
+| Choice | Overlay | Resources |
+|---|---|---|
+| System default | none | LineageOS `28dp` radius, `4dp` grouped radius |
+| Round | `LenosNotifyCornersRound` | `24dp`, `6dp` |
+| Compact | `LenosNotifyCornersCompact` | `16dp`, `4dp` |
+| Square | `LenosNotifyCornersSquare` | `6dp`, `2dp` |
+
+`LenosParts` enables exactly one corner overlay (or none) through
+`OverlayManager`. "Hide dividers between grouped notifications" toggles
+`LenosNotifyDividersHidden`, which sets `notification_divider_color` to
+transparent. The divider view and its spacing are unchanged, so notification
+layout and touch targets do not move. Both controls are independent of the
+selected theme pack and of the Quick Settings layout.
 
 ## Launcher controls
 
@@ -130,7 +152,7 @@ no GMS/Theme Store/Play Integrity references.
 | Theme tokens | Full Material 3 palettes plus SystemUI colors/dimens via three local packs | Add a local pack manifest and user-defined seed; keep dynamic-color precedence explicit |
 | Status bar | Link to LineageOS's existing clock/battery/network/brightness panel | Add Axion-style icon controls only where LineageOS has no equivalent |
 | Quick Settings | 3/5 columns and 3/5 expanded rows via local overlays (rows apply to the paginated grid; the dual-shade infinite grid scrolls); theme pack controls tile shape/spacing | Split tile shape from the theme pack and add a compact/collapsed-rows control |
-| Notifications | Theme pack controls corners/colors | Add optional background/blur styling; blur stays device-dependent and off by default |
+| Notifications | Independent corner radii and hidden group dividers; theme packs control notification/scrim colors | Add optional background/blur styling; blur stays device-dependent and off by default |
 | Motion | Independent system, transition and window scales plus reset | Add higher-level presets only after A17 SystemUI hooks are reviewed |
 | Lock screen | Not yet | Start with clock styles and local media-art styling; Lockscreen Studio is a later project |
 | Launcher / Recents | Grid selection, icon shape and themed icons through Launcher3's grid-control provider, plus a link to the stock launcher settings | Recents is a separate risk |
@@ -155,32 +177,36 @@ LENOS_WORKSPACE=/path/to/lineage bash tests/run-tests.sh
 When a build/device is available:
 
 1. Build `lenos_asteroids-user` with the stable series.
-2. Confirm `LenosParts` and the ten overlays are installed:
-   `adb shell pm list packages | grep -E 'lenos.parts|lenos.theme|lenos.qs'`.
+2. Confirm `LenosParts` and the fourteen overlays are installed:
+   `adb shell pm list packages | grep -E 'lenos.parts|lenos.theme|lenos.qs|lenos.notify'`.
 3. Open lenOS personalization and apply each pack; confirm the overlay list
-   changes with `adb shell cmd overlay list --user 0 | grep -E 'lenos.theme|lenos.qs'`.
+   changes with `adb shell cmd overlay list --user 0 | grep -E 'lenos.theme|lenos.qs|lenos.notify'`.
    The SystemUI pack and the framework palette for the selected theme must both
    be enabled.
-4. Confirm notification/QS corner and color changes plus the global accent
-   change (Settings, Dialer, Files), then select Stock and confirm the resources
-   return to the LineageOS defaults. The seeded values are visible with
+4. Confirm notification/QS colors plus the global accent change (Settings,
+   Dialer, Files), then select Stock and confirm the resources return to the
+   LineageOS defaults. The seeded values are visible with
    `adb shell settings get secure theme_customization_overlay_packages`.
 5. Select 3, 5, and the default Quick Settings columns/rows; confirm the grid
    changes and that only one overlay per dimension is enabled.
-6. Open the Launcher section and change the Home/All apps grid. Confirm the
+6. Select each notification corner choice and confirm the shade reflects it;
+   toggle "Hide dividers" on a grouped notification and confirm the lines
+   disappear without changing the row height. Confirm only one notification
+   corner overlay is enabled at a time.
+7. Open the Launcher section and change the Home/All apps grid. Confirm the
    spinner lists the launcher's grid options and that the workspace rearranges
    immediately. Change the icon shape and toggle themed icons; confirm both are
    reflected on the Home screen and in All apps. If a spinner is disabled,
    confirm "Open launcher settings" still reaches the stock launcher
    preferences.
-7. Change each motion scale independently and verify only that `Settings.Global`
+8. Change each motion scale independently and verify only that `Settings.Global`
    key changes; use "Reset all to 1.0x" and verify all three return to `1.0`.
-8. Confirm the app has no network access and no `INTERNET` permission:
+9. Confirm the app has no network access and no `INTERNET` permission:
    `adb shell dumpsys package org.lenos.parts | grep -i internet` should be empty.
-9. Confirm the launcher grid permission is the narrow one, not the wallpaper
-   permission: `adb shell dumpsys package org.lenos.parts | grep -E
-   'GRID_CONTROL|BIND_WALLPAPER'` should list only `GRID_CONTROL`.
-10. If SystemUI becomes unusable after a pack change, disable the framework
+10. Confirm the launcher grid permission is the narrow one, not the wallpaper
+    permission: `adb shell dumpsys package org.lenos.parts | grep -E
+    'GRID_CONTROL|BIND_WALLPAPER'` should list only `GRID_CONTROL`.
+11. If SystemUI becomes unusable after a pack change, disable the framework
     overlay and the SystemUI overlay with `cmd overlay disable` from `adb` (see
     above) and reboot.
 

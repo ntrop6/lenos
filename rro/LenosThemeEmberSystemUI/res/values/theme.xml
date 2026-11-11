@@ -8,8 +8,6 @@
     <color name="status_bar_clock_color">#FFFFD7A8</color>
     <color name="qs_tile_divider">#33FFB26A</color>
 
-    <dimen name="notification_corner_radius">24dp</dimen>
-    <dimen name="notification_corner_radius_small">6dp</dimen>
     <dimen name="qs_corner_radius">26dp</dimen>
     <dimen name="qs_tile_margin_horizontal">10dp</dimen>
 </resources>
