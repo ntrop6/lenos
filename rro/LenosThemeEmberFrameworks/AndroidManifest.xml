@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+     SPDX-FileCopyrightText: 2026 lenOS
+     SPDX-License-Identifier: Apache-2.0
+
+     Mutable framework overlay. framework-res does not declare an overlayable
+     subset, so the legacy CHANGE_OVERLAY_PACKAGES actor check applies. This
+     palette is the fallback when dynamic color is disabled; when Monet is on,
+     LenosParts seeds the accent through the secure theme setting instead.
+     Manifest priority is advisory for unconfigured overlays on Android 17.
+-->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="org.lenos.theme.ember.frameworks">
+    <overlay
+        android:targetPackage="android"
+        android:isStatic="false"
+        android:priority="1000" />
+    <application android:hasCode="false" />
+</manifest>

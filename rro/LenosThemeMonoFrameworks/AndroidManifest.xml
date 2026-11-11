@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+     SPDX-FileCopyrightText: 2026 lenOS
+     SPDX-License-Identifier: Apache-2.0
+
+     Mutable framework overlay. See LenosThemeEmberFrameworks for the actor
+     and Monet fallback rationale.
+-->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="org.lenos.theme.mono.frameworks">
+    <overlay
+        android:targetPackage="android"
+        android:isStatic="false"
+        android:priority="1000" />
+    <application android:hasCode="false" />
+</manifest>

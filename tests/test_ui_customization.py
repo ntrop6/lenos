@@ -28,6 +28,19 @@ THEMES = {
     "LenosThemeMonoSystemUI": "org.lenos.theme.mono.systemui",
 }
 
+FRAMEWORK_THEMES = {
+    "LenosThemeEmberFrameworks": "org.lenos.theme.ember.frameworks",
+    "LenosThemeMintFrameworks": "org.lenos.theme.mint.frameworks",
+    "LenosThemeMonoFrameworks": "org.lenos.theme.mono.frameworks",
+}
+
+QS_OVERLAYS = {
+    "LenosQsColumns3": ("org.lenos.qs.columns3", "columns", 3),
+    "LenosQsColumns5": ("org.lenos.qs.columns5", "columns", 5),
+    "LenosQsRows3": ("org.lenos.qs.rows3", "rows", 3),
+    "LenosQsRows5": ("org.lenos.qs.rows5", "rows", 5),
+}
+
 BANNED_JAVA = (
     "java.net.",
     "HttpURLConnection",
@@ -109,10 +122,32 @@ class TestLenosPartsApp(unittest.TestCase):
             "OverlayManager",
             "Process.myUserHandle()",
             "getOverlayInfosForTarget(",
-            "installed.contains(pkg)",
+            "installedPackages(",
+            "systemUiInstalled.contains(",
             "org.lenos.theme.ember.systemui",
             "org.lenos.theme.mint.systemui",
             "org.lenos.theme.mono.systemui",
+            "org.lenos.theme.ember.frameworks",
+            "org.lenos.theme.mint.frameworks",
+            "org.lenos.theme.mono.frameworks",
+            "org.lenos.qs.columns3",
+            "org.lenos.qs.columns5",
+            "org.lenos.qs.rows3",
+            "org.lenos.qs.rows5",
+            "applyQsLayout(",
+            "applyMonetSeed(",
+            "restoreMonetSeed(",
+            "backupMonetValue(",
+            "Settings.Secure.THEME_CUSTOMIZATION_OVERLAY_PACKAGES",
+            "android.theme.customization.system_palette",
+            "android.theme.customization.theme_style",
+            "android.theme.customization.color_source",
+            "C96A1E",
+            "2FA37C",
+            "6B6F76",
+            "VIBRANT",
+            "TONAL_SPOT",
+            "MONOCHROMATIC",
             "Settings.Global.ANIMATOR_DURATION_SCALE",
             "Settings.Global.TRANSITION_ANIMATION_SCALE",
             "Settings.Global.WINDOW_ANIMATION_SCALE",
@@ -128,6 +163,32 @@ class TestLenosPartsApp(unittest.TestCase):
                 VENDOR / "app/LenosParts/src/org/lenos/parts/MainActivity.java"),
             0,
         )
+
+
+class TestMonetSeeding(unittest.TestCase):
+    SOURCE = VENDOR / "app/LenosParts/src/org/lenos/parts/MainActivity.java"
+
+    def test_seed_and_style_arrays_are_aligned(self):
+        body = self.SOURCE.read_text()
+        seeds_match = re.search(r"THEME_SEEDS = \{(.*?)\};", body, re.S)
+        styles_match = re.search(r"THEME_STYLES = \{(.*?)\};", body, re.S)
+        self.assertIsNotNone(seeds_match)
+        self.assertIsNotNone(styles_match)
+        seeds = re.findall(r'"([0-9A-F]{6})"', seeds_match.group(1))
+        styles = re.findall(r'"([A-Z_]+)"', styles_match.group(1))
+        self.assertEqual(seeds, ["C96A1E", "2FA37C", "6B6F76"])
+        self.assertEqual(
+            styles, ["VIBRANT", "TONAL_SPOT", "MONOCHROMATIC"])
+
+    def test_stock_restores_only_values_the_app_wrote(self):
+        body = self.SOURCE.read_text()
+        self.assertIn("restoreMonetSeed(", body)
+        self.assertIn("restoreMonetValue(", body)
+        self.assertIn("owned.equals(current)", body,
+                      "a user's later wallpaper/preset choice must survive")
+        self.assertIn(
+            "Settings.Secure.THEME_CUSTOMIZATION_OVERLAY_PACKAGES", body)
+        self.assertIn('COLOR_SOURCE_PRESET = "preset"', body)
 
 
 class TestThemeOverlays(unittest.TestCase):
@@ -182,7 +243,7 @@ class TestThemeOverlays(unittest.TestCase):
                          "each pack must have a distinct corner radius")
 
     def test_no_network_or_remote_code_in_overlay_sources(self):
-        for name in THEMES:
+        for name in (*THEMES, *FRAMEWORK_THEMES, *QS_OVERLAYS):
             for path in (VENDOR / f"rro/{name}").rglob("*"):
                 if not path.is_file():
                     continue
@@ -192,10 +253,138 @@ class TestThemeOverlays(unittest.TestCase):
                                      f"{path}: {banned}")
 
 
+class TestFrameworkThemeOverlays(unittest.TestCase):
+    KEY_ROLES = (
+        "system_accent1_100_light",
+        "system_accent1_100_dark",
+        "system_accent1_500_light",
+        "system_accent1_500_dark",
+        "system_neutral1_500_light",
+        "system_neutral1_500_dark",
+        "system_primary_light",
+        "system_primary_dark",
+        "system_on_primary_light",
+        "system_on_primary_dark",
+        "system_surface_light",
+        "system_surface_dark",
+        "system_on_surface_light",
+        "system_on_surface_dark",
+    )
+
+    def test_overlays_are_mutable_framework_packages(self):
+        for name, package in FRAMEWORK_THEMES.items():
+            with self.subTest(overlay=name):
+                root = parse_xml(f"rro/{name}/AndroidManifest.xml")
+                self.assertEqual(root.get("package"), package)
+                node = root.find("overlay")
+                self.assertIsNotNone(node)
+                self.assertEqual(
+                    node.get(f"{ANDROID_NS}targetPackage"), "android")
+                self.assertEqual(
+                    node.get(f"{ANDROID_NS}isStatic"), "false",
+                    "framework palettes must be user-toggleable",
+                )
+                self.assertEqual(
+                    node.get(f"{ANDROID_NS}priority"), "1000",
+                    "advisory only; the Monet seed is the reliable accent path",
+                )
+                self.assertEqual(
+                    root.find("application").get(f"{ANDROID_NS}hasCode"),
+                    "false",
+                )
+
+                build = (VENDOR / f"rro/{name}/Android.bp").read_text()
+                self.assertIn("runtime_resource_overlay", build)
+                self.assertIn(f'name: "{name}"', build)
+                self.assertIn("product_specific: true", build)
+                self.assertIn('certificate: "platform"', build)
+
+    def test_palette_sets_are_complete_and_distinct(self):
+        reference = None
+        primary_tones = set()
+        for name in FRAMEWORK_THEMES:
+            with self.subTest(overlay=name):
+                root = parse_xml(f"rro/{name}/res/values/colors.xml")
+                values = {
+                    node.get("name"): (node.text or "").strip()
+                    for node in root
+                }
+                self.assertEqual(len(values), 236,
+                                 "every pack must define the same palette")
+                for role in self.KEY_ROLES:
+                    self.assertIn(role, values)
+                for role, value in values.items():
+                    self.assertRegex(
+                        value, r"^#[0-9A-F]{8}$",
+                        f"{name}: invalid color for {role}",
+                    )
+                if reference is None:
+                    reference = set(values)
+                else:
+                    self.assertEqual(set(values), reference)
+                primary_tones.add(values["system_primary_light"])
+        self.assertEqual(
+            len(primary_tones), len(FRAMEWORK_THEMES),
+            "each pack must generate a distinct primary palette",
+        )
+
+
+class TestQuickSettingsOverlays(unittest.TestCase):
+    def test_overlays_are_mutable_systemui_packages(self):
+        for name, (package, kind, value) in QS_OVERLAYS.items():
+            with self.subTest(overlay=name):
+                root = parse_xml(f"rro/{name}/AndroidManifest.xml")
+                self.assertEqual(root.get("package"), package)
+                node = root.find("overlay")
+                self.assertIsNotNone(node)
+                self.assertEqual(
+                    node.get(f"{ANDROID_NS}targetPackage"),
+                    "com.android.systemui",
+                )
+                self.assertEqual(
+                    node.get(f"{ANDROID_NS}isStatic"), "false")
+                self.assertEqual(
+                    node.get(f"{ANDROID_NS}priority"), "200")
+                self.assertEqual(
+                    root.find("application").get(f"{ANDROID_NS}hasCode"),
+                    "false",
+                )
+
+                build = (VENDOR / f"rro/{name}/Android.bp").read_text()
+                self.assertIn("runtime_resource_overlay", build)
+                self.assertIn(f'name: "{name}"', build)
+                self.assertIn("product_specific: true", build)
+                self.assertIn('certificate: "platform"', build)
+
+    def test_overlays_override_the_expected_grid_resources(self):
+        for name, (_, kind, value) in QS_OVERLAYS.items():
+            with self.subTest(overlay=name):
+                root = parse_xml(f"rro/{name}/res/values/config.xml")
+                values = {
+                    node.get("name"): int((node.text or "").strip())
+                    for node in root
+                }
+                if kind == "columns":
+                    self.assertEqual(
+                        values,
+                        {
+                            "quick_settings_infinite_grid_num_columns": value,
+                            "quick_settings_dual_shade_num_columns": value,
+                            "quick_settings_split_shade_num_columns": value,
+                        },
+                    )
+                else:
+                    self.assertEqual(
+                        values,
+                        {"quick_settings_paginated_grid_num_rows": value},
+                    )
+
+
 class TestProductWiring(unittest.TestCase):
     def test_personalization_is_shipped(self):
         body = (VENDOR / "config/lenos.mk").read_text()
-        for needle in ("LenosParts", *THEMES):
+        for needle in ("LenosParts", *THEMES, *FRAMEWORK_THEMES,
+                       *QS_OVERLAYS):
             self.assertIn(needle, body)
 
     def test_privapp_allowlist_is_scoped_to_the_app(self):

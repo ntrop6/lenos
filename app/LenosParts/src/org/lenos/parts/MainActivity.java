@@ -7,6 +7,7 @@ package org.lenos.parts;
 import android.app.Activity;
 import android.content.ActivityNotFoundException;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.om.OverlayInfo;
 import android.content.om.OverlayManager;
 import android.graphics.Color;
@@ -28,6 +29,11 @@ import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import org.json.JSONObject;
+
+import java.util.HashSet;
+import java.util.Set;
+
 /**
  * lenOS personalization shell.
  *
@@ -46,6 +52,11 @@ public class MainActivity extends Activity {
             "org.lenos.theme.mint.systemui",
             "org.lenos.theme.mono.systemui",
     };
+    private static final String[] FRAMEWORK_PACKAGES = {
+            "org.lenos.theme.ember.frameworks",
+            "org.lenos.theme.mint.frameworks",
+            "org.lenos.theme.mono.frameworks",
+    };
     private static final String[] THEME_NAMES = {
             "Ember",
             "Mint",
@@ -56,6 +67,38 @@ public class MainActivity extends Activity {
             "Cool green accents and compact corners.",
             "Neutral graphite with sharper corners.",
     };
+
+    // Monet reads these keys from Settings.Secure and builds its own fabricated
+    // framework overlays from the seed. Seeding a theme is therefore more
+    // reliable than relying on manifest priority alone, which is advisory for
+    // unconfigured overlays on Android 17.
+    private static final String THEME_OVERLAY_SETTING =
+            Settings.Secure.THEME_CUSTOMIZATION_OVERLAY_PACKAGES;
+    private static final String CATEGORY_SYSTEM_PALETTE =
+            "android.theme.customization.system_palette";
+    private static final String CATEGORY_THEME_STYLE =
+            "android.theme.customization.theme_style";
+    private static final String CATEGORY_COLOR_SOURCE =
+            "android.theme.customization.color_source";
+    private static final String COLOR_SOURCE_PRESET = "preset";
+    private static final String[] THEME_SEEDS = {
+            "C96A1E",
+            "2FA37C",
+            "6B6F76",
+    };
+    private static final String[] THEME_STYLES = {
+            "VIBRANT",
+            "TONAL_SPOT",
+            "MONOCHROMATIC",
+    };
+    private static final String PREFS = "lenos_parts";
+    private static final String PREF_OWNED_PALETTE = "monet_owned_palette";
+    private static final String PREF_OWNED_STYLE = "monet_owned_style";
+    private static final String PREF_OWNED_SOURCE = "monet_owned_source";
+    private static final String PREF_BACKUP_PALETTE = "monet_backup_palette";
+    private static final String PREF_BACKUP_STYLE = "monet_backup_style";
+    private static final String PREF_BACKUP_SOURCE = "monet_backup_source";
+    private static final String PREF_BACKUP_PRESENT = "monet_backup_present";
 
     private static final String[] MOTION_LABELS = {
             "System default (1.0x)",
@@ -68,6 +111,27 @@ public class MainActivity extends Activity {
             1.0f, 1.25f, 0.75f, 0.5f, 0.0f,
     };
 
+    private static final String[] QS_COLUMNS_LABELS = {
+            "4 columns (default)",
+            "3 columns",
+            "5 columns",
+    };
+    private static final String[] QS_COLUMNS_PACKAGES = {
+            null,
+            "org.lenos.qs.columns3",
+            "org.lenos.qs.columns5",
+    };
+    private static final String[] QS_ROWS_LABELS = {
+            "4 rows (default)",
+            "3 rows",
+            "5 rows",
+    };
+    private static final String[] QS_ROWS_PACKAGES = {
+            null,
+            "org.lenos.qs.rows3",
+            "org.lenos.qs.rows5",
+    };
+
     private static final int BG = Color.parseColor("#111318");
     private static final int CARD = Color.parseColor("#1C1F26");
     private static final int TEXT = Color.parseColor("#E8EAED");
@@ -77,8 +141,11 @@ public class MainActivity extends Activity {
 
     private RadioGroup themeGroup;
     private Spinner motionSpinner;
+    private Spinner qsColumnsSpinner;
+    private Spinner qsRowsSpinner;
     private boolean suppressTheme;
     private boolean suppressMotion;
+    private boolean suppressQs;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -91,6 +158,7 @@ public class MainActivity extends Activity {
         super.onResume();
         refreshThemeSelection();
         refreshMotionSelection();
+        refreshQsSelection();
     }
 
     private void buildUi() {
@@ -110,9 +178,10 @@ public class MainActivity extends Activity {
 
         root.addView(section("Theme packs"));
         root.addView(text(
-                "These packs change SystemUI colors, notification corners and Quick "
-                        + "Settings spacing. Android's wallpaper-based accent may take "
-                        + "precedence when dynamic color is enabled.",
+                "These packs change system accent colors, SystemUI notification "
+                        + "and Quick Settings colors, notification corners and "
+                        + "Quick Settings spacing. The selected pack overrides the "
+                        + "wallpaper-generated accent while it is enabled.",
                 12, MUTED, false));
 
         themeGroup = new RadioGroup(this);
@@ -143,6 +212,9 @@ public class MainActivity extends Activity {
         ArrayAdapter<String> adapter = new ArrayAdapter<>(this,
                 android.R.layout.simple_spinner_dropdown_item, MOTION_LABELS);
         motionSpinner.setAdapter(adapter);
+        // Match the existing scale before attaching the listener; otherwise the
+        // first layout pass could overwrite the user's current choice.
+        motionSpinner.setSelection(currentMotionIndex());
         motionSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view,
@@ -161,6 +233,24 @@ public class MainActivity extends Activity {
         motionCard.setOrientation(LinearLayout.VERTICAL);
         motionCard.addView(motionSpinner);
         root.addView(card(motionCard));
+
+        root.addView(section("Quick Settings layout"));
+        root.addView(text(
+                "Changes the number of tiles per row and the rows in the expanded "
+                        + "paginated grid. The stock layout is four columns and four "
+                        + "rows; SystemUI may restart or need a reboot to pick up the "
+                        + "new grid. A dual-shade infinite grid scrolls instead and "
+                        + "ignores the row choice.",
+                12, MUTED, false));
+        LinearLayout qsCard = new LinearLayout(this);
+        qsCard.setOrientation(LinearLayout.VERTICAL);
+        suppressQs = true;
+        qsColumnsSpinner = qsSpinner(QS_COLUMNS_LABELS, true);
+        qsRowsSpinner = qsSpinner(QS_ROWS_LABELS, false);
+        qsCard.addView(qsColumnsSpinner);
+        qsCard.addView(qsRowsSpinner);
+        root.addView(card(qsCard));
+        suppressQs = false;
 
         root.addView(section("Status bar and Quick Settings"));
         root.addView(text(
@@ -248,22 +338,40 @@ public class MainActivity extends Activity {
             if (manager == null) {
                 throw new IllegalStateException("OverlayManager unavailable");
             }
-            java.util.HashSet<String> installed = new java.util.HashSet<>();
-            for (OverlayInfo info : manager.getOverlayInfosForTarget(
-                    SYSTEMUI_PACKAGE, Process.myUserHandle())) {
-                installed.add(info.getPackageName());
+            int selectedIndex = themeIndex(selected);
+            Set<String> systemUiInstalled = installedPackages(manager, SYSTEMUI_PACKAGE);
+            Set<String> frameworkInstalled = installedPackages(manager, "android");
+            for (int i = 0; i < THEME_PACKAGES.length; i++) {
+                boolean enable = i == selectedIndex;
+                if (systemUiInstalled.contains(THEME_PACKAGES[i])) {
+                    manager.setEnabled(THEME_PACKAGES[i], enable,
+                            Process.myUserHandle());
+                }
             }
-            for (String pkg : THEME_PACKAGES) {
-                if (!installed.contains(pkg)) {
+            boolean frameworkFailure = false;
+            for (int i = 0; i < FRAMEWORK_PACKAGES.length; i++) {
+                if (!frameworkInstalled.contains(FRAMEWORK_PACKAGES[i])) {
+                    frameworkFailure |= i == selectedIndex;
                     continue;
                 }
-                manager.setEnabled(pkg, pkg.equals(selected),
-                        Process.myUserHandle());
+                try {
+                    manager.setEnabled(FRAMEWORK_PACKAGES[i], i == selectedIndex,
+                            Process.myUserHandle());
+                } catch (Throwable t) {
+                    frameworkFailure = true;
+                }
             }
-            Toast.makeText(this,
-                    selected == null ? "Stock appearance restored"
-                            : "Theme pack applied",
-                    Toast.LENGTH_SHORT).show();
+            boolean seedApplied = applyMonetSeed(selectedIndex);
+            if (frameworkFailure && !seedApplied) {
+                Toast.makeText(this,
+                        "SystemUI theme applied; the system accent could not be changed",
+                        Toast.LENGTH_LONG).show();
+            } else {
+                Toast.makeText(this,
+                        selected == null ? "Stock appearance restored"
+                                : "Theme pack applied",
+                        Toast.LENGTH_SHORT).show();
+            }
             refreshThemeSelection();
         } catch (Throwable t) {
             Toast.makeText(this, "Could not apply theme: " + t.getMessage(),
@@ -271,23 +379,178 @@ public class MainActivity extends Activity {
         }
     }
 
-    private void refreshMotionSelection() {
-        float current = Settings.Global.getFloat(getContentResolver(),
-                Settings.Global.ANIMATOR_DURATION_SCALE, 1.0f);
-        int index = 0;
-        for (int i = 0; i < MOTION_VALUES.length; i++) {
-            if (Math.abs(MOTION_VALUES[i] - current) < 0.01f) {
-                index = i;
-                break;
+    /**
+     * Seeds Monet with the pack's accent and style through the secure theme
+     * setting. This is the reliable path on Android 17: the controller builds
+     * fabricated overlays after boot, so an unconfigured preinstalled RRO
+     * cannot outrank them through manifest priority alone.
+     *
+     * @return true when the setting was written (or when stock needed no
+     *         restore), false when the setting could not be changed.
+     */
+    private boolean applyMonetSeed(int selectedIndex) {
+        try {
+            if (selectedIndex < 0) {
+                return restoreMonetSeed();
+            }
+            SharedPreferences prefs = prefs();
+            String current = Settings.Secure.getString(getContentResolver(),
+                    THEME_OVERLAY_SETTING);
+            JSONObject object = current == null || current.isEmpty()
+                    ? new JSONObject() : new JSONObject(current);
+            backupMonetValue(object, CATEGORY_SYSTEM_PALETTE,
+                    PREF_OWNED_PALETTE, PREF_BACKUP_PALETTE);
+            backupMonetValue(object, CATEGORY_THEME_STYLE,
+                    PREF_OWNED_STYLE, PREF_BACKUP_STYLE);
+            backupMonetValue(object, CATEGORY_COLOR_SOURCE,
+                    PREF_OWNED_SOURCE, PREF_BACKUP_SOURCE);
+            object.put(CATEGORY_SYSTEM_PALETTE, THEME_SEEDS[selectedIndex]);
+            object.put(CATEGORY_THEME_STYLE, THEME_STYLES[selectedIndex]);
+            object.put(CATEGORY_COLOR_SOURCE, COLOR_SOURCE_PRESET);
+            Settings.Secure.putString(getContentResolver(),
+                    THEME_OVERLAY_SETTING, object.toString());
+            prefs.edit()
+                    .putString(PREF_OWNED_PALETTE, THEME_SEEDS[selectedIndex])
+                    .putString(PREF_OWNED_STYLE, THEME_STYLES[selectedIndex])
+                    .putString(PREF_OWNED_SOURCE, COLOR_SOURCE_PRESET)
+                    .putBoolean(PREF_BACKUP_PRESENT, true)
+                    .apply();
+            return true;
+        } catch (Throwable t) {
+            return false;
+        }
+    }
+
+    /**
+     * Restores whatever values Monet had before the first pack was applied.
+     * A key is only restored while it still holds the value this app wrote, so
+     * a later wallpaper/preset choice is never overwritten.
+     */
+    private boolean restoreMonetSeed() {
+        try {
+            SharedPreferences prefs = prefs();
+            if (!prefs.getBoolean(PREF_BACKUP_PRESENT, false)) {
+                return true;
+            }
+            String current = Settings.Secure.getString(getContentResolver(),
+                    THEME_OVERLAY_SETTING);
+            JSONObject object = current == null || current.isEmpty()
+                    ? new JSONObject() : new JSONObject(current);
+            restoreMonetValue(object, CATEGORY_SYSTEM_PALETTE,
+                    PREF_OWNED_PALETTE, PREF_BACKUP_PALETTE);
+            restoreMonetValue(object, CATEGORY_THEME_STYLE,
+                    PREF_OWNED_STYLE, PREF_BACKUP_STYLE);
+            restoreMonetValue(object, CATEGORY_COLOR_SOURCE,
+                    PREF_OWNED_SOURCE, PREF_BACKUP_SOURCE);
+            Settings.Secure.putString(getContentResolver(),
+                    THEME_OVERLAY_SETTING, object.toString());
+            prefs.edit()
+                    .remove(PREF_OWNED_PALETTE)
+                    .remove(PREF_OWNED_STYLE)
+                    .remove(PREF_OWNED_SOURCE)
+                    .remove(PREF_BACKUP_PALETTE)
+                    .remove(PREF_BACKUP_STYLE)
+                    .remove(PREF_BACKUP_SOURCE)
+                    .remove(PREF_BACKUP_PRESENT)
+                    .apply();
+            return true;
+        } catch (Throwable t) {
+            return false;
+        }
+    }
+
+    private void backupMonetValue(JSONObject object, String category,
+            String ownedKey, String backupKey) {
+        SharedPreferences prefs = prefs();
+        String current = object.has(category)
+                ? object.optString(category, null) : null;
+        String owned = prefs.getString(ownedKey, null);
+        if (owned != null && owned.equals(current)) {
+            // This is still the value we wrote; keep the original backup.
+            return;
+        }
+        SharedPreferences.Editor editor = prefs.edit();
+        if (current == null) {
+            editor.remove(backupKey);
+        } else {
+            editor.putString(backupKey, current);
+        }
+        editor.apply();
+    }
+
+    private void restoreMonetValue(JSONObject object, String category,
+            String ownedKey, String backupKey) {
+        SharedPreferences prefs = prefs();
+        String current = object.has(category)
+                ? object.optString(category, null) : null;
+        String owned = prefs.getString(ownedKey, null);
+        if (owned == null || !owned.equals(current)) {
+            // The user or the system changed this value after we wrote it.
+            return;
+        }
+        String backup = prefs.getString(backupKey, null);
+        try {
+            if (backup == null) {
+                object.remove(category);
+            } else {
+                object.put(category, backup);
+            }
+        } catch (Throwable ignored) {
+            // A malformed key must not abort restoring the remaining keys.
+        }
+    }
+
+    private SharedPreferences prefs() {
+        return getSharedPreferences(PREFS, MODE_PRIVATE);
+    }
+
+    private static int themeIndex(String pkg) {
+        if (pkg == null) {
+            return -1;
+        }
+        for (int i = 0; i < THEME_PACKAGES.length; i++) {
+            if (THEME_PACKAGES[i].equals(pkg)) {
+                return i;
             }
         }
+        return -1;
+    }
+
+    private static Set<String> installedPackages(OverlayManager manager,
+            String targetPackage) {
+        Set<String> installed = new HashSet<>();
+        for (OverlayInfo info : manager.getOverlayInfosForTarget(
+                targetPackage, Process.myUserHandle())) {
+            installed.add(info.getPackageName());
+        }
+        return installed;
+    }
+
+    private void refreshMotionSelection() {
         suppressMotion = true;
-        motionSpinner.setSelection(index);
+        motionSpinner.setSelection(currentMotionIndex());
         suppressMotion = false;
+    }
+
+    private int currentMotionIndex() {
+        float current = Settings.Global.getFloat(getContentResolver(),
+                Settings.Global.ANIMATOR_DURATION_SCALE, 1.0f);
+        for (int i = 0; i < MOTION_VALUES.length; i++) {
+            if (Math.abs(MOTION_VALUES[i] - current) < 0.01f) {
+                return i;
+            }
+        }
+        return 0;
     }
 
     private void applyMotion(float scale) {
         try {
+            float current = Settings.Global.getFloat(getContentResolver(),
+                    Settings.Global.ANIMATOR_DURATION_SCALE, 1.0f);
+            if (Math.abs(current - scale) < 0.01f) {
+                // Already at this preset; do not rewrite the setting or toast.
+                return;
+            }
             Settings.Global.putFloat(getContentResolver(),
                     Settings.Global.ANIMATOR_DURATION_SCALE, scale);
             Settings.Global.putFloat(getContentResolver(),
@@ -299,6 +562,95 @@ public class MainActivity extends Activity {
         } catch (Throwable t) {
             Toast.makeText(this,
                     "Could not change animation scale: " + t.getMessage(),
+                    Toast.LENGTH_LONG).show();
+        }
+    }
+
+    private Spinner qsSpinner(String[] labels, boolean columns) {
+        Spinner spinner = new Spinner(this);
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(this,
+                android.R.layout.simple_spinner_dropdown_item, labels);
+        spinner.setAdapter(adapter);
+        // Pick the current state before attaching the listener so the first
+        // layout pass cannot mistake the default position for a user choice.
+        spinner.setSelection(enabledOption(
+                columns ? QS_COLUMNS_PACKAGES : QS_ROWS_PACKAGES, 0));
+        spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view,
+                    int position, long id) {
+                if (suppressQs) {
+                    return;
+                }
+                applyQsLayout(columns, position);
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+            }
+        });
+        return spinner;
+    }
+
+    private void refreshQsSelection() {
+        suppressQs = true;
+        qsColumnsSpinner.setSelection(
+                enabledOption(QS_COLUMNS_PACKAGES, 0));
+        qsRowsSpinner.setSelection(enabledOption(QS_ROWS_PACKAGES, 0));
+        suppressQs = false;
+    }
+
+    private int enabledOption(String[] packages, int defaultIndex) {
+        try {
+            OverlayManager manager = getSystemService(OverlayManager.class);
+            if (manager == null) {
+                return defaultIndex;
+            }
+            Set<String> enabled = new HashSet<>();
+            for (OverlayInfo info : manager.getOverlayInfosForTarget(
+                    SYSTEMUI_PACKAGE, Process.myUserHandle())) {
+                if (info.isEnabled()) {
+                    enabled.add(info.getPackageName());
+                }
+            }
+            for (int i = 0; i < packages.length; i++) {
+                if (packages[i] != null && enabled.contains(packages[i])) {
+                    return i;
+                }
+            }
+        } catch (Throwable ignored) {
+            // Keep the default visible if the overlay service is unavailable.
+        }
+        return defaultIndex;
+    }
+
+    private void applyQsLayout(boolean columns, int selectedIndex) {
+        try {
+            OverlayManager manager = getSystemService(OverlayManager.class);
+            if (manager == null) {
+                throw new IllegalStateException("OverlayManager unavailable");
+            }
+            String[] packages = columns ? QS_COLUMNS_PACKAGES : QS_ROWS_PACKAGES;
+            if (selectedIndex == enabledOption(packages, 0)) {
+                // The first layout pass can report the already-current
+                // selection; it must not toggle an overlay.
+                return;
+            }
+            Set<String> installed = installedPackages(manager, SYSTEMUI_PACKAGE);
+            for (int i = 0; i < packages.length; i++) {
+                if (packages[i] == null || !installed.contains(packages[i])) {
+                    continue;
+                }
+                manager.setEnabled(packages[i], i == selectedIndex,
+                        Process.myUserHandle());
+            }
+            Toast.makeText(this,
+                    "Quick Settings layout updated",
+                    Toast.LENGTH_SHORT).show();
+            refreshQsSelection();
+        } catch (Throwable t) {
+            Toast.makeText(this,
+                    "Could not change the Quick Settings layout: " + t.getMessage(),
                     Toast.LENGTH_LONG).show();
         }
     }

@@ -5,7 +5,8 @@
 
      Local-only customization app. It deliberately requests no network,
      location, account or telemetry permission. OverlayManager needs
-     CHANGE_OVERLAY_PACKAGES; the animation presets write Settings.Global.
+     CHANGE_OVERLAY_PACKAGES; motion presets write Settings.Global and theme
+     seeding writes the secure theme setting.
 -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="org.lenos.parts"

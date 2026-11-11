@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- SPDX-FileCopyrightText: 2026 lenOS -->
+<!-- SPDX-License-Identifier: Apache-2.0 -->
+<resources>
+    <integer name="quick_settings_infinite_grid_num_columns">5</integer>
+    <integer name="quick_settings_dual_shade_num_columns">5</integer>
+    <integer name="quick_settings_split_shade_num_columns">5</integer>
+</resources>

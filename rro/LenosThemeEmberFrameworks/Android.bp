@@ -1,0 +1,13 @@
+//
+// SPDX-FileCopyrightText: 2026 lenOS
+// SPDX-License-Identifier: Apache-2.0
+//
+// Mutable framework-res overlay for the Ember local theme pack. It is
+// preinstalled on the product partition, signed with the platform certificate
+// and enabled only by LenosParts. No code, no network.
+//
+runtime_resource_overlay {
+    name: "LenosThemeEmberFrameworks",
+    product_specific: true,
+    certificate: "platform",
+}

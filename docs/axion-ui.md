@@ -30,13 +30,39 @@ The practical route is therefore:
 |---|---|---|
 | `LenosParts` | `app/LenosParts` | Local dashboard: theme-pack selection, motion presets, link to the stock LineageOS status-bar panel |
 | Ember / Mint / Mono | `rro/LenosTheme*SystemUI` | Mutable SystemUI resource overlays: notification/scrim colors, notification corner radii, QS corner radius and tile spacing |
+| Ember / Mint / Mono | `rro/LenosTheme*Frameworks` | Mutable framework-res palettes: full Material 3 tonal palettes and dynamic color roles for light and dark themes |
+| Quick Settings layout | `rro/LenosQs*` | Mutable SystemUI overlays for 3/5 columns and 3/5 expanded rows; the stock 4/4 layout needs no overlay |
 | Privapp allowlist | `config/privapp-permissions-org.lenos.parts.xml` | Only `CHANGE_OVERLAY_PACKAGES` and `WRITE_SECURE_SETTINGS` |
-| Product wiring | `config/lenos.mk` | Installs the app and the three overlays on the product partition |
+| Product wiring | `config/lenos.mk` | Installs the app and the ten overlays on the product partition |
 
 The theme packs are **preinstalled and disabled by default**. Selecting one
-enables exactly one SystemUI overlay through `OverlayManager`; selecting
-"Stock" disables all three. Nothing is downloaded, and the app has no network
+enables exactly one SystemUI overlay and one framework palette through
+`OverlayManager`; selecting "Stock" disables all six. The Quick Settings layout
+overlays are independent of the theme: selecting the stock layout disables the
+non-default grid overlays. Nothing is downloaded, and the app has no network
 permission.
+
+Selecting a pack also seeds Monet through
+`Settings.Secure.THEME_CUSTOMIZATION_OVERLAY_PACKAGES`:
+`android.theme.customization.system_palette` gets the pack's seed color,
+`android.theme.customization.theme_style` gets its style, and
+`android.theme.customization.color_source` is set to `preset` so a wallpaper
+change does not clear the choice. This is the reliable accent path on Android
+17: `ThemeOverlayController` builds its fabricated overlays at runtime, and
+manifest priority is advisory for unconfigured overlays. The framework palettes
+therefore act as a fallback when dynamic color is disabled. The original secure
+values are backed up in the app's private preferences and restored when the user
+selects "Stock"; a value is only restored if it still holds what this app wrote,
+so a later wallpaper/preset choice is never overwritten.
+
+The palette XML is static output from Material Color Utilities; there is no
+runtime dependency on that library. If a pack ever misbehaves on a device, it
+can be disabled without the app:
+
+```bash
+adb shell cmd overlay disable org.lenos.theme.ember.frameworks
+adb shell cmd overlay disable org.lenos.theme.ember.systemui
+```
 
 Motion presets write the standard Android `Settings.Global` animation scales
 (`animator_duration_scale`, `transition_animation_scale`,
@@ -65,20 +91,20 @@ no GMS/Theme Store/Play Integrity references.
 
 | Area | Current state | Next step |
 |---|---|---|
-| Theme tokens | SystemUI colors/dimens via three local packs | Add framework accent overlays and a local pack manifest; keep dynamic-color precedence explicit |
+| Theme tokens | Full Material 3 palettes plus SystemUI colors/dimens via three local packs | Add a local pack manifest and user-defined seed; keep dynamic-color precedence explicit |
 | Status bar | Link to LineageOS's existing clock/battery/network/brightness panel | Add Axion-style icon controls only where LineageOS has no equivalent |
-| Quick Settings | Theme pack controls tile shape/spacing | Add columns/rows and tile-shape controls without duplicating LineageOS settings |
+| Quick Settings | 3/5 columns and 3/5 expanded rows via local overlays (rows apply to the paginated grid; the dual-shade infinite grid scrolls); theme pack controls tile shape/spacing | Split tile shape from the theme pack and add a compact/collapsed-rows control |
 | Notifications | Theme pack controls corners/colors | Add optional background/blur styling; blur stays device-dependent and off by default |
 | Motion | Three scales plus off | Add per-surface animation presets only after A17 SystemUI hooks are reviewed |
 | Lock screen | Not yet | Start with clock styles and local media-art styling; Lockscreen Studio is a later project |
 | Launcher / Recents | Not yet | Port small Launcher3 preferences first; Recents is a separate risk |
 | Dynamic Bar | Not yet | Local-only subset (media, timer, alarm, charging, torch); exclude sports/online feeds |
 
-The first vertical slice intentionally avoids framework code: it proves the
-overlay/application architecture and gives the user visible controls without
-touching the security patches or SystemUI Java. Later slices add SystemUI and
-framework hooks behind `LENOS_UI=1`/a dedicated patch series, with the same
-tests and no network surface.
+This slice still avoids framework Java and the security patches: it proves the
+overlay/application architecture and gives the user visible controls using only
+preinstalled resource overlays. Later slices add SystemUI and framework hooks
+behind `LENOS_UI=1`/a dedicated patch series, with the same tests and no network
+surface.
 
 ## Validation checklist
 
@@ -93,15 +119,24 @@ LENOS_WORKSPACE=/path/to/lineage bash tests/run-tests.sh
 When a build/device is available:
 
 1. Build `lenos_asteroids-user` with the stable series.
-2. Confirm `LenosParts` and the three overlays are installed:
-   `adb shell pm list packages | grep -E 'lenos.parts|lenos.theme'`.
+2. Confirm `LenosParts` and the ten overlays are installed:
+   `adb shell pm list packages | grep -E 'lenos.parts|lenos.theme|lenos.qs'`.
 3. Open lenOS personalization and apply each pack; confirm the overlay list
-   changes with `adb shell cmd overlay list --user 0 | grep lenos.theme`.
-4. Confirm notification/QS corner and color changes, then select Stock and
-   confirm the resources return to the LineageOS defaults.
-5. Change each motion preset and verify the three `Settings.Global` values.
-6. Confirm the app has no network access and no `INTERNET` permission:
+   changes with `adb shell cmd overlay list --user 0 | grep -E 'lenos.theme|lenos.qs'`.
+   The SystemUI pack and the framework palette for the selected theme must both
+   be enabled.
+4. Confirm notification/QS corner and color changes plus the global accent
+   change (Settings, Dialer, Files), then select Stock and confirm the resources
+   return to the LineageOS defaults. The seeded values are visible with
+   `adb shell settings get secure theme_customization_overlay_packages`.
+5. Select 3, 5, and the default Quick Settings columns/rows; confirm the grid
+   changes and that only one overlay per dimension is enabled.
+6. Change each motion preset and verify the three `Settings.Global` values.
+7. Confirm the app has no network access and no `INTERNET` permission:
    `adb shell dumpsys package org.lenos.parts | grep -i internet` should be empty.
+8. If SystemUI becomes unusable after a pack change, disable the framework
+   overlay and the SystemUI overlay with `cmd overlay disable` from `adb` (see
+   above) and reboot.
 
 ## Attribution
 

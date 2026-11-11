@@ -5,7 +5,7 @@
 
      LenosParts is platform-signed and privileged. The allowlist documents the
      only two privileged permissions it needs: overlay toggling and the
-     animation-scale settings.
+     animation-scale plus secure theme settings.
 -->
 <permissions>
     <privapp-permissions package="org.lenos.parts">
