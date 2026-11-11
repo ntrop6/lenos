@@ -1,0 +1,12 @@
+//
+// SPDX-FileCopyrightText: 2026 lenOS
+// SPDX-License-Identifier: Apache-2.0
+//
+// Mutable SystemUI overlay for the clock text-size choice.
+// Installed on the product partition and toggled by LenosParts.
+//
+runtime_resource_overlay {
+    name: "LenosClockLarge",
+    product_specific: true,
+    certificate: "platform",
+}

@@ -9,6 +9,9 @@ Feature contract (see docs/axion-ui.md):
   pack (or none) through OverlayManager.
 * Notification corner radius and grouped-notification dividers are separate
   mutable SystemUI overlays, independent of the theme packs.
+* The status bar clock size is a separate mutable SystemUI overlay choice.
+  Clock position, seconds, AM/PM, battery and network controls stay in the
+  stock LineageOS panel; the lock-screen dynamic clock stays in stock Settings.
 * Motion controls write only the standard Android animation-scale settings,
   one surface at a time, plus an explicit reset.
 * The launcher section uses Launcher3's exported grid-control provider through
@@ -57,6 +60,12 @@ NOTIFY_CORNER_OVERLAYS = {
 }
 NOTIFY_DIVIDERS_OVERLAY = "LenosNotifyDividersHidden"
 NOTIFY_DIVIDERS_PACKAGE = "org.lenos.notify.dividers.hidden"
+
+CLOCK_OVERLAYS = {
+    "LenosClockCompact": ("org.lenos.clock.compact", "12sp"),
+    "LenosClockLarge": ("org.lenos.clock.large", "16sp"),
+    "LenosClockXLarge": ("org.lenos.clock.xlarge", "18sp"),
+}
 
 BANNED_JAVA = (
     "java.net.",
@@ -156,9 +165,17 @@ class TestLenosPartsApp(unittest.TestCase):
             "org.lenos.notify.corners.compact",
             "org.lenos.notify.corners.square",
             "org.lenos.notify.dividers.hidden",
+            "org.lenos.clock.compact",
+            "org.lenos.clock.large",
+            "org.lenos.clock.xlarge",
             "applyQsLayout(",
             "applyNotifyCorners(",
             "applyNotifyDividers(",
+            "applyClockSize(",
+            "refreshClockSize(",
+            "openLockScreenSettings(",
+            "Settings.ACTION_LOCKSCREEN_SETTINGS",
+            "Settings.ACTION_SECURITY_SETTINGS",
             "applyLauncherGrid(",
             "applyLauncherShape(",
             "applyLauncherThemedIcons(",
@@ -279,7 +296,8 @@ class TestThemeOverlays(unittest.TestCase):
 
     def test_no_network_or_remote_code_in_overlay_sources(self):
         for name in (*THEMES, *FRAMEWORK_THEMES, *QS_OVERLAYS,
-                     *NOTIFY_CORNER_OVERLAYS, NOTIFY_DIVIDERS_OVERLAY):
+                     *NOTIFY_CORNER_OVERLAYS, NOTIFY_DIVIDERS_OVERLAY,
+                     *CLOCK_OVERLAYS):
             for path in (VENDOR / f"rro/{name}").rglob("*"):
                 if not path.is_file():
                     continue
@@ -518,6 +536,99 @@ class TestNotificationControls(unittest.TestCase):
         self.assertNotIn("notification_corner_radius_small", body)
 
 
+class TestClockOverlays(unittest.TestCase):
+    def test_overlays_are_mutable_systemui_packages(self):
+        for name, (package, size) in CLOCK_OVERLAYS.items():
+            with self.subTest(overlay=name):
+                root = parse_xml(f"rro/{name}/AndroidManifest.xml")
+                self.assertEqual(root.get("package"), package)
+                node = root.find("overlay")
+                self.assertIsNotNone(node)
+                self.assertEqual(
+                    node.get(f"{ANDROID_NS}targetPackage"),
+                    "com.android.systemui",
+                )
+                self.assertEqual(
+                    node.get(f"{ANDROID_NS}isStatic"), "false")
+                self.assertEqual(
+                    node.get(f"{ANDROID_NS}priority"), "200")
+                self.assertEqual(
+                    root.find("application").get(f"{ANDROID_NS}hasCode"),
+                    "false",
+                )
+
+                build = (VENDOR / f"rro/{name}/Android.bp").read_text()
+                self.assertIn("runtime_resource_overlay", build)
+                self.assertIn(f'name: "{name}"', build)
+                self.assertIn("product_specific: true", build)
+                self.assertIn('certificate: "platform"', build)
+
+                values = {
+                    child.get("name"): (child.text or "").strip()
+                    for child in parse_xml(
+                        f"rro/{name}/res/values/dimens.xml")
+                }
+                self.assertEqual(
+                    values, {"status_bar_clock_size": size})
+
+    def test_overlays_are_distinct(self):
+        sizes = {values[1] for values in CLOCK_OVERLAYS.values()}
+        self.assertEqual(len(sizes), len(CLOCK_OVERLAYS),
+                         "each clock-size overlay must have a distinct size")
+
+    def test_theme_packs_do_not_set_the_clock_size(self):
+        for name in THEMES:
+            with self.subTest(overlay=name):
+                root = parse_xml(f"rro/{name}/res/values/theme.xml")
+                names = {node.get("name") for node in root}
+                self.assertNotIn(
+                    "status_bar_clock_size", names,
+                    "clock size belongs to the dedicated overlays",
+                )
+
+
+class TestStatusBarControls(unittest.TestCase):
+    SOURCE = VENDOR / "app/LenosParts/src/org/lenos/parts/MainActivity.java"
+
+    def test_clock_size_is_a_separate_overlay_choice(self):
+        body = self.SOURCE.read_text()
+        for needle in (
+            "CLOCK_SIZE_LABELS",
+            "CLOCK_SIZE_PACKAGES",
+            "System default (14 sp)",
+            "org.lenos.clock.compact",
+            "org.lenos.clock.large",
+            "org.lenos.clock.xlarge",
+            "applyClockSize(",
+            "refreshClockSize(",
+            "suppressClock",
+        ):
+            self.assertIn(needle, body)
+
+    def test_stock_clock_and_battery_settings_are_not_duplicated(self):
+        body = self.SOURCE.read_text()
+        for key in (
+            "clock_seconds",
+            "lockscreen_use_double_line_clock",
+            "status_bar_show_battery_percent",
+            "status_bar_am_pm",
+        ):
+            self.assertNotIn(
+                key, body,
+                "the stock panel remains the only writer for this setting",
+            )
+        self.assertNotIn("LineageSettings", body)
+
+    def test_lock_screen_shortcut_uses_the_stock_intent(self):
+        body = self.SOURCE.read_text()
+        for needle in (
+            "Settings.ACTION_LOCKSCREEN_SETTINGS",
+            "Settings.ACTION_SECURITY_SETTINGS",
+            "openLockScreenSettings(",
+        ):
+            self.assertIn(needle, body)
+
+
 class TestMotionControls(unittest.TestCase):
     SOURCE = VENDOR / "app/LenosParts/src/org/lenos/parts/MainActivity.java"
 
@@ -634,7 +745,7 @@ class TestProductWiring(unittest.TestCase):
         body = (VENDOR / "config/lenos.mk").read_text()
         for needle in ("LenosParts", *THEMES, *FRAMEWORK_THEMES,
                        *QS_OVERLAYS, *NOTIFY_CORNER_OVERLAYS,
-                       NOTIFY_DIVIDERS_OVERLAY):
+                       NOTIFY_DIVIDERS_OVERLAY, *CLOCK_OVERLAYS):
             self.assertIn(needle, body)
 
     def test_privapp_allowlist_is_scoped_to_the_app(self):

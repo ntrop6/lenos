@@ -157,6 +157,22 @@ public class MainActivity extends Activity {
     private static final String NOTIFY_DIVIDERS_PACKAGE =
             "org.lenos.notify.dividers.hidden";
 
+    // The stock LineageOS panel owns clock position, seconds, AM/PM and
+    // battery style, so lenOS only adds the text size that stock does not
+    // expose. These overlays are the only writers of this resource.
+    private static final String[] CLOCK_SIZE_LABELS = {
+            "System default (14 sp)",
+            "Compact (12 sp)",
+            "Large (16 sp)",
+            "Extra large (18 sp)",
+    };
+    private static final String[] CLOCK_SIZE_PACKAGES = {
+            null,
+            "org.lenos.clock.compact",
+            "org.lenos.clock.large",
+            "org.lenos.clock.xlarge",
+    };
+
     // LineageOS 24.0 ships the Launcher3 fork as com.android.launcher3. Its
     // exported grid-control provider is guarded by the signature-level
     // GRID_CONTROL permission, not BIND_WALLPAPER. LenosParts is platform
@@ -186,6 +202,7 @@ public class MainActivity extends Activity {
     private Spinner qsRowsSpinner;
     private Spinner notifyCornersSpinner;
     private CheckBox notifyDividersCheck;
+    private Spinner clockSizeSpinner;
     private Spinner launcherGridSpinner;
     private TextView launcherGridNote;
     private Spinner launcherShapeSpinner;
@@ -202,6 +219,7 @@ public class MainActivity extends Activity {
     private boolean suppressMotion;
     private boolean suppressQs;
     private boolean suppressNotify;
+    private boolean suppressClock;
     private boolean suppressLauncher;
     private boolean suppressLauncherShape;
     private boolean suppressLauncherThemed;
@@ -222,6 +240,7 @@ public class MainActivity extends Activity {
         // callback could then overwrite it.
         refreshQsSelection();
         refreshNotifySelection();
+        refreshClockSize();
         refreshLauncherGrid();
         refreshLauncherShapes();
         refreshLauncherThemedIcons();
@@ -436,16 +455,55 @@ public class MainActivity extends Activity {
         launcherSettings.setOnClickListener(v -> openLauncherSettings());
         root.addView(launcherSettings);
 
-        root.addView(section("Status bar and Quick Settings"));
+        root.addView(section("Status bar and clock"));
         root.addView(text(
-                "LineageOS already provides clock position, seconds, battery style, "
-                        + "network traffic and brightness slider controls. Open the "
-                        + "stock panel to change them; lenOS does not duplicate those "
-                        + "settings.",
+                "LineageOS provides clock position, seconds, AM/PM, battery style, "
+                        + "network traffic and brightness controls in its status bar "
+                        + "panel, and the lock screen's dynamic clock toggle in the "
+                        + "stock lock screen settings. lenOS adds only the clock text "
+                        + "size below; both panels stay the source of truth.",
                 12, MUTED, false));
+        LinearLayout clockCard = new LinearLayout(this);
+        clockCard.setOrientation(LinearLayout.VERTICAL);
+        clockSizeSpinner = new Spinner(this);
+        ArrayAdapter<String> clockAdapter = new ArrayAdapter<>(this,
+                android.R.layout.simple_spinner_dropdown_item,
+                CLOCK_SIZE_LABELS);
+        clockSizeSpinner.setAdapter(clockAdapter);
+        // Pick the current state before attaching the listener so the first
+        // layout pass cannot mistake the default position for a user choice.
+        suppressClock = true;
+        clockSizeSpinner.setSelection(enabledOption(CLOCK_SIZE_PACKAGES, 0));
+        clockSizeSpinner.setOnItemSelectedListener(
+                new AdapterView.OnItemSelectedListener() {
+                    @Override
+                    public void onItemSelected(AdapterView<?> parent, View view,
+                            int position, long id) {
+                        if (suppressClock) {
+                            return;
+                        }
+                        applyClockSize(position);
+                    }
+
+                    @Override
+                    public void onNothingSelected(AdapterView<?> parent) {
+                    }
+                });
+        clockCard.addView(clockSizeSpinner);
+        clockCard.addView(text(
+                "Applies to the status bar and Quick Settings header clock. "
+                        + "Extra large can clip at very high system font sizes.",
+                12, MUTED, false));
+        root.addView(card(clockCard));
+        suppressClock = false;
+
         Button statusBar = button("Open status bar settings");
         statusBar.setOnClickListener(v -> openStatusBarSettings());
         root.addView(statusBar);
+
+        Button lockScreen = button("Open lock screen settings");
+        lockScreen.setOnClickListener(v -> openLockScreenSettings());
+        root.addView(lockScreen);
 
         root.addView(section("About this build"));
         root.addView(text(
@@ -967,6 +1025,41 @@ public class MainActivity extends Activity {
         }
     }
 
+    private void refreshClockSize() {
+        suppressClock = true;
+        clockSizeSpinner.setSelection(enabledOption(CLOCK_SIZE_PACKAGES, 0));
+        suppressClock = false;
+    }
+
+    private void applyClockSize(int selectedIndex) {
+        try {
+            OverlayManager manager = getSystemService(OverlayManager.class);
+            if (manager == null) {
+                throw new IllegalStateException("OverlayManager unavailable");
+            }
+            if (selectedIndex == enabledOption(CLOCK_SIZE_PACKAGES, 0)) {
+                // The first layout pass can report the already-current
+                // selection; it must not toggle an overlay.
+                return;
+            }
+            Set<String> installed = installedPackages(manager, SYSTEMUI_PACKAGE);
+            for (int i = 0; i < CLOCK_SIZE_PACKAGES.length; i++) {
+                String pkg = CLOCK_SIZE_PACKAGES[i];
+                if (pkg == null || !installed.contains(pkg)) {
+                    continue;
+                }
+                manager.setEnabled(pkg, i == selectedIndex,
+                        Process.myUserHandle());
+            }
+            Toast.makeText(this, "Clock size updated", Toast.LENGTH_SHORT).show();
+            refreshClockSize();
+        } catch (Throwable t) {
+            Toast.makeText(this,
+                    "Could not change the clock size: " + t.getMessage(),
+                    Toast.LENGTH_LONG).show();
+        }
+    }
+
     /**
      * Reads the launcher's grid choices off the UI thread. The provider may
      * start the launcher process, so a synchronous query could block the
@@ -1371,6 +1464,20 @@ public class MainActivity extends Activity {
                         Toast.LENGTH_LONG).show();
             }
         }
+    }
+
+    private void openLockScreenSettings() {
+        if (tryStartActivity(
+                new Intent(Settings.ACTION_LOCKSCREEN_SETTINGS))) {
+            return;
+        }
+        if (tryStartActivity(
+                new Intent(Settings.ACTION_SECURITY_SETTINGS))) {
+            return;
+        }
+        Toast.makeText(this,
+                "Lock screen settings are not available on this build",
+                Toast.LENGTH_LONG).show();
     }
 
     private TextView section(String value) {

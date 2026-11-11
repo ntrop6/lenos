@@ -20,7 +20,7 @@ applies it.
 - hardened first-boot defaults, PIN scrambling, duress wipe, and memory clearing
   on lock
 - no Google apps or services added; AudioFX excluded
-- local-only personalization (theme packs, Quick Settings layout, notification corners/dividers, motion controls, launcher grid/icon shape/themed icons) via `LenosParts`
+- local-only personalization (theme packs, Quick Settings layout, notification corners/dividers, status-bar clock size, motion controls, launcher grid/icon shape/themed icons) via `LenosParts`
 - optional extras behind `LENOS_EXPERIMENTAL=1`
 
 The full list, including what does not work, is in

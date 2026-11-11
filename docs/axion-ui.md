@@ -28,21 +28,22 @@ The practical route is therefore:
 
 | Component | Path | Behavior |
 |---|---|---|
-| `LenosParts` | `app/LenosParts` | Local dashboard: theme-pack selection, notification corners/dividers, motion controls, launcher grid/icon-shape/themed-icon controls, links to the stock LineageOS status-bar panel and Launcher3 settings |
+| `LenosParts` | `app/LenosParts` | Local dashboard: theme-pack selection, notification corners/dividers, status-bar clock size, motion controls, launcher grid/icon-shape/themed-icon controls, links to the stock LineageOS status-bar, lock-screen and Launcher3 settings |
 | Ember / Mint / Mono | `rro/LenosTheme*SystemUI` | Mutable SystemUI resource overlays: notification/scrim colors, QS corner radius and tile spacing |
 | Ember / Mint / Mono | `rro/LenosTheme*Frameworks` | Mutable framework-res palettes: full Material 3 tonal palettes and dynamic color roles for light and dark themes |
 | Quick Settings layout | `rro/LenosQs*` | Mutable SystemUI overlays for 3/5 columns and 3/5 expanded rows; the stock 4/4 layout needs no overlay |
 | Notification styling | `rro/LenosNotify*` | Mutable SystemUI overlays: three corner radii (round/compact/square) and hidden group dividers; the stock 28dp/4dp radii and visible divider need no overlay |
+| Clock size | `rro/LenosClock*` | Mutable SystemUI overlays: compact 12sp, large 16sp and extra-large 18sp clock text; the stock 14sp clock needs no overlay |
 | Privapp allowlist | `config/privapp-permissions-org.lenos.parts.xml` | Only `CHANGE_OVERLAY_PACKAGES` and `WRITE_SECURE_SETTINGS` |
-| Product wiring | `config/lenos.mk` | Installs the app and the fourteen overlays on the product partition |
+| Product wiring | `config/lenos.mk` | Installs the app and the seventeen overlays on the product partition |
 
 The theme packs are **preinstalled and disabled by default**. Selecting one
 enables exactly one SystemUI overlay and one framework palette through
-`OverlayManager`; selecting "Stock" disables all six. The Quick Settings layout
-and notification styling overlays are independent of the theme: selecting the
-stock layout or the stock notification style disables the corresponding
-non-default overlays. Nothing is downloaded, and the app has no network
-permission.
+`OverlayManager`; selecting "Stock" disables all six. The Quick Settings layout,
+notification styling and clock-size overlays are independent of the theme:
+selecting the stock layout, the stock notification style or the stock clock
+size disables the corresponding non-default overlays. Nothing is downloaded,
+and the app has no network permission.
 
 Selecting a pack also seeds Monet through
 `Settings.Secure.THEME_CUSTOMIZATION_OVERLAY_PACKAGES`:
@@ -73,6 +74,32 @@ scales independently: `animator_duration_scale` (system animations),
 0.75x, 0.5x or 0x; "Reset all to 1.0x" restores the defaults. The user can
 change them again at any time, and accessibility/battery-saver behavior is
 unchanged.
+
+## Status bar and clock
+
+The stock LineageOS status-bar panel remains the source of truth for clock
+position, seconds, AM/PM, battery style/percentage, network traffic and the
+brightness slider. The lock screen's dynamic (double-line) clock toggle stays
+in the stock lock-screen settings. `LenosParts` links to both panels and does
+not write those keys itself.
+
+The one status-bar visual that stock does not expose is the clock text size.
+It is a dedicated mutable SystemUI overlay so it cannot race the theme packs,
+which still own the clock color:
+
+| Choice | Overlay | `status_bar_clock_size` |
+|---|---|---|
+| System default | none | `14sp` |
+| Compact | `LenosClockCompact` | `12sp` |
+| Large | `LenosClockLarge` | `16sp` |
+| Extra large | `LenosClockXLarge` | `18sp` |
+
+`LenosParts` enables exactly one clock-size overlay (or none) through
+`OverlayManager`. The resource is used by the status bar and the Quick Settings
+header clock, so both change together. Extra large can clip at very high system
+font scales; select the default again to revert. The overlay targets the
+`Clock` view used by the current status bar and Quick Settings header; a future
+Compose-based status bar would need a separate hook.
 
 ## Notification controls
 
@@ -150,11 +177,11 @@ no GMS/Theme Store/Play Integrity references.
 | Area | Current state | Next step |
 |---|---|---|
 | Theme tokens | Full Material 3 palettes plus SystemUI colors/dimens via three local packs | Add a local pack manifest and user-defined seed; keep dynamic-color precedence explicit |
-| Status bar | Link to LineageOS's existing clock/battery/network/brightness panel | Add Axion-style icon controls only where LineageOS has no equivalent |
+| Status bar | Clock text size via local overlays; links to LineageOS's clock/battery/network/brightness panel | Add Axion-style icon controls only where LineageOS has no equivalent |
 | Quick Settings | 3/5 columns and 3/5 expanded rows via local overlays (rows apply to the paginated grid; the dual-shade infinite grid scrolls); theme pack controls tile shape/spacing | Split tile shape from the theme pack and add a compact/collapsed-rows control |
 | Notifications | Independent corner radii and hidden group dividers; theme packs control notification/scrim colors | Add optional background/blur styling; blur stays device-dependent and off by default |
 | Motion | Independent system, transition and window scales plus reset | Add higher-level presets only after A17 SystemUI hooks are reviewed |
-| Lock screen | Not yet | Start with clock styles and local media-art styling; Lockscreen Studio is a later project |
+| Lock screen | Shortcut to the stock lock-screen settings, which owns the dynamic clock toggle | Start with clock styles and local media-art styling; Lockscreen Studio is a later project |
 | Launcher / Recents | Grid selection, icon shape and themed icons through Launcher3's grid-control provider, plus a link to the stock launcher settings | Recents is a separate risk |
 | Dynamic Bar | Not yet | Local-only subset (media, timer, alarm, charging, torch); exclude sports/online feeds |
 
@@ -177,10 +204,10 @@ LENOS_WORKSPACE=/path/to/lineage bash tests/run-tests.sh
 When a build/device is available:
 
 1. Build `lenos_asteroids-user` with the stable series.
-2. Confirm `LenosParts` and the fourteen overlays are installed:
-   `adb shell pm list packages | grep -E 'lenos.parts|lenos.theme|lenos.qs|lenos.notify'`.
+2. Confirm `LenosParts` and the seventeen overlays are installed:
+   `adb shell pm list packages | grep -E 'lenos.parts|lenos.theme|lenos.qs|lenos.notify|lenos.clock'`.
 3. Open lenOS personalization and apply each pack; confirm the overlay list
-   changes with `adb shell cmd overlay list --user 0 | grep -E 'lenos.theme|lenos.qs|lenos.notify'`.
+   changes with `adb shell cmd overlay list --user 0 | grep -E 'lenos.theme|lenos.qs|lenos.notify|lenos.clock'`.
    The SystemUI pack and the framework palette for the selected theme must both
    be enabled.
 4. Confirm notification/QS colors plus the global accent change (Settings,
@@ -193,20 +220,25 @@ When a build/device is available:
    toggle "Hide dividers" on a grouped notification and confirm the lines
    disappear without changing the row height. Confirm only one notification
    corner overlay is enabled at a time.
-7. Open the Launcher section and change the Home/All apps grid. Confirm the
+7. Select each clock size and confirm the status bar and Quick Settings header
+   clock change; confirm only one clock-size overlay is enabled at a time. Open
+   "Open lock screen settings" and confirm the stock dynamic-clock toggle is
+   reachable there. Return to the dashboard and confirm the clock-size spinner
+   still reflects the enabled overlay.
+8. Open the Launcher section and change the Home/All apps grid. Confirm the
    spinner lists the launcher's grid options and that the workspace rearranges
    immediately. Change the icon shape and toggle themed icons; confirm both are
    reflected on the Home screen and in All apps. If a spinner is disabled,
    confirm "Open launcher settings" still reaches the stock launcher
    preferences.
-8. Change each motion scale independently and verify only that `Settings.Global`
+9. Change each motion scale independently and verify only that `Settings.Global`
    key changes; use "Reset all to 1.0x" and verify all three return to `1.0`.
-9. Confirm the app has no network access and no `INTERNET` permission:
-   `adb shell dumpsys package org.lenos.parts | grep -i internet` should be empty.
-10. Confirm the launcher grid permission is the narrow one, not the wallpaper
+10. Confirm the app has no network access and no `INTERNET` permission:
+    `adb shell dumpsys package org.lenos.parts | grep -i internet` should be empty.
+11. Confirm the launcher grid permission is the narrow one, not the wallpaper
     permission: `adb shell dumpsys package org.lenos.parts | grep -E
     'GRID_CONTROL|BIND_WALLPAPER'` should list only `GRID_CONTROL`.
-11. If SystemUI becomes unusable after a pack change, disable the framework
+12. If SystemUI becomes unusable after a pack change, disable the framework
     overlay and the SystemUI overlay with `cmd overlay disable` from `adb` (see
     above) and reboot.
 
