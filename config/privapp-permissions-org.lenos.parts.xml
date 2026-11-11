@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+     SPDX-FileCopyrightText: 2026 lenOS
+     SPDX-License-Identifier: Apache-2.0
+
+     LenosParts is platform-signed and privileged. The allowlist documents the
+     only two privileged permissions it needs: overlay toggling and the
+     animation-scale settings.
+-->
+<permissions>
+    <privapp-permissions package="org.lenos.parts">
+        <permission name="android.permission.CHANGE_OVERLAY_PACKAGES"/>
+        <permission name="android.permission.WRITE_SECURE_SETTINGS"/>
+    </privapp-permissions>
+</permissions>

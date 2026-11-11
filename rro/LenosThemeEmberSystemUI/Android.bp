@@ -1,0 +1,13 @@
+//
+// SPDX-FileCopyrightText: 2026 lenOS
+// SPDX-License-Identifier: Apache-2.0
+//
+// Mutable SystemUI overlay for the Ember local theme pack. It is installed on
+// the product partition and enabled only by LenosParts; there is no network
+// component and no code.
+//
+runtime_resource_overlay {
+    name: "LenosThemeEmberSystemUI",
+    product_specific: true,
+    certificate: "platform",
+}

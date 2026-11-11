@@ -1,0 +1,11 @@
+//
+// SPDX-FileCopyrightText: 2026 lenOS
+// SPDX-License-Identifier: Apache-2.0
+//
+// Mutable SystemUI overlay for the Mono local theme pack.
+//
+runtime_resource_overlay {
+    name: "LenosThemeMonoSystemUI",
+    product_specific: true,
+    certificate: "platform",
+}

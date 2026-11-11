@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- SPDX-FileCopyrightText: 2026 lenOS -->
+<!-- SPDX-License-Identifier: Apache-2.0 -->
+<resources>
+    <color name="notification_scrim_base">#FF102823</color>
+    <color name="notification_legacy_background_color">#FF0E1F1B</color>
+    <color name="notification_ripple_untinted_color">#3352D6A0</color>
+    <color name="status_bar_clock_color">#FFB8F5D8</color>
+    <color name="qs_tile_divider">#3352D6A0</color>
+
+    <dimen name="notification_corner_radius">20dp</dimen>
+    <dimen name="notification_corner_radius_small">4dp</dimen>
+    <dimen name="qs_corner_radius">22dp</dimen>
+    <dimen name="qs_tile_margin_horizontal">8dp</dimen>
+</resources>

@@ -1,0 +1,16 @@
+//
+// SPDX-FileCopyrightText: 2026 lenOS
+// SPDX-License-Identifier: Apache-2.0
+//
+// Local-only personalization app. Platform APIs are used for OverlayManager
+// and Settings.Global writes; there is no SDK, network or GMS dependency.
+//
+android_app {
+    name: "LenosParts",
+    srcs: ["src/**/*.java"],
+    resource_dirs: ["res"],
+    manifest: "AndroidManifest.xml",
+    platform_apis: true,
+    privileged: true,
+    certificate: "platform",
+}

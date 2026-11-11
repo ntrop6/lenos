@@ -13,6 +13,15 @@
 PRODUCT_PACKAGES += \
     LenosSecurity
 
+# Local-only personalization: the LenosParts dashboard plus three mutable
+# SystemUI resource overlays. The overlays are preinstalled on the product
+# partition and are disabled until the user selects one; nothing is downloaded.
+PRODUCT_PACKAGES += \
+    LenosParts \
+    LenosThemeEmberSystemUI \
+    LenosThemeMintSystemUI \
+    LenosThemeMonoSystemUI
+
 # Experimental features are opt-in at build time. The driver only applies the
 # patches-experimental/ series and installs experimental/app/ when
 # LENOS_EXPERIMENTAL=1; a normal 1.0 build never inherits this fragment.
@@ -43,7 +52,8 @@ PRODUCT_COMPRESSED_APEX := false
 # the allowlist keeps the app working (and documents the intent) if it is ever
 # built without the platform certificate.
 PRODUCT_COPY_FILES += \
-    vendor/lenos/config/privapp-permissions-org.lenos.security.xml:$(TARGET_COPY_OUT_SYSTEM)/etc/permissions/privapp-permissions-org.lenos.security.xml
+    vendor/lenos/config/privapp-permissions-org.lenos.security.xml:$(TARGET_COPY_OUT_SYSTEM)/etc/permissions/privapp-permissions-org.lenos.security.xml \
+    vendor/lenos/config/privapp-permissions-org.lenos.parts.xml:$(TARGET_COPY_OUT_SYSTEM)/etc/permissions/privapp-permissions-org.lenos.parts.xml
 
 # Product properties are loaded last by init, so they override values from
 # system/system_ext/vendor/odm (see system/core/init/property_service.cpp).

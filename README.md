@@ -20,6 +20,7 @@ applies it.
 - hardened first-boot defaults, PIN scrambling, duress wipe, and memory clearing
   on lock
 - no Google apps or services added; AudioFX excluded
+- local-only personalization (theme packs, motion presets) via `LenosParts`
 - optional extras behind `LENOS_EXPERIMENTAL=1`
 
 The full list, including what does not work, is in
@@ -101,7 +102,7 @@ python3 vendor/lenos/tools/lenos-patch.py --tree . --reset
 - `patches-experimental/` — optional second series, applied after the default one
 - `app/LenosSecurity/` — small settings app for controls the stock UI lacks
 - `config/`, `rro/` — product configuration and privacy overlays
-- `docs/` — build notes, feature list, porting notes, flashing safety
+- `docs/` — build notes, feature list, porting notes, local personalization, flashing safety
 - `experimental/` — opt-in app source, checks, and status notes
 - `tools/` — patch application, read-only verification helpers, and the pinned
   opt-in root preparer
