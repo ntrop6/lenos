@@ -140,6 +140,8 @@ class TestLenosPartsApp(unittest.TestCase):
             "org.lenos.qs.rows5",
             "applyQsLayout(",
             "applyLauncherGrid(",
+            "applyLauncherShape(",
+            "applyLauncherThemedIcons(",
             "openLauncherSettings(",
             "Intent.ACTION_APPLICATION_PREFERENCES",
             "Settings.ACTION_HOME_SETTINGS",
@@ -435,6 +437,21 @@ class TestLauncherIntegration(unittest.TestCase):
         self.assertNotIn("LauncherProvider", body)
         self.assertNotIn("ACCESS_LAUNCHER_DATA", body)
 
+    def test_shape_and_themed_icon_contract(self):
+        body = self.SOURCE.read_text()
+        for needle in (
+            '"/shape_options"',
+            '"/shape"',
+            '"/get_icon_themed"',
+            '"/set_icon_themed"',
+            '"shape_key"',
+            '"shape_title"',
+            '"boolean_value"',
+            "applyLauncherShape(",
+            "applyLauncherThemedIcons(",
+        ):
+            self.assertIn(needle, body)
+
     def test_launcher_settings_intent_has_a_stock_fallback(self):
         body = self.SOURCE.read_text()
         for needle in (
@@ -451,8 +468,14 @@ class TestLauncherIntegration(unittest.TestCase):
         for needle in (
             "lenos-launcher-grid-query",
             "lenos-launcher-grid-apply",
+            "lenos-launcher-shape-query",
+            "lenos-launcher-shape-apply",
+            "lenos-launcher-themed-query",
+            "lenos-launcher-themed-apply",
             "runOnUiThread(",
             "launcherGridRequest",
+            "launcherShapeRequest",
+            "launcherThemedRequest",
         ):
             self.assertIn(needle, body)
 

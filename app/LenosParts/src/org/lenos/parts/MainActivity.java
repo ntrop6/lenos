@@ -24,6 +24,7 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.LinearLayout;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
@@ -147,6 +148,10 @@ public class MainActivity extends Activity {
             "com.android.launcher3.grid_control";
     private static final String LAUNCHER_LIST_OPTIONS = "/list_options";
     private static final String LAUNCHER_DEFAULT_GRID = "/default_grid";
+    private static final String LAUNCHER_SHAPE_OPTIONS = "/shape_options";
+    private static final String LAUNCHER_SET_SHAPE = "/shape";
+    private static final String LAUNCHER_GET_ICON_THEMED = "/get_icon_themed";
+    private static final String LAUNCHER_SET_ICON_THEMED = "/set_icon_themed";
 
     private static final int BG = Color.parseColor("#111318");
     private static final int CARD = Color.parseColor("#1C1F26");
@@ -161,13 +166,22 @@ public class MainActivity extends Activity {
     private Spinner qsRowsSpinner;
     private Spinner launcherGridSpinner;
     private TextView launcherGridNote;
+    private Spinner launcherShapeSpinner;
+    private TextView launcherShapeNote;
+    private CheckBox launcherThemedIcons;
     private final List<String> launcherGridNames = new ArrayList<>();
+    private final List<String> launcherShapeKeys = new ArrayList<>();
     private String launcherGridCurrent;
+    private String launcherShapeCurrent;
     private int launcherGridRequest;
+    private int launcherShapeRequest;
+    private int launcherThemedRequest;
     private boolean suppressTheme;
     private boolean suppressMotion;
     private boolean suppressQs;
     private boolean suppressLauncher;
+    private boolean suppressLauncherShape;
+    private boolean suppressLauncherThemed;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -182,6 +196,8 @@ public class MainActivity extends Activity {
         refreshMotionSelection();
         refreshQsSelection();
         refreshLauncherGrid();
+        refreshLauncherShapes();
+        refreshLauncherThemedIcons();
     }
 
     private void buildUi() {
@@ -277,10 +293,11 @@ public class MainActivity extends Activity {
 
         root.addView(section("Launcher"));
         root.addView(text(
-                "The Home screen and All apps grid is read from the launcher's "
-                        + "own grid-control provider. Changes apply immediately; "
-                        + "icon shape, themed icons, notification dots and the "
-                        + "remaining Home options stay in launcher settings.",
+                "The Home screen and All apps grid, icon shape and themed "
+                        + "icons are read from the launcher's own provider. "
+                        + "Grid and shape changes apply immediately; "
+                        + "notification dots and the remaining Home options "
+                        + "stay in launcher settings.",
                 12, MUTED, false));
         launcherGridSpinner = new Spinner(this);
         launcherGridSpinner.setEnabled(false);
@@ -305,6 +322,45 @@ public class MainActivity extends Activity {
         launcherCard.setOrientation(LinearLayout.VERTICAL);
         launcherCard.addView(launcherGridSpinner);
         launcherCard.addView(launcherGridNote);
+
+        TextView shapeTitle = text("Icon shape", 14, TEXT, true);
+        shapeTitle.setPadding(0, dp(18), 0, 0);
+        launcherCard.addView(shapeTitle);
+        launcherShapeSpinner = new Spinner(this);
+        launcherShapeSpinner.setEnabled(false);
+        launcherShapeSpinner.setOnItemSelectedListener(
+                new AdapterView.OnItemSelectedListener() {
+                    @Override
+                    public void onItemSelected(AdapterView<?> parent, View view,
+                            int position, long id) {
+                        if (suppressLauncherShape) {
+                            return;
+                        }
+                        applyLauncherShape(position);
+                    }
+
+                    @Override
+                    public void onNothingSelected(AdapterView<?> parent) {
+                    }
+                });
+        launcherShapeNote = text("Reading icon shapes\u2026", 12, MUTED, false);
+        launcherCard.addView(launcherShapeSpinner);
+        launcherCard.addView(launcherShapeNote);
+
+        launcherThemedIcons = new CheckBox(this);
+        launcherThemedIcons.setText("Themed icons");
+        launcherThemedIcons.setTextColor(TEXT);
+        launcherThemedIcons.setTextSize(14);
+        launcherThemedIcons.setEnabled(false);
+        launcherThemedIcons.setPadding(0, dp(12), 0, 0);
+        launcherThemedIcons.setOnCheckedChangeListener(
+                (buttonView, isChecked) -> {
+                    if (suppressLauncherThemed) {
+                        return;
+                    }
+                    applyLauncherThemedIcons(isChecked);
+                });
+        launcherCard.addView(launcherThemedIcons);
         root.addView(card(launcherCard));
 
         Button launcherSettings = button("Open launcher settings");
@@ -730,7 +786,7 @@ public class MainActivity extends Activity {
             List<String> labels = new ArrayList<>();
             int selected = -1;
             try (Cursor cursor = getContentResolver().query(
-                    launcherGridUri(LAUNCHER_LIST_OPTIONS),
+                    launcherProviderUri(LAUNCHER_LIST_OPTIONS),
                     new String[]{"name", "grid_title", "rows", "cols",
                             "is_default"},
                     null, null, null)) {
@@ -823,7 +879,7 @@ public class MainActivity extends Activity {
                 ContentValues values = new ContentValues();
                 values.put("name", name);
                 updated = getContentResolver().update(
-                        launcherGridUri(LAUNCHER_DEFAULT_GRID), values,
+                        launcherProviderUri(LAUNCHER_DEFAULT_GRID), values,
                         null, null);
             } catch (Throwable t) {
                 failure = t.getMessage();
@@ -864,6 +920,218 @@ public class MainActivity extends Activity {
         return title.trim();
     }
 
+    /**
+     * Reads the launcher's icon-shape choices off the UI thread. The provider
+     * exposes the same list the stock launcher settings screen uses.
+     */
+    private void refreshLauncherShapes() {
+        if (launcherShapeSpinner == null) {
+            return;
+        }
+        launcherShapeSpinner.setEnabled(false);
+        final int request = ++launcherShapeRequest;
+        new Thread(() -> {
+            List<String> keys = new ArrayList<>();
+            List<String> labels = new ArrayList<>();
+            int selected = -1;
+            try (Cursor cursor = getContentResolver().query(
+                    launcherProviderUri(LAUNCHER_SHAPE_OPTIONS),
+                    new String[]{"shape_key", "shape_title", "is_default"},
+                    null, null, null)) {
+                if (cursor != null) {
+                    int keyIndex = cursor.getColumnIndexOrThrow("shape_key");
+                    int titleIndex = cursor.getColumnIndex("shape_title");
+                    int defaultIndex =
+                            cursor.getColumnIndexOrThrow("is_default");
+                    while (cursor.moveToNext()) {
+                        String key = cursor.getString(keyIndex);
+                        if (key == null || key.isEmpty()) {
+                            continue;
+                        }
+                        String title = titleIndex >= 0
+                                ? cursor.getString(titleIndex) : null;
+                        boolean current = cursor.getInt(defaultIndex) != 0;
+                        keys.add(key);
+                        labels.add(launcherShapeLabel(title, key));
+                        if (current) {
+                            selected = keys.size() - 1;
+                        }
+                    }
+                }
+            } catch (Throwable ignored) {
+                // Fall back to the stock launcher settings screen.
+            }
+            final List<String> resultKeys = keys;
+            final List<String> resultLabels = labels;
+            final int resultSelected = selected;
+            runOnUiThread(() -> {
+                if (request != launcherShapeRequest || isFinishing()
+                        || isDestroyed()) {
+                    return;
+                }
+                showLauncherShapes(resultKeys, resultLabels, resultSelected);
+            });
+        }, "lenos-launcher-shape-query").start();
+    }
+
+    private void showLauncherShapes(List<String> keys, List<String> labels,
+            int selected) {
+        launcherShapeKeys.clear();
+        launcherShapeKeys.addAll(keys);
+        suppressLauncherShape = true;
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(this,
+                android.R.layout.simple_spinner_dropdown_item,
+                labels.isEmpty()
+                        ? Collections.singletonList(
+                                "Icon shape control not available")
+                        : labels);
+        launcherShapeSpinner.setAdapter(adapter);
+        int shown = selected >= 0 && selected < keys.size() ? selected : 0;
+        launcherShapeSpinner.setSelection(shown);
+        // Treat the visible option as current so the initial selection
+        // callback cannot write a shape the user did not choose.
+        launcherShapeCurrent = keys.isEmpty() ? null : keys.get(shown);
+        launcherShapeSpinner.setEnabled(!keys.isEmpty());
+        suppressLauncherShape = false;
+        if (keys.isEmpty()) {
+            launcherShapeNote.setText(
+                    "This launcher build does not expose icon shapes to "
+                            + "lenOS. Use launcher settings below.");
+        } else {
+            launcherShapeNote.setText(
+                    "Changes the mask applied to launcher icons.");
+        }
+    }
+
+    private void applyLauncherShape(int position) {
+        if (position < 0 || position >= launcherShapeKeys.size()) {
+            return;
+        }
+        String key = launcherShapeKeys.get(position);
+        if (key.equals(launcherShapeCurrent)) {
+            return;
+        }
+        launcherShapeSpinner.setEnabled(false);
+        new Thread(() -> {
+            int updated = 0;
+            String failure = null;
+            try {
+                ContentValues values = new ContentValues();
+                values.put("shape_key", key);
+                updated = getContentResolver().update(
+                        launcherProviderUri(LAUNCHER_SET_SHAPE), values,
+                        null, null);
+            } catch (Throwable t) {
+                failure = t.getMessage();
+            }
+            final int result = updated;
+            final String message = failure;
+            runOnUiThread(() -> {
+                if (isFinishing() || isDestroyed()) {
+                    return;
+                }
+                if (result > 0) {
+                    launcherShapeCurrent = key;
+                    Toast.makeText(this, "Icon shape updated",
+                            Toast.LENGTH_SHORT).show();
+                } else {
+                    Toast.makeText(this,
+                            message == null
+                                    ? "This launcher did not accept the icon "
+                                            + "shape"
+                                    : "Could not change the icon shape: "
+                                            + message,
+                            Toast.LENGTH_LONG).show();
+                }
+                refreshLauncherShapes();
+            });
+        }, "lenos-launcher-shape-apply").start();
+    }
+
+    private static String launcherShapeLabel(String title, String key) {
+        if (title == null || title.trim().isEmpty()) {
+            return key;
+        }
+        return title.trim();
+    }
+
+    /**
+     * Reads the monochrome/themed-icon preference from the launcher provider.
+     */
+    private void refreshLauncherThemedIcons() {
+        if (launcherThemedIcons == null) {
+            return;
+        }
+        launcherThemedIcons.setEnabled(false);
+        final int request = ++launcherThemedRequest;
+        new Thread(() -> {
+            Boolean enabled = null;
+            try (Cursor cursor = getContentResolver().query(
+                    launcherProviderUri(LAUNCHER_GET_ICON_THEMED),
+                    new String[]{"boolean_value"},
+                    null, null, null)) {
+                if (cursor != null && cursor.moveToFirst()) {
+                    int index = cursor.getColumnIndexOrThrow("boolean_value");
+                    enabled = cursor.getInt(index) != 0;
+                }
+            } catch (Throwable ignored) {
+                // Fall back to the stock launcher settings screen.
+            }
+            final Boolean result = enabled;
+            runOnUiThread(() -> {
+                if (request != launcherThemedRequest || isFinishing()
+                        || isDestroyed()) {
+                    return;
+                }
+                suppressLauncherThemed = true;
+                launcherThemedIcons.setChecked(Boolean.TRUE.equals(result));
+                launcherThemedIcons.setEnabled(result != null);
+                launcherThemedIcons.setText(result == null
+                        ? "Themed icons (not available)" : "Themed icons");
+                suppressLauncherThemed = false;
+            });
+        }, "lenos-launcher-themed-query").start();
+    }
+
+    private void applyLauncherThemedIcons(boolean enabled) {
+        launcherThemedIcons.setEnabled(false);
+        new Thread(() -> {
+            int updated = 0;
+            String failure = null;
+            try {
+                ContentValues values = new ContentValues();
+                values.put("boolean_value", enabled);
+                updated = getContentResolver().update(
+                        launcherProviderUri(LAUNCHER_SET_ICON_THEMED), values,
+                        null, null);
+            } catch (Throwable t) {
+                failure = t.getMessage();
+            }
+            final int result = updated;
+            final String message = failure;
+            runOnUiThread(() -> {
+                if (isFinishing() || isDestroyed()) {
+                    return;
+                }
+                if (result > 0) {
+                    Toast.makeText(this,
+                            enabled ? "Themed icons enabled"
+                                    : "Themed icons disabled",
+                            Toast.LENGTH_SHORT).show();
+                } else {
+                    Toast.makeText(this,
+                            message == null
+                                    ? "This launcher did not accept the "
+                                            + "themed-icon change"
+                                    : "Could not change themed icons: "
+                                            + message,
+                            Toast.LENGTH_LONG).show();
+                }
+                refreshLauncherThemedIcons();
+            });
+        }, "lenos-launcher-themed-apply").start();
+    }
+
     private void openLauncherSettings() {
         Intent preferences = new Intent(Intent.ACTION_APPLICATION_PREFERENCES);
         preferences.setPackage(LAUNCHER_PACKAGE);
@@ -888,7 +1156,7 @@ public class MainActivity extends Activity {
         }
     }
 
-    private static Uri launcherGridUri(String path) {
+    private static Uri launcherProviderUri(String path) {
         return Uri.parse("content://" + LAUNCHER_GRID_AUTHORITY + path);
     }
 
