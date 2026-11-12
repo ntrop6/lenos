@@ -1,6 +1,5 @@
 # Experimental Settings work.
 0001-crash-log-viewer.patch
-0002-usb-port-security.patch
 0003-clipboard-privacy.patch
 0004-clipboard-app-access.patch
 0005-native-debugging-block.patch

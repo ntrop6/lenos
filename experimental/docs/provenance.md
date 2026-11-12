@@ -9,8 +9,8 @@ diff against the commit below. Original lenOS work is marked as such.
 | Project | Revision | Used by |
 |---|---|---|
 | `bionic` | `ff3bb041547924ac1a7504e4b3bd3ea18169ca2f` (`lineage-24.0`) | HTS-1 hardened thread stacks |
-| `frameworks/base` | `7c7188f8585e20c035eb43fed72df5e717614b38` (`lineage-24.0`) | #20/#21, #22, #23 partial, #25, OPS-3 |
-| `packages/apps/Settings` | `2f16bfe2c784623a324350cd19dae7f6066e2cfb` (`lineage-24.0`) | #17, #22, #23 partial, OPS-3, OPS-4 |
+| `frameworks/base` | `7c7188f8585e20c035eb43fed72df5e717614b38` (`lineage-24.0`) | #20/#21, #23 partial, #25, OPS-3 |
+| `packages/apps/Settings` | `2f16bfe2c784623a324350cd19dae7f6066e2cfb` (`lineage-24.0`) | #17, #23 partial, OPS-3, OPS-4 |
 | `packages/apps/SetupWizard` | `9c75b8a75bb3e48d4ec96375fba00b1e409c8763` (`lineage-24.0`) | #28 |
 | `packages/apps/Seedvault` | `cd6ab3fa1631d8c230b16a66239faca1e370b27e` (`lineage-24.0`) | #27 |
 | `vendor/lenos` (main patchkit) | this repository, `lenos-1.0` | OPS-1 / OPS-2 source and opt-in product integration |
@@ -30,8 +30,6 @@ are:
 | `bionic/0001-hardened-thread-stacks.patch` | `libc/bionic/pthread_create.cpp` from the four GrapheneOS bionic commits listed above; no header change is needed |
 | `frameworks_base/0001-system-app-update-verity.patch` | `services/core/java/com/android/server/pm/PackageVerityExt.java`; hooks in `services/core/java/com/android/server/pm/InstallPackageHelper.java` (`scanPackageForInitLI`, `preparePackageLI`) |
 | `frameworks_base/0002-screenshot-sound-settings.patch` | `packages/SystemUI/src/com/android/systemui/screenshot/ScreenshotSoundController.kt` and `ScreenshotSoundPolicy.kt`; the existing `multivalentTests` for both classes |
-| `frameworks_base/0003-usb-port-security.patch` | `core/java/android/hardware/usb/UsbPortSecurity.java`, `core/java/android/ext/settings/UsbPortSecurity.java`, `services/core/java/com/android/server/policy/keyguard/UsbPortSecurityHooks.java`, `core/java/android/hardware/usb/UsbManager.java`; AOSP `UsbService.enableUsbDataInternal` / `UsbPortManager.enableUsbData` |
-| `packages_apps_Settings/0002-usb-port-security.patch` | GrapheneOS Settings `UsbPortSecurityPrefController.java` and `exploit_protection_settings.xml` (adapted to a standalone lenOS preference fragment) |
 | `packages_apps_Seedvault/0001-grapheneos-app-id-prefix.patch` | Seedvault commit `db21e16` (internal `app.grapheneos` package prefix), binary chunker commit `61d1b60` / `libs/seedvault-chunker-0.1.jar` |
 | `packages_apps_Settings/0004-clipboard-app-access.patch` | AOSP `AppOpsManager.OP_READ_CLIPBOARD` policy; the GrapheneOS per-app `GosPackageState` switch is not ported. This is the AppOps route anticipated by the stage-2 note in §8 of the main porting guide. |
 
@@ -107,30 +105,6 @@ are:
   `screenshotSoundForced_ignoresSoundEffectsSetting` pins that behavior.
 * `shouldForceShutterSound()` is suspend and the callback is registered unconditionally because
   the callback must exist on every build, not only on builds where the old flag was compiled in.
-
-### #22 — USB-C data-line control
-
-* GrapheneOS enforces the policy through vendor sysprops (`sys.port_security_mode`,
-  `security.deny_new_usb2`) and its keyguard hooks. Those props are not portable to `asteroids`
-  without the matching vendor HAL/kernel support, so this port uses the standard Android 17
-  per-port `UsbPortManager.enableUsbData` HAL operation.
-* Consequence: the AOSP operation disables the data lines only. Modes `ALL_PORTS_DISABLED` (0) and
-  `CHARGING_ONLY` (1) are therefore equivalent on this build; a true VBUS-off mode needs a vendor
-  HAL and is not claimed. The persistent key remains GrapheneOS's `persist.security.usb_mode` so a
-  future HAL can consume it.
-* The mode is applied on boot, on keyguard lock/unlock, and on first user unlock. AFU
-  (`MODE_CHARGING_ONLY_WHEN_LOCKED_AFU`) uses an in-memory first-unlock flag, reset by every boot.
-* User builds default to `MODE_CHARGING_ONLY_WHEN_LOCKED`; debuggable builds default to
-  `MODE_ALL_PORTS_ENABLED` to keep adb available during bring-up. The Settings UI requires the
-  device to be unlocked and asks for confirmation before allowing USB data while locked.
-* The service has a deny gate for ordinary enable requests while the port-security policy is
-  blocking; the controller bypasses it through `UsbPortManager` directly. This is intentionally
-  asymmetric: security policy wins over app/HAL requests, while disable requests are always
-  allowed.
-* No `sys.port_security_mode`/`security.deny_new_usb2` writes are added. If the `asteroids` USB HAL
-  does not implement `enableUsbData`, the policy is a no-op; the Settings screen detects “no USB
-  ports” but cannot detect a HAL that reports ports and silently rejects the operation, hence the
-  experimental status and physical verification step.
 
 ### #17 — crash/ANR log viewer
 

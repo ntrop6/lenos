@@ -675,18 +675,21 @@ USB-C alternate modes (DisplayPort) are disabled, plus a kernel/OS-level second 
 
 **Size:** OS-side port L (mostly the 424-line hooks file + HAL plumbing); hardware part infeasible.
 **API/version risk:** low for OS side; the risk is entirely vendor-HAL behavior.
-**Verdict: not feasible now (full feature); partial prototype possible (see step 1).** Put on the
-"research" list; do not promise GrapheneOS-equivalent guarantees.
+**Verdict: the full GrapheneOS feature remains infeasible; the portable OS-side subset is
+implemented (below).** Do not promise GrapheneOS-equivalent hardware guarantees.
 
-**Implemented in the opt-in experimental series (not 1.0).** `frameworks_base/0003` +
-`packages_apps_Settings/0002` implement the OS-side subset using AOSP 17's existing per-port
+**Implemented in the default 1.0 series.** `frameworks_base/0030` +
+`packages_apps_Settings/0005` implement the OS-side subset using AOSP 17's existing per-port
 `UsbPortManager.enableUsbData` operation rather than the GrapheneOS vendor sysprops. The five
 GrapheneOS mode constants and the `persist.security.usb_mode` key are preserved; a controller
 applies the mode on boot, keyguard lock/unlock and first unlock, rejects ordinary re-enables while
-the policy is blocking, and exposes the setting in Settings. Because the portable operation only
-controls data lines, modes 0 (`ALL_PORTS_DISABLED`) and 1 (`CHARGING_ONLY`) are equivalent on this
-build; alternate-mode/PD disabling and persisted HAL-init enforcement remain vendor-firmware work.
-The `asteroids` USB HAL has not been validated, so this stays out of 1.0 and is marked experimental.
+the policy is blocking, and exposes the setting in Settings. The default is
+`MODE_CHARGING_ONLY_WHEN_LOCKED` on **all** build types, including debuggable builds. Because the
+portable operation only controls data lines, modes 0 (`ALL_PORTS_DISABLED`) and 1
+(`CHARGING_ONLY`) are equivalent on this build; alternate-mode/PD disabling and persisted
+HAL-init enforcement remain vendor-firmware work. The `asteroids` USB HAL has not been validated;
+if it does not implement the operation the calls fail without changing state, and Settings reports
+"unsupported" when Android exposes no ports.
 
 ---
 
@@ -1006,7 +1009,7 @@ All are GrapheneOS ports unless marked otherwise; each is independently shippabl
 |---|---|---|
 | Exploit-mitigation program: `hardened_malloc`, exec spawning, MTE-for-apps defaults, BTI/PAC userspace hardening, JIT-disabled base OS, base-OS dynamic-code-loading block | These are bionic/ART/kernel/toolchain projects, not patch ports; the ExtSettings/ASW toggles registered in `fwb/0006` are config only and stay inert by design. One narrow exception is **experimental HTS-1**: `bionic/0001` ports GrapheneOS's pthread guard-gap/layout change behind an experimental-series runtime property, but it is not a replacement for any of these and is not built or booted | Keep the toggles hidden; HTS-1 requires a full boot, thread-stress and app-compatibility pass before promotion. Revisit the rest only if lenOS adopts a runtime-hardening workstream |
 | Kernel LTS + hardening (remaining pieces) | We build `kernel/nothing/sm7635` from LineageOS source, so kernel patches are *possible*, but GrapheneOS-grade kernel hardening targets their supported Pixels and is a project of its own against the vendor baseline | **Started (Tier 3 #32, §19):** the portability-safe config fragment is in (`kernel_nothing_sm7635/0001` + `device_nothing_asteroids/0008`). Still out of reach without a dedicated kernel/firmware effort: 48-bit VA / 4-level page tables, forced module signing + lockdown (vendor modules cannot be re-signed), LTS point-release cadence, GrapheneOS's custom allocator canaries and MTE-for-apps. Boot/performance validation is pending |
-| USB-C port control (full semantics) | Hardware data-line disable, alternate-mode (DisplayPort) block and boot-time `persist.security.usb_mode` enforcement live in the vendor USB HAL/kernel/firmware; Nothing controls them | OS-side prototype only if the SM7635 HAL implements AOSP `IUsb.enableUsbData` (verify with VINTF/`dumpsys usb`); see §10 |
+| USB-C port control (full semantics) | Hardware data-line disable, alternate-mode (DisplayPort) block and boot-time `persist.security.usb_mode` enforcement live in the vendor USB HAL/kernel/firmware; Nothing controls them | The OS-side subset ships in the default series (`0030`/`0005`) and defaults to charging-only-when-locked; it works only if the SM7635 HAL implements AOSP `IUsb.enableUsbData` (verify with VINTF/`dumpsys usb`); see §10 |
 | Battery charge limit (80 %) | GrapheneOS's mechanism is gated to Google devices (`BatteryChargeLimit.isGoogleDevice()`) and depends on Pixel charger/kernel support | Nothing's stock firmware has a vendor battery-protection feature, but it is not exposed via an AOSP path we can call; skip unless the kernel exposes a charge-stop node |
 | Sandboxed Google Play + Android Auto + GmsCompatConfig | GrapheneOS's compatibility layer (their own repositories and app) — a separate large project; Android Auto support is tied to the sandboxed Play integration | Not applicable to lenOS's current app stack; revisit only if a Play-compat layer is ever adopted |
 | Network location service | GrapheneOS runs a network-location proxy on their infrastructure; the OS hooks are portable but the backend is not | Keep GNSS-only location; optionally port the settings toggles (see §14.2) |
@@ -1261,11 +1264,6 @@ Current experimental batches:
   sound is not silenced by the touch-sounds setting (a deliberate deviation
   from GrapheneOS branch 17's early return; see the experimental provenance
   doc).
-* **#22 — USB-C data-line control.** `frameworks_base/0003` +
-  `packages_apps_Settings/0002` implement the portable OS-side subset with
-  AOSP's per-port `enableUsbData` HAL operation. Modes, keyguard transitions,
-  the `persist.security.usb_mode` key and the Settings UI are present; the
-  `asteroids` HAL and modes 0/1 are documented limitations (§10).
 * **#17 — crash/ANR viewer.** `packages_apps_Settings/0001` adds a local
   DropBox reader with bounded entries and explicit sharing; no upload path.
 * **#28 — Setup Wizard warning.** `packages_apps_SetupWizard/0001` shows a
@@ -1300,7 +1298,7 @@ Current experimental batches:
   known tracking fields from links while preserving functional query
   parameters and fragments. It never opens, resolves or uploads the links.
 
-The experimental series carries 13 patches, 87 source-level tests in
+The experimental series carries 11 patches, 81 source-level tests in
 `experimental/tests/` (each sandbox rebuilds the stable base first), 16 build-gate
 tests in the main suite, provenance and a post-build verification checklist. The
 remaining workstreams (full per-app #23, #30/#31 scopes/2FA, the rest of #33,

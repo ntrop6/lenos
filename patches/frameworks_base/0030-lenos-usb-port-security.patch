@@ -83,7 +83,6 @@ index 0000000000000000000000000000000000000000..1b7964fcf4c711f8e827ab1a299c3207
 +package android.hardware.usb;
 +
 +import android.annotation.IntDef;
-+import android.os.Build;
 +import android.os.SystemProperties;
 +
 +import java.lang.annotation.Retention;
@@ -92,10 +91,10 @@ index 0000000000000000000000000000000000000000..1b7964fcf4c711f8e827ab1a299c3207
 +/**
 + * Controls whether USB data lines are available while the device is locked.
 + *
-+ * <p>This is a lenOS experimental implementation of the USB-C port control
-+ * feature. It uses the standard Android per-port {@code enableUsbData} HAL
-+ * operation; devices whose USB HAL does not implement that operation will
-+ * simply keep their existing data behaviour.
++ * <p>This is the lenOS implementation of USB-C port control. It uses the
++ * standard Android per-port {@code enableUsbData} HAL operation; devices
++ * whose USB HAL does not implement that operation keep their existing data
++ * behaviour.
 + *
 + * @hide
 + */
@@ -117,10 +116,11 @@ index 0000000000000000000000000000000000000000..1b7964fcf4c711f8e827ab1a299c3207
 +     */
 +    public static final String MODE_SETTING = "persist.security.usb_mode";
 +
-+    /** Debuggable builds keep adb available for bring-up. */
-+    public static final int DEFAULT_MODE = Build.IS_DEBUGGABLE
-+            ? MODE_ALL_PORTS_ENABLED
-+            : MODE_CHARGING_ONLY_WHEN_LOCKED;
++    /**
++     * USB data is blocked while the device is locked on every build type.
++     * Debuggable builds can still select another mode explicitly in Settings.
++     */
++    public static final int DEFAULT_MODE = MODE_CHARGING_ONLY_WHEN_LOCKED;
 +
 +    @IntDef(prefix = {"MODE_"}, value = {
 +            MODE_ALL_PORTS_DISABLED,
@@ -158,7 +158,7 @@ new file mode 100644
 index 0000000000000000000000000000000000000000..d52574512b5186577cb2bb3a41463b07e19cbbb5
 --- /dev/null
 +++ b/services/usb/java/com/android/server/usb/UsbPortSecurityController.java
-@@ -0,0 +1,154 @@
+@@ -0,0 +1,153 @@
 +/*
 + * Copyright (C) 2026 The lenOS Project
 + *
@@ -193,8 +193,7 @@ index 0000000000000000000000000000000000000000..d52574512b5186577cb2bb3a41463b07
 + *
 + * <p>This intentionally does not depend on a vendor-specific sysfs node. If
 + * the HAL does not implement the operation, the calls fail and the device
-+ * keeps its existing behaviour; the feature is therefore explicitly
-+ * experimental until the asteroid USB HAL has been validated.</p>
++ * keeps its existing behaviour.</p>
 + */
 +final class UsbPortSecurityController {
 +    private static final String TAG = "UsbPortSecurity";

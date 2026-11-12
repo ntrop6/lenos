@@ -196,10 +196,11 @@ class TestPatchToolModes(unittest.TestCase):
         lines = self.run_list("--experimental")
         projects = {line.split("\t", 1)[0] for line in lines}
         self.assertEqual(projects, EXPECTED_PROJECTS)
-        self.assertEqual(len(lines), 13)
+        self.assertEqual(len(lines), 11)
         self.assertIn("bionic\t0001-hardened-thread-stacks.patch", lines)
         self.assertIn("frameworks/base\t0001-system-app-update-verity.patch", lines)
         self.assertIn("packages/apps/Settings\t0005-native-debugging-block.patch", lines)
+        self.assertFalse(any("usb-port-security" in line for line in lines))
         self.assertFalse(any(line.startswith("vendor/lenos\t") for line in lines))
 
     def test_stable_list_does_not_include_experimental_projects(self):

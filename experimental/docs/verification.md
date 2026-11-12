@@ -24,12 +24,11 @@ approval.
    adb shell cmd package resolve-activity --brief \
        -a android.intent.action.SEND -t image/jpeg
    ```
-3. Confirm `PackageVerityExt`, `UsbPortSecurity`, `UsbPortSecurityController`,
-   `ClipboardPrivacySettings`, `NativeDebuggingBlock` and `LenosOpsec` are compiled (inspect the
-   build log for the paths).
+3. Confirm `PackageVerityExt`, `ClipboardPrivacySettings`, `NativeDebuggingBlock` and `LenosOpsec`
+   are compiled (inspect the build log for the paths).
 4. Confirm no `neverallow` or hidden-API failure was introduced. The brand-new framework APIs are
-   `@hide`; Settings and `LenosOpsec` are platform apps. The USB, clipboard and native-debugging
-   patches must not require sepolicy changes.
+   `@hide`; Settings and `LenosOpsec` are platform apps. The clipboard and native-debugging patches
+   must not require sepolicy changes.
 5. Check the experimental product does not include a browser or network code from `LenosOpsec`:
    `adb shell dumpsys package org.lenos.opsec | grep -i internet` must be empty.
 6. Run the read-only helpers before manual testing:
@@ -75,37 +74,6 @@ device. Use a disposable userdata image or a test device.
    take a screenshot with sound effects off: the forced shutter sound must still play.
 4. Repeat with the camera closed: no forced sound.
 5. Check that screenshot capture latency and SystemUI crashes are unchanged in logcat.
-
-## #22 — USB-C data-line control
-
-This is the highest-risk item in the batch because it depends on a vendor HAL. Test with a
-**non-production** device and a USB cable/host that cannot damage the port.
-
-1. Before applying the patch, confirm the device's USB port list:
-   ```bash
-   adb shell dumpsys usb
-   ```
-   If Android reports no ports, Settings will show “unsupported” and the feature cannot work.
-2. Confirm the HAL implements `enableUsbData`:
-   ```bash
-   adb shell dumpsys usb | grep -i -E 'enableUsbData|data signal|port'
-   adb logcat -b all -s UsbPortSecurity UsbPortManager
-   ```
-   A successful policy change should log `applying USB port security mode ...` with the port
-   count. If the HAL returns an error, the log must show it and data must remain in its prior
-   state; do not treat an error as a successful block.
-3. Lock the device with a USB data device attached (a USB stick, not just a charger). The data
-   device must disappear; charging must continue. Unlock and confirm it re-enumerates.
-4. Check `adb shell getprop persist.security.usb_mode` returns the mode written by Settings.
-   `MODE_CHARGING_ONLY_WHEN_LOCKED` should be `2`, AFU `3`, enabled `4`.
-5. Reboot locked, attach a USB device, and confirm AFU mode does not expose data before first
-   unlock. Unlock and confirm data returns.
-6. Try an ordinary app/USB enable request while the policy is blocking; it must fail with the
-   documented internal error rather than overriding the policy.
-7. On a debug build, confirm the default is `4` (USB data enabled) so adb remains available.
-   On a user build, confirm the default is `2`; document the escape hatch before testing.
-8. Test the Settings confirmation dialog, the unsupported state, and changing the mode while the
-   device is locked (must be rejected).
 
 ## #17 — crash/ANR log viewer
 

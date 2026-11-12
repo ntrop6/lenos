@@ -72,6 +72,7 @@ their content until the user explicitly allows it.
 | LTE-only / 5G-only network mode | `packages_apps_Settings/0001` (GrapheneOS port) | the preferred-network-type list gains "LTE only" (always) and "5G or LTE only" / "5G only" (when the carrier and baseband expose NR; "5G only" also requires NR standalone). Picking one strips 2G/3G (or LTE) from the modem's allowed RATs, shrinking the baseband attack surface. Ports GrapheneOS `5310142ccc` + `8d37b32db6`; the carrier-hidden-settings guard is kept (see deviations) |
 | SUPL / PSDS network assistance off | `frameworks_base/0021` + `packages_apps_Settings/0001` (GrapheneOS port) | SUPL (A-GNSS) and PSDS (predicted satellite data) default to **off**, so the device does not send its IP address and cell-derived location to an assistance server. Settings → Location → Network assistance offers "Off"/"Standard server" for each. The old device-level `gps.supl_host` blanking (`device/0003`) was removed so "Standard server" actually works; GrapheneOS's own proxies are not offered (no proxy infrastructure) |
 | Modem/radio logging and snapshot props off | `config/lenos.mk` | `persist.vendor.radio.*` logging off, small radio log buffer, `persist.traced.enable=0` |
+| Cellular null-cipher protection and notifications | `frameworks_opt_telephony/0002` | **on by default where the radio HAL supports it.** Android's "Require encryption" preference defaults to **on** (`PREF_NULL_CIPHER_AND_INTEGRITY_ENABLED=false`), so null cipher/integrity connections are disallowed, and "Cellular security notifications" defaults to **on** for both null-cipher and cellular-identifier disclosures. The requests are only sent when the network HAL advertises 2.1 (null cipher/integrity) or 2.2 (cipher/integrity and identifier-disclosure notifications); on older or unimplemented modems the code marks the feature unsupported, disables the notifier and leaves AOSP's Settings controls hidden instead of crashing. The carrier must still permit encrypted service, and emergency calls remain exempt as required by Android |
 
 ## Lock, data and recovery
 
@@ -86,6 +87,7 @@ their content until the user explicitly allows it.
 | FBE filename padding | `system_extras/0001` (GrapheneOS port) | every encryption policy created by this build pads filenames to 32 bytes instead of AOSP's 16 (GrapheneOS commit "pad filenames to 32 bytes instead of 16 or 4 bytes"), hiding filename lengths better. The pre-R 4-byte compatibility branch is dropped (`PRODUCT_SHIPPING_API_LEVEL := 35` makes it unreachable); `vold` picks the flags up through `libfscrypt`. Only applies to policies created after flashing (see limits) |
 | Memory hygiene on lock | `frameworks_base/0024` (GrapheneOS port) | when the keyguard starts showing, both SystemUI and system_server run a full compacting GC (`System.gc(); System.runFinalization(); System.gc();`), releasing memory that is no longer reachable and reducing how long sensitive data (lock credentials, derived keys) sits in the heap — the complement to the auto-reboot timer. SystemUI runs it in `handleShowInner`; system_server runs it on the transition-gated `setLockScreenShown` binder thread right after the lock transition and outside the global lock |
 | Lock-screen end session hidden | `frameworks_base/0028` (GrapheneOS port) | the lock screen never offers the "End session" (logout) button: GrapheneOS short-circuits `KeyguardIndicationController.updateLockScreenLogoutView()` with `if (false && …)`, because anyone holding the locked device could otherwise terminate the session and close every app without credentials. The action stays available from the power menu, where the lock-screen restrictions apply. GrapheneOS's A17 DevicePolicyManager logout split (`isPolicyManagerLogoutEnabled`) is an A17-only refactor and is not ported |
+| USB data off while locked | `frameworks_base/0030` + `packages_apps_Settings/0005` | **on by default on every build.** The five GrapheneOS-compatible modes (`0` all ports blocked, `1` charging only, `2` charging only when locked, `3` charging only when locked after first unlock, `4` all ports enabled) and the `persist.security.usb_mode` key are preserved. The default is `MODE_CHARGING_ONLY_WHEN_LOCKED`; debuggable builds no longer default to data-enabled, so adb needs an explicit mode change while unlocked. A controller applies the mode on boot, keyguard lock/unlock and first unlock, and Settings rejects ordinary data enables while the policy is blocking. Uses AOSP's per-port `UsbPortManager.enableUsbData`; if the vendor USB HAL does not implement it, the calls fail without changing state and Settings reports "unsupported" when Android exposes no ports (modes 0 and 1 both block data lines, not VBUS) |
 
 ## Framework infrastructure
 
@@ -145,9 +147,6 @@ batches implement:
   same/older `/data` updates across reboot (GrapheneOS `PackageVerityExt`);
 * **#25** — screenshot sound follows `Settings.System.SOUND_EFFECTS_ENABLED`,
   while forced-shutter regions keep `MediaActionSound.mustPlayShutterSound()`;
-* **#22** — USB-C data-line control using AOSP's per-port `enableUsbData` HAL
-  operation, with the five GrapheneOS mode constants and
-  `persist.security.usb_mode`; HAL support on `asteroids` is not yet verified;
 * **#17** — a local-only DropBox crash/ANR viewer in Settings with explicit
   sharing and no upload path;
 * **#28** — a non-blocking Setup Wizard warning when the bootloader is not
@@ -321,6 +320,22 @@ LineageOS Updater app is not installed in this product.
   time and memory before quoting performance numbers.
 
 ## Verification checklist (on the first flash)
+
+USB and cellular security have their own device-dependent checks:
+
+* `getprop persist.security.usb_mode` is empty on a fresh install (the
+  controller then applies `2`, charging only when locked). Lock the device
+  with a USB data device attached: it must disappear while charging continues,
+  and re-enumerate after unlock. `adb logcat -s UsbPortSecurity` must show the
+  mode and port count; an unsupported HAL logs an error and changes nothing.
+  On a debuggable build the default is still `2`, so adb requires selecting
+  `4` in Settings while unlocked.
+* Open **Settings → Network & internet → SIMs → Cellular security**. On a
+  modem that reports network HAL 2.1/2.2, "Require encryption" and "Cellular
+  security notifications" are on by default; on an older or unimplemented
+  modem the rows are hidden. Check `adb logcat -s GsmCdmaPhone` for the
+  "requires radio HAL" or unsupported messages instead of a crash, and use a
+  test SIM/carrier before relying on null-cipher rejection for calls.
 
 See `build.md`. At minimum: `cmd overlay list --user 0` shows all three lenOS
 RROs enabled, `settings list global | grep -E "private_dns|ntp|captive"` shows

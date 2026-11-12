@@ -22,7 +22,6 @@ while reviewing the patches at source level. A passing test is not a runtime sec
 | Reset driver | Rename destinations (the Seedvault `app.grapheneos` tree) survived `--reset`. | **Fixed.** Rename/copy destinations and empty parents are removed; regression test added. |
 | ENF-1 / #23 | This is a global opt-in dumpable-bit clear, not per-app native-debugging policy. Root/`CAP_SYS_PTRACE` and existing processes are exempt. If app seccomp rejects `prctl`, the helper logs and does nothing. An app that deliberately calls
 `prctl(PR_SET_DUMPABLE, 1)` can undo its own bit; this is a hardening primitive, not a sandbox. | Deliberate limitation; documented and marked unbuilt. |
-| #22 USB | The controller asks each port HAL to enable/disable data but does not turn a HAL failure into a UI error. A present port whose HAL ignores `enableUsbData` can therefore leave data enabled despite the selected mode. | Build/device validator required; documented limitation. |
 | #17 crash logs | `READ_LOGS` is signature-level; entries stay local and sharing is explicit. The viewer does not upload. | Acceptable for a platform Settings app; runtime test pending. |
 | #27 Seedvault | Internal prefix migration can make old backups unreadable by the new app id. | Documented; restore-migration test required. |
 | #28 SetupWizard | Shows a warning when verified boot is not green; does not block setup, unlock, or relock. | Acceptable; first-boot states still need testing. |
@@ -36,8 +35,6 @@ while reviewing the patches at source level. A passing test is not a runtime sec
 ## Deliberate non-goals
 
 * ENF-1 does not claim to stop root, kernel, `debuggerd`, or a process with `CAP_SYS_PTRACE`.
-* The USB policy does not claim to cut VBUS or protect against a malicious charger; it only asks
-  the port HAL to disable data.
 * The share targets do not sanitize arbitrary file formats; unsupported images fail rather than
   silently pass through.
 * The Settings log viewer does not guarantee deletion of logs held by other system components.
@@ -51,9 +48,9 @@ while reviewing the patches at source level. A passing test is not a runtime sec
 
 1. Build every project with the experimental series applied in order.
 2. Boot `asteroids`, check SELinux denial logs and the hidden-API build check.
-3. Run the checks in `verification.md`, including a same-UID ptrace attempt, USB data behavior
-   while locked, a Seedvault restore, a Setup Wizard first boot with green and non-green
-   verified-boot properties, and HTS-1 thread-creation/app-compatibility/memory checks against a
-   control build. Do not promote HTS-1 on source-level tests alone.
+3. Run the checks in `verification.md`, including a same-UID ptrace attempt, a Seedvault restore,
+   a Setup Wizard first boot with green and non-green verified-boot properties, and HTS-1
+   thread-creation/app-compatibility/memory checks against a control build. Do not promote HTS-1
+   on source-level tests alone.
 4. Promote only the features that pass. ENF-1 remains experimental until the per-app policy or an
    explicit product decision replaces it.

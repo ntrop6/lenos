@@ -16,7 +16,6 @@ series; see its section below.
 | #17 | On-device crash/ANR log viewer | `packages_apps_Settings/0001` | Needs a Settings build, DropBox entries on a booted device, and confirmation that the Settings UID can read the tags |
 | #20 | fs-verity enforcement for system-app updates | `frameworks_base/0001` | Needs a full system image and a booted device to exercise `scanPackageForInitLI` and the PackageInstaller path |
 | #21 | Reject same/older system-app updates at boot | `frameworks_base/0001` | Same; the failure mode only appears across a reboot with a `/data` update |
-| #22 | USB-C data-line control (charging-only / when-locked / AFU) | `frameworks_base/0003` + `packages_apps_Settings/0002` | Needs the `asteroids` USB HAL to implement the AOSP `enableUsbData` operation, a keyguard transition, and a physical USB host/cable |
 | #25 | Screenshot sound follows `SOUND_EFFECTS_ENABLED`; forced shutter regions unchanged | `frameworks_base/0002` | Needs a SystemUI build and a device with/without a forced-shutter region |
 | #27 | Seedvault GrapheneOS app-id prefix + chunker | `packages_apps_Seedvault/0001` | Needs a full Seedvault build and a backup/restore cycle, including migration from a pre-prefix backup |
 | #28 | Setup Wizard unlocked-bootloader warning | `packages_apps_SetupWizard/0001` | Needs a Setup Wizard build and first-boot states with a green and non-green verified-boot property |
@@ -28,10 +27,11 @@ series; see its section below.
 | OPS-4 / #8 stage 2 | Per-app clipboard read control | `packages_apps_Settings/0004` | Needs a Settings build and an app-op read test; the UI is source-complete and uses the existing AppOps policy |
 | OPS-5 | Tracking-parameter scrubber for shared text | `experimental/app/LenosOpsec` | Needs an app build and a real text-share flow; verify the link set with a local parser and no network |
 
-Patch count: 13 (5 frameworks/base, 5 Settings, 1 SetupWizard, 1 Seedvault, 1 bionic) plus the
-`experimental/app/LenosOpsec` source tree. The stable `patches/` series is unchanged.
+Patch count: 11 (4 frameworks/base, 4 Settings, 1 SetupWizard, 1 Seedvault, 1 bionic) plus the
+`experimental/app/LenosOpsec` source tree. The promoted USB and cellular defaults are part of the
+stable `patches/` series and are tested in the main suite.
 
-Static tests: 87 in `experimental/tests/` plus 16 build-gate tests in the main suite.
+Static tests: 81 in `experimental/tests/` plus 16 build-gate tests in the main suite.
 Each test sandbox applies the stable base first, then the experimental series. The Settings
 patches are tested both one at a time and in series order; the reset driver removes rename
 destinations and empty directories. The source-level review is in `docs/security-review.md`.

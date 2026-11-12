@@ -1,0 +1,103 @@
+diff --git a/src/java/com/android/internal/telephony/GsmCdmaPhone.java b/src/java/com/android/internal/telephony/GsmCdmaPhone.java
+index ef655d7..0c5bc7b 100644
+--- a/src/java/com/android/internal/telephony/GsmCdmaPhone.java
++++ b/src/java/com/android/internal/telephony/GsmCdmaPhone.java
+@@ -19,6 +19,7 @@ package com.android.internal.telephony;
+ import static android.telephony.NetworkRegistrationInfo.DOMAIN_PS;
+ import static android.telephony.TelephonyManager.ACTION_2G_DISABLED_BY_CARRIER;
+ import static android.telephony.TelephonyManager.EXTRA_SUBSCRIPTION_ID;
++import static android.telephony.TelephonyManager.HAL_SERVICE_NETWORK;
+ 
+ import static com.android.internal.telephony.CommandException.Error.GENERIC_FAILURE;
+ import static com.android.internal.telephony.CommandException.Error.SIM_BUSY;
+@@ -4416,6 +4417,11 @@ public class GsmCdmaPhone extends Phone {
+             logi("Not handling null cipher update. Feature disabled by DeviceConfig.");
+             return;
+         }
++        if (!isNetworkHalAtLeast(RIL.RADIO_HAL_VERSION_2_1)) {
++            logi("Null cipher and integrity control requires radio HAL 2.1 or newer.");
++            mIsNullCipherAndIntegritySupported = false;
++            return;
++        }
+         mCi.setNullCipherAndIntegrityEnabled(
+                 getNullCipherAndIntegrityEnabledPreference(),
+                 obtainMessage(EVENT_SET_NULL_CIPHER_AND_INTEGRITY_DONE));
+@@ -4423,6 +4429,13 @@ public class GsmCdmaPhone extends Phone {
+ 
+     @Override
+     public void handleIdentifierDisclosureNotificationPreferenceChange() {
++        if (!isNetworkHalAtLeast(RIL.RADIO_HAL_VERSION_2_2)) {
++            logi("Cellular identifier disclosure notifications require radio HAL 2.2 or newer.");
++            mIsIdentifierDisclosureTransparencySupported = false;
++            mIdentifierDisclosureNotifier.disable(mContext);
++            return;
++        }
++
+         boolean prefEnabled = getIdentifierDisclosureNotificationsPreferenceEnabled();
+ 
+         // The notifier is tied to handling unsolicited updates from the modem, not the
+@@ -4440,6 +4453,13 @@ public class GsmCdmaPhone extends Phone {
+ 
+     @Override
+     public void handleNullCipherNotificationPreferenceChanged() {
++        if (!isNetworkHalAtLeast(RIL.RADIO_HAL_VERSION_2_2)) {
++            logi("Null cipher notifications require radio HAL 2.2 or newer.");
++            mIsNullCipherNotificationSupported = false;
++            mNullCipherNotifier.disable(mContext);
++            return;
++        }
++
+         boolean prefEnabled = getNullCipherNotificationsPreferenceEnabled();
+ 
+         // The notifier is tied to handling unsolicited updates from the modem, not the
+@@ -4454,6 +4474,11 @@ public class GsmCdmaPhone extends Phone {
+                 obtainMessage(EVENT_SET_SECURITY_ALGORITHMS_UPDATED_ENABLED_DONE));
+     }
+ 
++    /** Returns whether the network radio HAL implements at least {@code version}. */
++    private boolean isNetworkHalAtLeast(HalVersion version) {
++        return getHalVersion(HAL_SERVICE_NETWORK).greaterOrEqual(version);
++    }
++
+     /**
+      * Update the phoneId -> subId mapping of the null cipher notifier.
+      */
+diff --git a/src/java/com/android/internal/telephony/Phone.java b/src/java/com/android/internal/telephony/Phone.java
+index 9c2112d..95854ed 100644
+--- a/src/java/com/android/internal/telephony/Phone.java
++++ b/src/java/com/android/internal/telephony/Phone.java
+@@ -4929,10 +4929,13 @@ public abstract class Phone extends Handler implements PhoneInternalInterface {
+ 
+     /**
+      * @return global null cipher and integrity enabled preference
++     *
++     * <p>lenOS requires encryption by default. {@link GsmCdmaPhone} only applies
++     * this preference when the radio HAL exposes the corresponding command.
+      */
+     public boolean getNullCipherAndIntegrityEnabledPreference() {
+         SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(getContext());
+-        return sp.getBoolean(PREF_NULL_CIPHER_AND_INTEGRITY_ENABLED, true);
++        return sp.getBoolean(PREF_NULL_CIPHER_AND_INTEGRITY_ENABLED, false);
+     }
+ 
+     /**
+@@ -4964,7 +4967,8 @@ public abstract class Phone extends Handler implements PhoneInternalInterface {
+      */
+     public boolean getIdentifierDisclosureNotificationsPreferenceEnabled() {
+         SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(getContext());
+-        return sp.getBoolean(PREF_IDENTIFIER_DISCLOSURE_NOTIFICATIONS_ENABLED, false);
++        // lenOS enables cellular security notifications by default.
++        return sp.getBoolean(PREF_IDENTIFIER_DISCLOSURE_NOTIFICATIONS_ENABLED, true);
+     }
+ 
+     /**
+@@ -4993,7 +4997,8 @@ public abstract class Phone extends Handler implements PhoneInternalInterface {
+      */
+     public boolean getNullCipherNotificationsPreferenceEnabled() {
+         SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(getContext());
+-        return sp.getBoolean(PREF_NULL_CIPHER_NOTIFICATIONS_ENABLED, false);
++        // lenOS enables notifications for unencrypted connections by default.
++        return sp.getBoolean(PREF_NULL_CIPHER_NOTIFICATIONS_ENABLED, true);
+     }
+ 
+     /**

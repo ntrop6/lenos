@@ -100,9 +100,10 @@ Experimental means **source-complete, not validated**:
 
 * no full `asteroids` build has been run for this combined series;
 * no image has been flashed, wiped, relocked or booted;
-* untested items include the USB HAL `enableUsbData` path, fs-verity updates,
-  Seedvault restore migration, ENF-1 ptrace behavior, Setup Wizard verified-boot
-  states, HTS-1 thread-stack behavior/compatibility, and every OPSEC UI flow.
+* untested items include fs-verity updates, Seedvault restore migration, ENF-1
+  ptrace behavior, Setup Wizard verified-boot states, HTS-1 thread-stack
+  behavior/compatibility, and every OPSEC UI flow. The promoted USB and cellular
+  features are documented and verified separately in `features.md`.
 
 The no-flash/no-wipe/no-relock rules in
 [`flash-and-lock.md`](flash-and-lock.md) still apply. An experimental build

@@ -14,7 +14,6 @@ stop the default series from applying.
 | **#20** fs-verity enforcement for system-app updates | `frameworks_base/0001-system-app-update-verity.patch` | Implemented; static checks pass; **not built or booted** |
 | **#21** reject same/older system-app updates across reboot | same patch (GrapheneOS `PackageVerityExt` pair) | Implemented; static checks pass; **not built or booted** |
 | **#25** screenshot sound follows the system sound-effects setting | `frameworks_base/0002-screenshot-sound-settings.patch` | Implemented; static checks pass; **not built or booted** |
-| **#22** USB-C data-line control (charging-only / when-locked / AFU) | `frameworks_base/0003-usb-port-security.patch` + `packages_apps_Settings/0002-usb-port-security.patch` | Implemented against the AOSP per-port HAL; **HAL support on `asteroids` unverified** |
 | **#17** on-device crash/ANR log viewer | `packages_apps_Settings/0001-crash-log-viewer.patch` | Implemented; local-only; **not built** |
 | **#28** Setup Wizard unlocked-bootloader warning | `packages_apps_SetupWizard/0001-bootloader-unlocked-warning.patch` | Implemented; **not built** |
 | **#23 partial / ENF-1** global opt-in native-debugging block | `frameworks_base/0005-native-debugging-block.patch` + `packages_apps_Settings/0005-native-debugging-block.patch` | Implemented source-only; **not per-app** and **not built** |
@@ -50,15 +49,6 @@ wipe.
   lenOS-only screenshot sound switch; turning off touch sounds also silences
   the non-forced screenshot sound. Forced shutter regions still obey
   `MediaActionSound.mustPlayShutterSound()`.
-* **#22 needs a USB HAL that implements `enableUsbData`.** It deliberately does
-  not use GrapheneOS's vendor `sys.port_security_mode` /
-  `security.deny_new_usb2` hooks. If the `asteroids` HAL does not implement the
-  standard operation, the policy is a no-op and the Settings screen correctly
-  reports unsupported. Modes 0 and 1 both block the data lines because the
-  portable HAL operation does not expose a safe VBUS-off operation. The default
-  on user builds is `MODE_CHARGING_ONLY_WHEN_LOCKED`; debug builds default to
-  enabled so adb remains usable during bring-up. The persistent key is
-  GrapheneOS's `persist.security.usb_mode`.
 * **#17 reads DropBox, not a full crash-reporting service.** It shows
   crash/ANR/Java/watchdog entries already present in DropBox, has no upload
   path and no automatic sharing. Settings needs `READ_LOGS`; entries are
@@ -205,9 +195,6 @@ The suite builds the default base in a sandbox and proves:
 * the #20/#21 boot scan, install-time checks, fs-verity loop, versionCode
   comparison and signing capability checks are present and ordered correctly;
 * the screenshot-sound patch keeps the forced-shutter path intact;
-* #22 exposes the GrapheneOS-compatible mode constants and persistent property,
-  registers the keyguard listener, applies the policy through the per-port HAL
-  and rejects ordinary re-enables while blocking;
 * #17 stays local-only (DropBox tags, explicit share) and #28 is conditional on
   the verified-boot property without blocking setup;
 * #27 uses the GrapheneOS prefix while keeping the public application id;

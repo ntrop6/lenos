@@ -88,9 +88,9 @@ index 0000000000000000000000000000000000000000..404868a6676bde5dd82eee8f73355d5e
 +/**
 + * Controls whether USB data lines are available while the device is locked.
 + *
-+ * <p>Uses the standard Android USB HAL data-signal operation. This is an
-+ * experimental lenOS feature; the device must have a USB HAL that implements
-+ * {@code enableUsbData} for the policy to take effect.</p>
++ * <p>Uses the standard Android USB HAL data-signal operation. The device must
++ * have a USB HAL that implements {@code enableUsbData} for the policy to take
++ * effect.</p>
 + */
 +public class UsbPortSecuritySettings extends SettingsPreferenceFragment {
 +    private static final String KEY = "usb_port_security";

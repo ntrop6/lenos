@@ -1,18 +1,19 @@
-"""USB data-line control (Tier 2 #22, experimental).
+"""USB data-line control (Tier 2 #22, stable).
 
 The implementation uses Android's existing per-port ``enableUsbData`` HAL
 operation instead of a vendor sysfs node. That makes it portable, but it also
 means the policy is a no-op on USB HALs that do not implement the operation;
-the experimental status and verification checklist record that limitation.
+the Settings screen reports the unsupported state and the source-level tests
+record the limitation.
 """
 from __future__ import annotations
 
 import unittest
 
-from harness import PATCH_ROOT, LenosPatchTest, VENDOR, patch_paths
+from harness import VENDOR, LenosPatchTest, patch_paths
 
-FWB_PATCH = "0003-usb-port-security.patch"
-SETTINGS_PATCH = "0002-usb-port-security.patch"
+FWB_PATCH = "0030-lenos-usb-port-security.patch"
+SETTINGS_PATCH = "0005-lenos-usb-port-security.patch"
 
 
 class TestUsbPortSecurityFramework(LenosPatchTest):
@@ -20,7 +21,7 @@ class TestUsbPortSecurityFramework(LenosPatchTest):
     PATCHES = [FWB_PATCH]
 
     def test_patch_scope(self):
-        patch = PATCH_ROOT / "frameworks_base" / FWB_PATCH
+        patch = VENDOR / "patches" / "frameworks_base" / FWB_PATCH
         self.assertEqual(
             sorted(patch_paths(patch)),
             sorted([
@@ -41,7 +42,18 @@ class TestUsbPortSecurityFramework(LenosPatchTest):
             "MODE_CHARGING_ONLY_WHEN_LOCKED_AFU = 3",
             "MODE_ALL_PORTS_ENABLED = 4",
             "MODE_SETTING = \"persist.security.usb_mode\"",
+        )
+
+    def test_data_is_blocked_while_locked_on_every_build(self):
+        self.assert_contains(
+            "core/java/android/hardware/usb/UsbPortSecurity.java",
+            "DEFAULT_MODE = MODE_CHARGING_ONLY_WHEN_LOCKED",
+            "public static final int DEFAULT_MODE = MODE_CHARGING_ONLY_WHEN_LOCKED;",
+        )
+        self.assert_not_contains(
+            "core/java/android/hardware/usb/UsbPortSecurity.java",
             "Build.IS_DEBUGGABLE",
+            "MODE_ALL_PORTS_ENABLED\n            : MODE_CHARGING_ONLY_WHEN_LOCKED",
         )
 
     def test_service_applies_policy_on_keyguard_changes(self):
